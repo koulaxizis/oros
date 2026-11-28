@@ -14,7 +14,7 @@
 //   OrosVAD.probs(samples16k, { cancelled, progress(f) }) → Promise<Float32Array>
 //     one speech probability per 32 ms frame (512 samples)
 //   OrosVAD.speech(samples16k, opts) → Promise<[{ start, end }]> seconds
-//   OrosVAD.stream(opts) → { push(samples16k), flush(), reset() }
+//   OrosVAD.stream(opts) → { ready, push(samples16k), flush(), speaking(), close() }
 //     live use: calls opts.onStart(), opts.onPhrase(samples16k, start, end)
 //     when a phrase ends (a pause), opts.onIdle(ms) on silence
 // The pure steps (segments, silences, windows, Stepper) are unit-tested
@@ -247,6 +247,7 @@
       flush: function () {
         return chain.then(function () { if (st.on && phraseLen >= st.minF * FRAME) give(); phrase = []; phraseLen = 0; st.reset(); });
       },
+      speaking: function () { return st.on; },
       close: function () { dead = true; }
     };
   }

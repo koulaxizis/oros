@@ -47,6 +47,14 @@ The calendar button next to the title (`Today's note`) opens the page for today,
 
 Templates are pages under a page named `Templates` (in any notebook). The template button under the tree, or `New page from template…` in the page menu, lists them; pick one, give the new page a title, and its text is copied in. In a template, `{{date}}` becomes today's date, `{{time}}` the time and `{{title}}` the new page's title. A template named `Daily` is used for the daily note instead of the built-in one.
 
+## Dictate
+
+The `Dictate` button (the microphone with lines, first in the formatting bar) writes what you say straight into the page, at your cursor (or at the end). Speak normally: at each pause the phrase you just said is written while you go on talking.
+- It stops when you tap it again, 3 seconds after your last phrase, or after 8 seconds if you say nothing at the start.
+- When it ends, a notice with `Undo` takes the whole dictation out again; Ctrl+Z takes it out phrase by phrase.
+- It listens in the orOS language. Everything happens on this device with the Whisper speech model and a small speech detector (Silero VAD); nothing you say is recorded or sent anywhere. The first time it asks before downloading them (the size is shown), then it works offline.
+- Names and numbers can come out wrong: read it over.
+
 ## Voice notes
 The microphone button next to the title records into the open page. The bar under the toolbar shows the time and the sound level; `Pause` holds it, the tick stops and saves, `×` throws it away. When you stop, a line such as `🎙 voice:2026-11-12-181005-a7k2.webm (0:42)` goes into the page, after the line where your cursor was (or at the end), and a player appears under the page in the `Recordings` strip and, in `Preview`, in the place of that line. A player plays and pauses, jumps to any point, and plays at 1×, 1.5× or 2×; its `⋯` menu has the rest: `Transcribe`, `Trim…`, `Send to Studio`, `Download` and `Delete`.
 

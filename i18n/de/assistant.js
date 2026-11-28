@@ -2483,6 +2483,7 @@ orosPack("de", "assistant", {
  "vo.net": "Das Sprachmodell konnte nicht geladen werden. Prüfe die Verbindung und versuch es noch einmal.",
  "vo.mic": "Das Mikrofon ist nicht verfügbar. Erlaube es für diese App und versuch es noch einmal.",
  "vo.max": "Die Aufnahme stoppt nach zwei Minuten von selbst.",
+ "vo.recAuto": "Ich höre zu… es stoppt von selbst, wenn du aufhörst zu sprechen (oder tippe auf das Mikrofon).",
  "set.voice": "Spracheingabe",
  "set.voiceNone": "Noch nicht geladen: Der Mikrofonknopf fragt beim ersten Mal.",
  "set.voiceHas": "Geladen: {name}.",

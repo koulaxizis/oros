@@ -232,6 +232,7 @@
       "vo.go": "Download and start", "vo.none": "Nothing was heard. Try again a little closer to the microphone.",
       "vo.fail": "Speech could not be turned into text on this device.", "vo.net": "The speech model could not be downloaded. Check the connection and try again.",
       "vo.mic": "The microphone is not available. Allow it for this app and try again.", "vo.max": "Recording stops by itself after two minutes.",
+      "vo.recAuto": "Listening… it stops by itself when you stop talking (or tap the microphone).",
       "set.voice": "Voice input","set.voiceNone": "Not downloaded yet: the microphone button asks the first time.",
       "set.voiceHas": "Downloaded: {name}.", "set.voiceRm": "Remove the speech model", "set.voiceHint": "The text appears in the message box for you to check; nothing is sent by itself. Montage, Lyric Sync and Notes use the small model too, so removing it removes it there as well.",
       "brief.msg": "Briefing for {date}", "brief.title": "Share with {name} for the briefing?",
@@ -1048,6 +1049,7 @@
       "vo.go": "Λήψη και έναρξη", "vo.none": "Δεν ακούστηκε τίποτα. Δοκίμασε ξανά λίγο πιο κοντά στο μικρόφωνο.",
       "vo.fail": "Η ομιλία δεν έγινε κείμενο σε αυτή τη συσκευή.", "vo.net": "Το μοντέλο ομιλίας δεν κατέβηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "vo.mic": "Το μικρόφωνο δεν είναι διαθέσιμο. Επίτρεψέ το σε αυτή την εφαρμογή και δοκίμασε ξανά.", "vo.max": "Η ηχογράφηση σταματά μόνη της μετά από δύο λεπτά.",
+      "vo.recAuto": "Ακούω… σταματώ μόνος μου όταν σταματήσεις να μιλάς (ή πάτα το μικρόφωνο).",
       "set.voice": "Φωνητική εισαγωγή","set.voiceNone": "Δεν έχει κατέβει ακόμη: το κουμπί του μικροφώνου ρωτά την πρώτη φορά.",
       "set.voiceHas": "Έχει κατέβει: {name}.", "set.voiceRm": "Αφαίρεση του μοντέλου ομιλίας", "set.voiceHint": "Το κείμενο εμφανίζεται στο πλαίσιο μηνύματος για να το ελέγξεις· τίποτα δεν στέλνεται μόνο του. Το μικρό μοντέλο το χρησιμοποιούν και το Montage, το Lyric Sync και οι Σημειώσεις, οπότε αν το αφαιρέσεις φεύγει και από εκεί.",
       "brief.msg": "Ενημέρωση για {date}", "brief.title": "Κοινοποίηση στο {name} για την ενημέρωση;",
@@ -10736,7 +10738,7 @@
   // with Montage, Lyric Sync, Notes) or "base" (better Greek), chosen the
   // first time, device-local in prefs.voice.
   var VO_MAX_MS = 120000;
-  var vo = { st: "", rec: null, stream: null, parts: [], timer: 0, ctl: null };
+  var vo = { st: "", rec: null, stream: null, parts: [], timer: 0, ctl: null, live: null };
   function voCan() {
     return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder &&
       (window.AudioContext || window.webkitAudioContext) && (window.OfflineAudioContext || window.webkitOfflineAudioContext));
@@ -10819,7 +10821,61 @@
       showToast(e && /^http|fetch|network|load/i.test(String(e.message || e)) ? t("vo.net") : t("vo.fail"));
     });
   }
+  // DICT-4: live listening (montage/listen.js): Silero VAD cuts at the
+  // pauses, each phrase is written into the box while the person goes
+  // on, and it stops by itself 2 s after the last phrase. If it cannot
+  // start (old browser, the detector not downloadable) the recording
+  // below is used, as before.
+  function voListen() {
+    if (window.OrosListen) return window.OrosListen.load().then(function () { return window.OrosListen; });
+    return new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      var v = (document.querySelector('script[src*="assistant.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+      sc.src = "../montage/listen.js" + (m ? "?v=" + m[1] : "");
+      sc.onload = function () { window.OrosListen ? window.OrosListen.load().then(function () { resolve(window.OrosListen); }, reject) : reject(new Error("no-listen")); };
+      sc.onerror = function () { sc.remove(); reject(new Error("no-listen")); };
+      document.head.appendChild(sc);
+    });
+  }
   function voStart() {
+    if (vo.st) return;
+    vo.st = "wait";
+    voListen().then(function (L) {
+      if (!L.can()) throw new Error("no-listen");
+      if (vo.st !== "wait") return;
+      if (document.visibilityState === "hidden") { voEnd(); return; }
+      var heard = 0, listening = false;
+      vo.live = L.start({
+        lang: voLang(), model: prefs.voice || "tiny", waitFirst: 8000, waitAfter: 2000, maxMs: VO_MAX_MS,
+        onText: function (text) {
+          var box = $("input");
+          box.value = C.voiceJoin(box.value, text).slice(0, MAX_INPUT);
+          autosize();
+          heard++;
+        },
+        onState: function (st, info) {
+          if (st === "listen" || st === "speak") {
+            listening = true;
+            if (vo.st === "wait") vo.st = "rec";
+            if (vo.st === "rec") voDraw(t("vo.recAuto"));
+          } else if (st === "write" && vo.st === "rec") voDraw(t("vo.recAuto"));
+          else if (st === "done") {
+            vo.live = null;
+            voEnd();
+            if (!heard) { showToast(t("vo.none")); return; }
+            var box = $("input");
+            try { box.focus(); box.setSelectionRange(box.value.length, box.value.length); } catch (e) {}
+          } else if (st === "error") {
+            vo.live = null;
+            if (!listening && info !== "denied" && info !== "nomic") { vo.st = ""; voRecord(); return; }
+            voEnd();
+            showToast(t(info === "net" ? "vo.net" : info === "denied" || info === "nomic" ? "vo.mic" : "vo.fail"));
+          }
+        }
+      });
+    }).catch(function () { if (vo.st === "wait") { vo.st = ""; voRecord(); } });
+  }
+  function voRecord() {
     if (vo.st) return;
     vo.st = "wait";
     navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(function (stream) {
@@ -10838,6 +10894,7 @@
     }, function () { voEnd(); showToast(t("vo.mic")); });
   }
   function voStop() {
+    if (vo.st === "rec" && vo.live) { vo.st = "run"; voDraw(t("vo.run", { p: 0 }).replace(/\s*0\s*%$/, "")); vo.live.stop(); return; }
     if (vo.st !== "rec" || !vo.rec) return;
     clearTimeout(vo.timer);
     vo.st = "run";

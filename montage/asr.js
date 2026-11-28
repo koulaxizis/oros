@@ -330,6 +330,10 @@
         for (var i = 0; i < V; i++) if (logits[i] > bv) { bv = logits[i]; tok = i; }
         if (tok === EOT || bv === -Infinity) break;
         seq.push(tok);
+        // DICT-2: greedy decoding can get stuck repeating itself
+        // ("πως πως πως …"): keep the first time, stop there.
+        var lp = loopAt(seq);
+        if (lp >= 0) { seq.length = lp; break; }
         past = presents(out, past, layers);
         input = [tok];
         if (seq.length % 8 === 0) progress(Math.min(0.99, (seek + Math.min(winLen, lastStamp(seq))) / total), "write");
@@ -344,6 +348,22 @@
     }
     progress(1, "write");
     return { lang: lang, cues: cues };
+  }
+  // The same 1..12 tokens three times in a row at the end of seq (a
+  // single token: four times) → where the repeats start (the first
+  // copy is kept), else -1.
+  function loopAt(seq) {
+    var n = seq.length;
+    for (var k = 1; k <= 12; k++) {
+      var times = k === 1 ? 4 : 3;
+      if (n < k * times) break;
+      var same = true;
+      for (var r = 1; r < times && same; r++) {
+        for (var i = 0; i < k; i++) if (seq[n - 1 - i] !== seq[n - 1 - i - r * k]) { same = false; break; }
+      }
+      if (same) return n - (times - 1) * k;
+    }
+    return -1;
   }
   function lastStamp(seq) { for (var i = seq.length - 1; i >= 0; i--) if (seq[i] >= TS0) return (seq[i] - TS0) * TS_STEP; return 0; }
   function pause() { return new Promise(function (r) { setTimeout(r, 0); }); }
@@ -378,7 +398,7 @@
 
   var pure = {
     melFilters: melFilters, logMel: logMel, decimate3: decimate3, applyTimestampRules: applyTimestampRules,
-    segmentsFrom: segmentsFrom, decodeText: decodeText, splitCue: splitCue, transcribe: transcribe, invertVocab: invertVocab,
+    segmentsFrom: segmentsFrom, loopAt: loopAt, decodeText: decodeText, splitCue: splitCue, transcribe: transcribe, invertVocab: invertVocab,
     FILES: FILES, MODEL_MB: MODEL_MB, RUNTIME_MB: RUNTIME_MB, TS0: TS0, EOT: EOT,
     MODELS: MODELS, fileList: fileList, modelOf: modelOf
   };
@@ -559,11 +579,19 @@
     });
   }
   function hasFile(f) { return stored(f).then(Boolean, function () { return false; }); }
+  // DICT-2: the speech model this device uses for dictation (Notes, the
+  // Assistant): device-local, "base" until the person picks another.
+  var PREF_KEY = "oros-asr-model";
+  function preferred() {
+    try { var v = localStorage.getItem(PREF_KEY); if (v && MODELS[v]) return v; } catch (e) {}
+    return "base";
+  }
+  function setPreferred(v) { try { if (MODELS[v]) localStorage.setItem(PREF_KEY, v); } catch (e) {} }
 
   root.MontageASR = {
     ready: ready, run: run, forget: forget, decimate3: decimate3, MODEL_MB: MODEL_MB, RUNTIME_MB: RUNTIME_MB,
     melFilters: melFilters, logMel: logMel, splitCue: splitCue,
-    runtime: runtime, file: oneFile, has: hasFile,
+    runtime: runtime, file: oneFile, has: hasFile, preferred: preferred, setPreferred: setPreferred,
     mbOf: function (model) { return MODELS[modelOf(model)].mb; },
     // download (if needed) and load a model ahead of the first run
     prepare: function (model, onProgress, signal) { return models(model, onProgress, signal).then(function () { return true; }); }
