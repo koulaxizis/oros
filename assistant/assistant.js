@@ -802,7 +802,7 @@
       "entry.invoice": "New invoice · {app}",
       "tool.sum": "Summary of {app}", "tool.sumNo": "You kept the summary of {app} back", "tool.shopFind": "Products of {shop} for “{q}”: {n}", "tool.shopErr": "The shop could not be asked",
       "tool.gh": "GitHub {repo}: {what}", "tool.ghErr": "GitHub could not be read ({repo})",
-      "tool.calc": "Computed with Spreadsheet's formulas: {n}", "tool.hash": "SHA-256 of {path}",
+      "tool.calc": "Computed with Spreadsheet's formulas: {n}", "tool.wchk.status": "Checked {host}", "tool.wchk.dns": "DNS of {host}", "tool.wchk.sitemap": "Sitemap of {host}", "tool.hash": "SHA-256 of {path}",
       "gh.w.releases": "releases", "gh.w.latest_release": "latest release", "gh.w.file": "file", "gh.w.runs": "Actions runs", "gh.w.pulls": "pull requests", "gh.w.commits": "commits", "gh.w.issues": "issues",
       "f.pweight": "Weight", "f.length": "Length", "f.width": "Width", "f.height": "Height", "f.saleprice": "Sale price", "f.stock": "In stock", "f.managestock": "Stock counted", "f.stockstatus": "Availability",
       "v.ms.true": "yes", "v.ms.false": "no", "v.ss.instock": "in stock", "v.ss.outofstock": "out of stock", "v.ss.onbackorder": "on backorder",
@@ -1622,7 +1622,7 @@
       "entry.invoice": "Νέο τιμολόγιο · {app}",
       "tool.sum": "Σύνοψη: {app}", "tool.sumNo": "Κράτησες τη σύνοψη ({app})", "tool.shopFind": "Προϊόντα του {shop} για «{q}»: {n}", "tool.shopErr": "Το κατάστημα δεν απάντησε",
       "tool.gh": "GitHub {repo}: {what}", "tool.ghErr": "Το GitHub δεν διαβάστηκε ({repo})",
-      "tool.calc": "Υπολογισμός με τους τύπους του Υπολογιστικού φύλλου: {n}", "tool.hash": "SHA-256 του {path}",
+      "tool.calc": "Υπολογισμός με τους τύπους του Υπολογιστικού φύλλου: {n}", "tool.wchk.status": "Έλεγχος: {host}", "tool.wchk.dns": "DNS του {host}", "tool.wchk.sitemap": "Χάρτης σελίδων του {host}", "tool.hash": "SHA-256 του {path}",
       "gh.w.releases": "εκδόσεις", "gh.w.latest_release": "τελευταία έκδοση", "gh.w.file": "αρχείο", "gh.w.runs": "εκτελέσεις Actions", "gh.w.pulls": "pull requests", "gh.w.commits": "commits", "gh.w.issues": "issues",
       "f.pweight": "Βάρος", "f.length": "Μήκος", "f.width": "Πλάτος", "f.height": "Ύψος", "f.saleprice": "Τιμή προσφοράς", "f.stock": "Απόθεμα", "f.managestock": "Μέτρηση αποθέματος", "f.stockstatus": "Διαθεσιμότητα",
       "v.ms.true": "ναι", "v.ms.false": "όχι", "v.ss.instock": "σε απόθεμα", "v.ss.outofstock": "εξαντλημένο", "v.ss.onbackorder": "με προπαραγγελία",
@@ -3537,6 +3537,60 @@
     });
   }
 
+  // AS-WCHK (wave 5b, AH-6): is a site up, its DNS, its sitemap. The
+  // page goes through the orOS relay's "web" operation (Reader's network
+  // layer, feeds/fetch.js: Sensitive work respected), DNS through
+  // Cloudflare's DNS-over-HTTPS straight from the browser.
+  var RELAY_DEFAULT = "https://oros-mail-relay.koulaxizis.workers.dev";
+  function feedsFetch() {
+    return loadOnce("../feeds/core.js").then(function () { return loadOnce("../feeds/fetch.js"); }).then(function () { return window.orosFeedsFetch || null; });
+  }
+  function webCheck(c, a) {
+    a = a && typeof a === "object" ? a : {};
+    var what = String(a.what || ""), raw = String(a.url || "").trim();
+    function fail(msg, host) { return { content: "Error: " + msg, err: 1, ui: { k: "toolErr", why: "args", name: "web_check" } }; }
+    if (C.WCHK_WHAT.indexOf(what) < 0) return Promise.resolve(fail("what must be status, dns or sitemap."));
+    if (what === "dns") {
+      var du = C.dohUrl(raw, a.type), host = C.dnsName(raw);
+      if (!du) return Promise.resolve(fail("url must be a host name such as noxpress.tech."));
+      var t0 = Date.now();
+      return webFetch({ url: du, headers: { Accept: "application/dns-json" } }).then(function (r) {
+        if (!r.ok) throw { why: webWhy(null, r) };
+        return r.json();
+      }).then(function (j) {
+        var o = C.dohShape(j);
+        o.host = host; o.type = C.dohUrl(raw, a.type).split("type=")[1]; o.ms = Date.now() - t0; o.via = "Cloudflare DNS-over-HTTPS";
+        return { content: JSON.stringify(o), ui: { k: "wchk", what: "dns", host: host } };
+      }).catch(function (e) { return fail("the DNS lookup did not work (" + ((e && e.why) || webWhy(e)) + ")."); });
+    }
+    var url = what === "sitemap" ? C.sitemapUrl(raw) : C.pageUrl(raw);
+    if (!url) return Promise.resolve(fail("url is not a web address (https://…)."));
+    if (!C.pageAllowed(c.msgs, url)) return Promise.resolve(fail("web_check opens only a site the owner wrote (in this conversation or the routine's instructions) or one web_search returned."));
+    var hostOfUrl = hostOf(url);
+    return feedsFetch().then(function (F) {
+      if (!F) throw { code: "relay" };
+      var t1 = Date.now();
+      return F.fetchOne(url, { via: "relay", relay: function () { return F.relayUrl({}) || RELAY_DEFAULT; }, timeout: 15000 }).then(function (r) {
+        var ms = Date.now() - t1;
+        if (what === "status") {
+          var o = { url: url, status: r.status, final_url: r.finalUrl || r.url || url, redirected: !!(r.finalUrl && r.finalUrl !== url), type: r.type || "",
+                    size: r.bytes ? r.bytes.length : 0, last_modified: r.lm || "", ms: ms, via: "orOS relay", note: "ms includes the relay; no TLS expiry here." };
+          return { content: JSON.stringify(o), ui: { k: "wchk", what: "status", host: hostOfUrl } };
+        }
+        if (r.status < 200 || r.status > 299) return fail("the sitemap answered " + r.status + ".");
+        var sm = C.sitemapParse(r.text || "");
+        sm.url = r.finalUrl || url;
+        return { content: JSON.stringify(sm), ui: { k: "wchk", what: "sitemap", host: hostOfUrl } };
+      });
+    }).catch(function (e) {
+      var code = (e && e.code) || "network";
+      if (code === "strict") return fail("Sensitive work is on: orOS sends nothing through the relay.");
+      return what === "status"
+        ? { content: JSON.stringify({ url: url, up: false, error: code, note: "The site could not be reached through the orOS relay (" + code + ")." }), ui: { k: "wchk", what: "status", host: hostOfUrl } }
+        : fail("the sitemap could not be read (" + code + ").");
+    });
+  }
+
   // A catalog too big for the Assistant's first open (Slides needs its
   // core.js) is loaded before the first turn that may use it.
   // again: how many times this turn already went and failed before any
@@ -3610,7 +3664,7 @@
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native", page: wmode === "native",
                                             actions: acts, history: hiOn,
                                             recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn, epub: rbOn, mockup: !builtin && !!installed().mockups,
-                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps), fonts: !data.set.chat && !ro, github: ghOn, calc: true });
+                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps), fonts: !data.set.chat && !ro, github: ghOn, calc: true, check: !builtin && !!wmode });
     if (ro) tools = tools.filter(function (x) { return !!RT_READ[x.name]; }).concat(builtin ? [] : RT.TOOLS);
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
@@ -3890,6 +3944,7 @@
     if (call.name === "web_search") return webSearch(call.args);
     if (call.name === "github_read") return ghRead(call.args);
     if (call.name === "calc") return calcTool(call.args);
+    if (call.name === "web_check") return webCheck(c, call.args);
     if (call.name === "file_hash") return fileHash(call.args, apps);
     if (call.name === "read_page") return readPage(c, call.args);
     // Claude knows Anthropic's own page tool as web_fetch: the same
@@ -8774,6 +8829,7 @@
         else if (ui.k === "chgErr") txt = t("chg.err", { app: ui.app || "" });
         else if (ui.k === "shopFind") txt = t("tool.shopFind", { q: ui.q || "", n: ui.n || 0, shop: ui.shop || "" });   // AS-SHOP
         else if (ui.k === "shopErr") txt = t("tool.shopErr");
+        else if (ui.k === "wchk") txt = t("tool.wchk." + (ui.what || "status"), { host: ui.host || "" });   // AS-WCHK
         else if (ui.k === "calc") txt = t("tool.calc", { n: ui.n || 0 });   // AS-CALC
         else if (ui.k === "hash") txt = t("tool.hash", { path: ui.path || "" });
         else if (ui.k === "gh") txt = t("tool.gh", { repo: ui.repo || "", what: t("gh.w." + (ui.what || "file")) });   // AS-GH
@@ -11099,7 +11155,7 @@
   // there. Changes it would make come as numbered proposals (cards
   // that wait for the person follow in wave 3).
   var RT_READ = { search_data: 1, list_apps: 1, read_item: 1, app_summary: 1, change_history: 1,
-                  files_list: 1, files_read: 1, web_search: 1, read_page: 1, github_read: 1, calc: 1, file_hash: 1,
+                  files_list: 1, files_read: 1, web_search: 1, read_page: 1, github_read: 1, calc: 1, file_hash: 1, web_check: 1,
                   budget_lines: 1, invoice_list: 1, stock_items: 1, publish_titles: 1 };
   var rtCtx = null;            // the run going on in this frame
   var RT_FILE_MAX = 60000, RT_REF_MAX = 30000;

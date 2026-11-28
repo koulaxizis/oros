@@ -16,7 +16,7 @@ test.before(async () => { R = await import("../relay/gate.js"); });
 function assistantTools() {
   return C.toolsFor({ data: 1, summary: 1, entries: 1, openFile: 1, rebuild: 1, house: 1, epub: 1, changes: 1, creates: ["todo"], links: 1,
                       partnerLinks: 1, actions: ["timer"], history: 1, edits: { writer: 1 }, recipes: ["layout"], newsletter: 1,
-                      cover: 1, rules: 1, web: 1, lines: ["budget", "invoices", "stock", "publish"], kbCols: 1, files: "write", fonts: 1, mockup: 1, shop: "write", github: 1, calc: 1 });
+                      cover: 1, rules: 1, web: 1, lines: ["budget", "invoices", "stock", "publish"], kbCols: 1, files: "write", fonts: 1, mockup: 1, shop: "write", github: 1, calc: 1, check: 1 });
 }
 
 // A tool on one side only: { twin: [tools on the other side that do the
@@ -58,6 +58,7 @@ const ASSISTANT_ONLY = {
   shop_change: { why: "Wave 2 (GATE-SHOP) offers it through the gate once the owner sets the Shop app to write; until then only the owner's Apply on the device changes the shop." },
   // AS-GH / AS-CALC (Assistant waves 5-6, Chris 2026-11-28)
   github_read: { why: "Claude reads GitHub with its own GitHub access; the gate reads and changes orOS, not GitHub." },
+  web_check: { why: "Claude checks sites with its own web tools; the gate reads and changes orOS, not the web." },
   calc: { why: "Claude computes with its own tools; the gate reads and changes orOS." },
   file_hash: { why: "Gate twin is planned with wave 5b (it needs the gate's tool list in the relay, a Mail-thread change); until then Claude reads the file's text with files_read." },
   open_file: { why: "It opens a file attached to the Assistant's conversation; a gate call has no attachments (a file on the orOS disk opens with do_action open)." }

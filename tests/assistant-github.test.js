@@ -52,7 +52,7 @@ test("answers are shaped short: releases with files, text files decoded, no e-ma
 test("offered only with a GitHub account; a routine needs its own switch; routines may call it", () => {
   const as = fs.readFileSync(path.join(__dirname, "../assistant/assistant.js"), "utf8");
   assert.match(as, /var ghOn = !builtin && ghAccts\(\)\.length > 0 && \(!ro \|\| !!\(rtCtx && rtCtx\.r\.gh\)\);/);
-  assert.match(as, /github: ghOn(, calc: true)? \}\);/);
+  assert.match(as, /github: ghOn(, calc: true)?(, check: !builtin && !!wmode)? \}\);/);
   assert.match(as, /web_search: 1, read_page: 1, github_read: 1,/);
   assert.match(as, /lk\.list\("github"\)/);
   assert.equal(C.toolsFor({ github: true }).map((x) => x.name).join(), "github_read");

@@ -270,6 +270,9 @@ A routine is a job the assistant does by itself on a schedule, like a colleague 
 - `Claude's reports` (optional): a folder where Claude's routine on the same job writes its reports. Each run reads the newest one and ends with `Compared with Claude's report`.
 - `Kanban board` and `column` (optional): a card that waits for you then has `To Kanban`, which opens Kanban's own new-card field filled in; you save it.
 
+## Site checks
+With web search on, ask "is noxpress.tech up?", "what are the MX records of glarolykoi.net?" or "how many pages does the sitemap of useoros.online list?". The page is checked through the orOS relay, DNS through Cloudflare. Only sites you named (or that a search found) are checked. A routine checks sites when it may search the web.
+
 ## Exact sums
 For totals, VAT, percentages, dates and loans the assistant uses the formulas of [Spreadsheet](app:spreadsheet) instead of counting in its head ("what is 24% VAT on these 38 lines?", "how many working days in December?"). It can also give the SHA-256 of a file on the orOS disk, to check a download.
 
