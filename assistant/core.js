@@ -4416,7 +4416,7 @@
         "leading = το διάστιχο, tracking = η αραίωση των γραμμάτων, style = το στυλ (τα στυλ), colophon = ο κολοφώνας, spread = το δισέλιδο (a cover spread: το ανάπτυγμα), endpaper = το εσώφυλλο, trim = το μέγεθος κοπής, bleed = η αιμορραγία, " +
         "overset text = κείμενο που περισσεύει, widow / orphan = χήρα / ορφανή γραμμή, preflight = ο προέλεγχος. «All fine» is «Όλα εντάξει» or «Σε καλή κατάσταση». Quotes «…», the question mark ;.",
       // AS-EXP
-      "The user saves a whole conversation as a Markdown file with the download button next to it in the list of conversations (the menu at the top left); tell them so when they ask to export it."
+      "The user saves a whole conversation as a Markdown file with Export as Markdown in the More (⋯) menu on its row in the list of conversations (the menu at the top left); tell them so when they ask to export it."
     ];
     if (opts.builtin && opts.pre) {
       lines.push("You have no tools. When a question may need the user's own data, orOS searches it before the message reaches you and adds only what the user agreed to share, marked as data. Answer from that; if it is missing or not enough, say so and suggest other words to ask with. Never invent the user's data. You can't open, add, change or delete anything in orOS; when asked to, say which app does it and offer text the user can paste.");
@@ -5423,12 +5423,15 @@
       return tb;
     }
     if (!Array.isArray(x.msgs)) return null;
-    return {
+    var out = {
       id: x.id, m: m, title: str(x.title, 200),
       msgs: x.msgs.filter(isObj),
       refs: isObj(x.refs) ? x.refs : {},
       refN: stamp(x.refN)
     };
+    // AS-THREADS: pinned to the top of the list (on every device)
+    if (x.pin === 1) out.pin = 1;
+    return out;
   }
   function chatFile(c) {
     var n = normChat(c);

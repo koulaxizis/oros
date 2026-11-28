@@ -49,6 +49,7 @@
   var S = window.OrosAssistSummary;
   var E = window.OrosAssistEdits;
   var N = window.OrosAssistCreate;
+  var TH = window.OrosAssistThreads;
   var STORAGE_KEY = "oros-assistant-data";
   var PREFS_KEY   = "oros-assistant-prefs";
   var DB_NAME     = "oros-assistant";
@@ -102,6 +103,11 @@
       "ph.input": "Message the assistant…", "ph.noSetup": "Set up the assistant first",
       "chats.empty": "No conversations yet",
       "chats.local": "Kept on this device only",
+      "th.search": "Search conversations", "th.none": "No conversation has these words.",
+      "th.g.pin": "Pinned", "th.g.wait": "Waiting for you", "th.g.today": "Today", "th.g.yday": "Yesterday", "th.g.week": "This week", "th.g.older": "Older",
+      "th.wait": "{n} waiting", "th.more": "More", "th.pin": "Pin to the top", "th.unpin": "Unpin", "th.rename": "Rename",
+      "th.renameTitle": "Rename the conversation", "th.save": "Save", "th.resume": "Continue: {title}",
+      "th.resumeHint": "Pick up where you left off. Every conversation stays in the list, with a search.",
       "chats.synced": "Synced to your devices (encrypted)",
       "chats.off": "History is off: conversations are not kept",
       "who": "{name} · {model}", "who.to": "Sent to {host}",
@@ -808,6 +814,11 @@
       "ph.input": "Γράψε στον βοηθό…", "ph.noSetup": "Ρύθμισε πρώτα τον βοηθό",
       "chats.empty": "Καμία συζήτηση ακόμη",
       "chats.local": "Μένουν μόνο σε αυτή τη συσκευή",
+      "th.search": "Αναζήτηση στις συζητήσεις", "th.none": "Καμία συζήτηση δεν έχει αυτές τις λέξεις.",
+      "th.g.pin": "Καρφιτσωμένες", "th.g.wait": "Περιμένουν εσένα", "th.g.today": "Σήμερα", "th.g.yday": "Χθες", "th.g.week": "Αυτή την εβδομάδα", "th.g.older": "Παλαιότερες",
+      "th.wait": "{n} σε αναμονή", "th.more": "Περισσότερα", "th.pin": "Καρφίτσωμα στην κορυφή", "th.unpin": "Ξεκαρφίτσωμα", "th.rename": "Μετονομασία",
+      "th.renameTitle": "Μετονομασία της συζήτησης", "th.save": "Αποθήκευση", "th.resume": "Συνέχισε: {title}",
+      "th.resumeHint": "Συνέχισε από εκεί που έμεινες. Κάθε συζήτηση μένει στη λίστα, με αναζήτηση.",
       "chats.synced": "Συγχρονίζονται στις συσκευές σου (κρυπτογραφημένα)",
       "chats.off": "Το ιστορικό είναι κλειστό: οι συζητήσεις δεν κρατιούνται",
       "who": "{name} · {model}", "who.to": "Στέλνεται στο {host}",
@@ -1552,7 +1563,9 @@
     mic: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
     clip: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg>',
     file: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4"/></svg>',
-    edit: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>'
+    edit: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+    more: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>',
+    pin: '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6l-1 6 3 3H7l3-3zM12 13v7"/></svg>'
   };
 
   // ---------- 2. Data + prefs ----------
@@ -7802,6 +7815,18 @@
     savePrefs();
     scheduleReconcile();                       // removes the file, writes the list
   }
+  // AS-THREADS (Chris 2026-11-28): conversations follow the person to
+  // every device once orOS sync is set up, without a switch to find.
+  // Turned on with stamp 1, so any choice a person ever made on any
+  // device (stamped with its time) wins over it in the merge.
+  function autoChatSync() {
+    if (MINI || GATE || (data.cs && data.cs.m) || !prefs.keep || !fsApi() || !vaultUsable()) return false;
+    data.cs = { m: 1, on: 1 };
+    saveData();
+    renderChats();
+    reconcile();
+    return true;
+  }
   function setChatSync(on) {
     var cur = data.cs || { m: 0, on: 0 };
     data.cs = { m: Math.max(Date.now(), cur.m + 1), on: on ? 1 : 0 };
@@ -7965,7 +7990,7 @@
     try {
       var v = window.parent && window.parent !== window ? window.parent.orosVault : null;
       if (!v || typeof v.onStatus !== "function" || vaultUnsub) return;
-      vaultUnsub = v.onStatus(function (kind) { if (kind === "done") scheduleReconcile(); });
+      vaultUnsub = v.onStatus(function (kind) { if (kind === "done") { if (!autoChatSync()) scheduleReconcile(); } });
       window.addEventListener("pagehide", function () {
         if (vaultUnsub) { vaultUnsub(); vaultUnsub = null; }
         if (fileTimer) { clearTimeout(fileTimer); flushChatFiles(); }
@@ -7998,39 +8023,132 @@
     catch (e) { return C.ymd(ms); }
   }
 
+  // AS-THREADS (Chris 2026-11-28): the list works like project threads:
+  // a search over titles and messages, pinned ones on top, the ones
+  // with a card still waiting for the person next, then by day; each
+  // row's "More" menu pins, renames, exports or deletes.
+  var chatQuery = "";
+  function chatRow(c, snip) {
+    var row = el("div", "chat-row" + (chat && chat.id === c.id ? " on" : ""));
+    var b = el("button", "chat-open");
+    b.type = "button";
+    var tl = el("span", "chat-title", c.title || t("chat.untitled"));
+    if (c.pin === 1) { var pi = el("span", "chat-pin"); pi.innerHTML = ICON.pin; pi.setAttribute("aria-label", t("th.g.pin")); tl.insertBefore(pi, tl.firstChild); }
+    b.appendChild(tl);
+    var src = impSource(c);
+    var dl = el("span", "chat-date", dayLabel(src ? impAt(c) : c.m));
+    if (src) dl.appendChild(el("span", "chat-src", IMP_NAME[src]));
+    var w = TH.waits(c);
+    if (w) dl.appendChild(el("span", "chat-wait", t("th.wait", { n: w })));
+    b.appendChild(dl);
+    if (snip) b.appendChild(el("span", "chat-snip", snip));
+    b.addEventListener("click", function () { openChat(c.id); });
+    var more = el("button", "icon-btn small chat-more");
+    more.type = "button";
+    more.innerHTML = ICON.more;
+    more.setAttribute("aria-label", t("th.more"));
+    more.setAttribute("aria-haspopup", "menu");
+    more.title = t("th.more");
+    more.addEventListener("click", function (e) { e.stopPropagation(); chatMenu(c, more); });
+    row.appendChild(b);
+    row.appendChild(more);
+    return row;
+  }
   function renderChats() {
     var host = $("chats");
     host.textContent = "";
+    var sb = $("chat-q");
+    if (sb) sb.hidden = chats.length < 2 && !chatQuery;
     if (!chats.length) host.appendChild(el("p", "hint pad", t("chats.empty")));
-    chats.forEach(function (c) {
-      var row = el("div", "chat-row" + (chat && chat.id === c.id ? " on" : ""));
-      var b = el("button", "chat-open");
-      b.type = "button";
-      b.appendChild(el("span", "chat-title", c.title || t("chat.untitled")));
-      var src = impSource(c);
-      var dl = el("span", "chat-date", dayLabel(src ? impAt(c) : c.m));
-      if (src) dl.appendChild(el("span", "chat-src", IMP_NAME[src]));
-      b.appendChild(dl);
-      b.addEventListener("click", function () { openChat(c.id); });
-      var del = el("button", "icon-btn small chat-del");
-      del.type = "button";
-      del.innerHTML = ICON.x;
-      del.setAttribute("aria-label", t("btn.delete"));
-      del.title = t("btn.delete");
-      del.addEventListener("click", function () { deleteChat(c); });
-      // AS-EXP: the conversation as a Markdown file
-      var exp = el("button", "icon-btn small chat-exp");
-      exp.type = "button";
-      exp.innerHTML = ICON.down;
-      exp.setAttribute("aria-label", t("chat.export"));
-      exp.title = t("chat.export");
-      exp.addEventListener("click", function () { exportChat(c); });
-      row.appendChild(b);
-      row.appendChild(exp);
-      row.appendChild(del);
-      host.appendChild(row);
-    });
+    else if (chatQuery) {
+      var byId = {};
+      chats.forEach(function (c) { byId[c.id] = c; });
+      var hits = TH.find(chats, chatQuery);
+      if (!hits.length) host.appendChild(el("p", "hint pad", t("th.none")));
+      hits.forEach(function (h) { if (byId[h.id]) host.appendChild(chatRow(byId[h.id], h.title ? "" : h.snip)); });
+    } else {
+      TH.groups(chats, Date.now()).forEach(function (g) {
+        var sec = el("div", "chat-group");
+        sec.setAttribute("role", "group");
+        var head = el("div", "chat-ghead" + (g.key === "wait" ? " wait" : ""), t("th.g." + g.key));
+        head.id = "chat-g-" + g.key;
+        sec.setAttribute("aria-labelledby", head.id);
+        sec.appendChild(head);
+        g.chats.forEach(function (c) { sec.appendChild(chatRow(c, "")); });
+        host.appendChild(sec);
+      });
+    }
     $("chats-foot").textContent = !prefs.keep ? t("chats.off") : (chatSyncOn() ? t("chats.synced") : t("chats.local"));
+  }
+  function closeChatMenu() {
+    var old = document.getElementById("chat-menu");
+    if (old) old.remove();
+    document.removeEventListener("mousedown", chatMenuOut, true);
+  }
+  function chatMenuOut(e) {
+    var m = document.getElementById("chat-menu");
+    if (m && !m.contains(e.target)) closeChatMenu();
+  }
+  function chatMenu(c, anchor) {
+    var had = document.getElementById("chat-menu");
+    closeChatMenu();
+    if (had && had.dataset.id === c.id) return;
+    var m = el("div", "chat-menu");
+    m.id = "chat-menu";
+    m.dataset.id = c.id;
+    m.setAttribute("role", "menu");
+    function item(label, cls, fn) {
+      var b = el("button", "chat-mi" + (cls ? " " + cls : ""), label);
+      b.type = "button";
+      b.setAttribute("role", "menuitem");
+      b.addEventListener("click", function () { closeChatMenu(); fn(); });
+      m.appendChild(b);
+      return b;
+    }
+    item(t(c.pin === 1 ? "th.unpin" : "th.pin"), "", function () { pinChat(c); });
+    item(t("th.rename"), "", function () { renameChat(c); });
+    item(t("chat.export"), "", function () { exportChat(c); });
+    item(t("btn.delete"), "danger", function () { deleteChat(c); });
+    m.addEventListener("keydown", function (e) {
+      var list = Array.prototype.slice.call(m.querySelectorAll("button")), i = list.indexOf(document.activeElement);
+      if (e.key === "Escape") { e.preventDefault(); closeChatMenu(); anchor.focus(); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); list[(i + 1) % list.length].focus(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); list[(i - 1 + list.length) % list.length].focus(); }
+    });
+    anchor.parentNode.appendChild(m);
+    m.querySelector("button").focus();
+    document.addEventListener("mousedown", chatMenuOut, true);
+  }
+  function pinChat(c) {
+    if (c.pin === 1) delete c.pin; else c.pin = 1;
+    saveChat(c);
+    renderChats();
+  }
+  function renameChat(c) {
+    var dlg = makeDialog("as-rename");
+    dlg.appendChild(el("div", "dlg-title", t("th.renameTitle")));
+    var inp = el("input", "dlg-input");
+    inp.type = "text";
+    inp.maxLength = 200;
+    inp.value = c.title || "";
+    inp.setAttribute("aria-label", t("th.renameTitle"));
+    dlg.appendChild(inp);
+    var acts = el("div", "dlg-actions");
+    function save() {
+      var v = inp.value.replace(/\s+/g, " ").trim().slice(0, 200);
+      dlg.close();
+      if (!v || v === c.title) return;
+      c.title = v;
+      saveChat(c);
+      renderAll();
+    }
+    acts.appendChild(button(t("btn.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("th.save"), "primary", save));
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); save(); } });
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    inp.select();
   }
 
   function renderBar() {
@@ -8088,6 +8206,16 @@
     }, 40);
   }
 
+  // AS-THREADS: the welcome of a new conversation offers to continue
+  // the last one (the AS-FRESH opening stays a new conversation).
+  function welResume() {
+    var b = $("wel-resume"), c = MINI ? null : TH.resume(chats);
+    b.hidden = !c;
+    if (!c) return;
+    var title = c.title || t("chat.untitled");
+    b.textContent = t("th.resume", { title: title.length > 48 ? title.slice(0, 47) + "…" : title });
+    b.title = t("th.resumeHint");
+  }
   function renderMessages() {
     var host = $("msgs");
     var nearEnd = isNearEnd();
@@ -8104,6 +8232,7 @@
       $("wel-setup").hidden = false;
       $("wel-brief").hidden = true;
       $("wel-brief-hint").hidden = true;
+      welResume();
       host.hidden = true;
       return;
     }
@@ -8115,6 +8244,7 @@
       $("wel-local").hidden = true;
       $("wel-brief").hidden = !briefCan();
       $("wel-brief-hint").hidden = !briefCan();
+      welResume();
       if (!busy) return;
     } else {
       $("welcome").hidden = true;
@@ -10469,6 +10599,8 @@
       });
     $("side-new").textContent = t("btn.new");
     $("side-hist").textContent = t("hist.title");
+    $("chat-q").placeholder = t("th.search");
+    $("chat-q").setAttribute("aria-label", t("th.search"));
     $("side").setAttribute("aria-label", t("btn.chats"));
     $("wel-icon").innerHTML = ICON.spark;
     $("input").setAttribute("aria-label", t("ph.input"));
@@ -10483,6 +10615,18 @@
     $("new-btn").addEventListener("click", newChat);
     $("side-new").addEventListener("click", function () { setSide(false); newChat(); });
     $("side-hist").addEventListener("click", function () { setSide(false); openHistory(); });
+    var qTimer = 0;
+    $("chat-q").addEventListener("input", function (e) {
+      clearTimeout(qTimer);
+      qTimer = setTimeout(function () { chatQuery = e.target.value.trim(); renderChats(); }, 150);
+    });
+    $("chat-q").addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && e.target.value) { e.preventDefault(); e.stopPropagation(); e.target.value = ""; chatQuery = ""; renderChats(); }
+    });
+    $("wel-resume").addEventListener("click", function () {
+      var c = TH.resume(chats);
+      if (c) openChat(c.id);
+    });
     $("settings-btn").addEventListener("click", settingsDialog);
     $("wel-setup").addEventListener("click", settingsDialog);
     $("wel-local").addEventListener("click", function () { sysAIAsk("install"); });
@@ -11169,6 +11313,7 @@
         if (!pending) $("input").focus();
       }
       watchVault();
+      autoChatSync();
       document.addEventListener("visibilitychange", function () {
         if (document.visibilityState === "visible") scheduleReconcile();
       });
