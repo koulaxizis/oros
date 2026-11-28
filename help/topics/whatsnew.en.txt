@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.14.00
+- **The Assistant stays open, or works side by side.** On a computer the Assistant no longer closes when you go to the desktop or open another app: it waits with the open apps and comes back with your conversation, and an answer goes on. A new button in its bar puts it beside the app you used last. The small Assistant window can be minimised to a round button, or moved beside the app you are in.
+
 ## Version 9.13.00
 - **Cover colours.** The island, the Now playing player in the top bar and the media widget on the desktop take their colours from the cover of what plays: a dark shade behind light text that stays easy to read, a lighter one for the progress and the play button. Never under high contrast or while Sensitive work is on.
 
