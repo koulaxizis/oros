@@ -53,6 +53,12 @@ Auf dem Handy sind alle Menüs unter der Menü-Taste.
 - Beide betrachten das ganze sichtbare Bild. Bewege den Regler `Kante`, um mehr oder weniger um das Motiv zu behalten, dann `Anwenden`. Ein `Rückgängig` nimmt es zurück.
 - Sie nutzen dasselbe Werkzeug auf dem Gerät wie der Hintergrund-Entferner im Atelier. Beim ersten Mal ist ein Download von etwa 16 MB nötig; danach geht es offline, und das Bild verlässt nie dein Gerät. Hat das Atelier es schon geladen, musst du nichts laden.
 
+## Gesichter unkenntlich machen
+- `Filter` › `Gesichter unkenntlich machen…` findet die Gesichter im Bild und legt sie unkenntlich auf eine neue Ebene `Unkenntliche Gesichter` ganz oben. Darunter ändert sich nichts: Blende die Ebene aus, verschiebe oder lösche sie. Ein `Rückgängig` nimmt es zurück.
+- `Auswahl` › `Gesichter…` wählt stattdessen die Gesichter aus (weiche Kante), für jeden eigenen Filter oder jede Korrektur.
+- Vor dem Anwenden hat jedes gefundene Gesicht einen gelben Rahmen. Tippe auf ein Gesicht, damit es frei bleibt (der Rahmen wird gestrichelt), und noch einmal, um es zurückzuholen. Ein Gesicht kann übersehen werden (im Profil, sehr klein, halb verdeckt): Ziehe über das Bild, um es hinzuzufügen. `Stil` ist `Weichzeichnen`, `Verpixeln` oder `Abdecken` (eine Vollfarbe, am sichersten).
+- Es findet, wo ein Gesicht ist, nie wer es ist. Die Gesichtssuche (YuNet, etwa 0,3 MB) wird einmal geladen, geprüft und auf diesem Gerät beim Werkzeug von `Motiv…` aufbewahrt (etwa 11 MB, falls das noch nicht da ist); danach geht es offline, und das Bild verlässt nie dein Gerät.
+
 ## Aus Google Fotos
 - Auf dem Projekte-Bildschirm `Aus Google Fotos`: Melde dich bei Google an, tippe auf `Google Fotos öffnen`, wähle ein Bild und tippe auf `Fertig`. Es öffnet sich hier als neues Projekt.
 - orOS liest nur dieses Bild, einmal, und gibt die Anmeldung sofort wieder frei. Videos öffnen sich hier nicht.

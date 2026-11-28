@@ -628,6 +628,8 @@ body.dropping .drop-hint { display: flex; }
 
 /* ---------- Wave 44: Select subject, batch processing ---------- */
 .subj-checker { background-color: #fff; background-image: linear-gradient(45deg, #d6d6d6 25%, transparent 25%, transparent 75%, #d6d6d6 75%), linear-gradient(45deg, #d6d6d6 25%, transparent 25%, transparent 75%, #d6d6d6 75%); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
+.faces-stage .fk-ed { display: flex; justify-content: center; }
+.faces-stage .fk-cv { display: block; max-width: 100%; max-height: 55vh; width: auto; height: auto; border-radius: 8px; cursor: crosshair; }
 .subj-stage { display: flex; justify-content: center; align-items: center; border-radius: 8px; overflow: hidden; }
 .subj-img { display: block; max-width: 100%; max-height: 40vh; width: auto; height: auto; }
 .bt-sec { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border); }

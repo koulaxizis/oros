@@ -53,6 +53,12 @@ On a phone all menus are under the menu button.
 - Both look at the whole visible picture. Move the `Edge` slider to keep more or less around the subject, then `Apply`. One `Undo` takes it back.
 - They use the same on-device tool as Atelier's background remover. The first time, it needs a download of about 16 MB; after that it works offline, and the picture never leaves your device. If Atelier downloaded it already, there is nothing to download.
 
+## Blur faces
+- `Filter` › `Blur faces…` finds the faces in the picture and puts them, blurred, on a new layer `Blurred faces` on top. Nothing below changes: hide the layer, move it or delete it. One `Undo` takes it back.
+- `Select` › `Faces…` selects the faces instead (soft edge), for any filter or adjustment of your own.
+- Before you apply, every face found has a yellow outline. Tap a face to keep it clear (the outline turns dashed) and tap it again to take it back. A face can be missed (in profile, very small, half hidden): drag over the picture to add it. `Style` is `Blur`, `Pixelate` or `Cover` (a solid colour, the safest).
+- It finds where a face is, never who it is. The face finder (YuNet, about 0.3 MB) is downloaded once, checked, and kept on this device with the tool `Subject…` uses (about 11 MB if that is not here yet); after that it works offline, and the picture never leaves your device.
+
 ## From Google Photos
 - On the projects screen, `From Google Photos`: sign in to Google, press `Open Google Photos`, pick one picture and press `Done`. It opens here as a new project.
 - orOS reads only that picture, once, and lets go of the sign-in right away. Videos don't open here.

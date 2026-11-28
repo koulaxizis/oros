@@ -801,6 +801,7 @@
       { id: "deselect", k: "Ctrl+D", run: function () { ops().deselect(); }, on: hasSel },
       { id: "invertSel", k: "Ctrl+Shift+I", run: function () { ops().invertSel(); }, on: hasSel },
       { id: "selSubject", run: function () { PL.subject.run("select"); }, on: has },
+      { id: "selFaces", run: function () { PL.faces.run("select"); }, on: has },
       { id: "selLayer", run: function () { ops().selectLayerPixels(); }, on: has },
       { id: "colorRange", run: colorRangeDialog, on: has },
       { id: "saveSel", run: saveSelDialog, on: hasSel },
@@ -835,6 +836,7 @@
       { id: "fMedian", run: function () { adjustDialog("median"); }, on: has },
       "-",
       { id: "fPixelate", run: function () { adjustDialog("pixelate"); }, on: has },
+      { id: "fBlurFaces", run: function () { PL.faces.run("blur"); }, on: has },
       { id: "fEmboss", run: function () { adjustDialog("emboss"); }, on: has },
       { id: "fEdges", run: function () { quickFilter("edges"); }, on: has },
       { id: "fVignette", run: function () { adjustDialog("vignette"); }, on: has }

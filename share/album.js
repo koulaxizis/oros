@@ -16,9 +16,12 @@
 //   MAX, EDGE, BUDGET
 //   captionOf(name)                → caption from a file name ("" for camera names)
 //   place(sizes, budget?)          → { at: [offsets], keep: n, total } (which fit)
-//   prepare(items, opts)           → Promise<{ data: {t, p}, bin, skipped, cut }>
+//   prepare(items, opts)           → Promise<{ data: {t, p}, bin, skipped, cut, list }>
 //      items: [{ blob? , path?, name?, c? }]
-//      opts:  { title, read(path) → Promise<Blob>, onProgress(done, all) }
+//      opts:  { title, read(path) → Promise<Blob>, onProgress(done, all),
+//               faces?(canvas) → Promise<boxes> (Blur faces), signal? }
+//   pack(list, title)              → { data, bin } again after a change
+//   drawn(blob) / redraw(blob, hook?) / sourceOf(item, read)
 // ============================================================
 (function (root) {
   "use strict";
@@ -65,8 +68,10 @@
       im.src = url;
     });
   }
-  // One photo → { bytes, w, h } as a fresh JPEG (no EXIF), or null.
-  function redraw(blob) {
+  // One photo drawn again → a canvas (≤ EDGE, white under transparency),
+  // or null. The same picture gives the same canvas, so face boxes found
+  // on one drawing fit the next (share/faces.js review).
+  function drawn(blob) {
     return decode(blob).then(function (img) {
       var w0 = img.width || img.naturalWidth, h0 = img.height || img.naturalHeight;
       if (!w0 || !h0) return null;
@@ -80,15 +85,38 @@
       g.imageSmoothingQuality = "high";
       g.drawImage(img, 0, 0, w, h);
       if (img.close) try { img.close(); } catch (e) {}
-      return new Promise(function (ok) {
-        c.toBlob(function (b) { c.width = c.height = 0; ok(b); }, "image/jpeg", QUALITY);
-      }).then(function (b) {
-        if (!b) return null;
-        return b.arrayBuffer().then(function (ab) { return { bytes: new Uint8Array(ab), w: w, h: h }; });
-      });
+      return c;
     }).then(null, function () { return null; });
   }
+  // One photo → { bytes, w, h, f? } as a fresh JPEG (no EXIF), or null.
+  // hook(canvas) (optional, "Blur faces"): changes the canvas before it
+  // is saved and gives back what it found (f); when it fails the photo
+  // fails, so a photo meant to be blurred never leaves unblurred.
+  function redraw(blob, hook) {
+    return drawn(blob).then(function (c) {
+      if (!c) return null;
+      return Promise.resolve(hook ? hook(c) : undefined).then(function (f) {
+        return new Promise(function (ok) {
+          c.toBlob(function (b) { var w = c.width, h = c.height; c.width = c.height = 0; ok(b ? { b: b, w: w, h: h } : null); }, "image/jpeg", QUALITY);
+        }).then(function (r) {
+          if (!r) return null;
+          return r.b.arrayBuffer().then(function (ab) {
+            var o = { bytes: new Uint8Array(ab), w: r.w, h: r.h };
+            if (f !== undefined) o.f = f;
+            return o;
+          });
+        });
+      });
+    }, function () { return null; }).then(null, function (e) {
+      if (hook) throw e;
+      return null;
+    });
+  }
 
+  // opts.faces (optional): a hook for redraw (share/faces.js). A hook
+  // that fails stops the whole preparation (Promise rejected).
+  // The result also has list: [{ bytes, w, h, c, it, f? }] (it = the
+  // item given) for pack() after a photo was done again.
   function prepare(items, opts) {
     opts = opts || {};
     var list = (items || []).slice(0, MAX), done = [], skipped = 0, cut = (items || []).length > MAX, used = 0;
@@ -96,35 +124,50 @@
     var i = 0;
     function next() {
       if (i >= list.length || cut) return Promise.resolve();
+      if (opts.signal && opts.signal.aborted) return Promise.reject(new Error("abort"));
       var it = list[i++] || {};
       progress(i - 1, list.length);
-      var src = it.blob ? Promise.resolve(it.blob)
-        : (it.path && typeof opts.read === "function" ? opts.read(it.path) : Promise.resolve(null));
-      return src.then(function (b) { return b ? redraw(b) : null; }, function () { return null; }).then(function (r) {
+      return sourceOf(it, opts.read).then(function (b) { return b ? redraw(b, opts.faces) : null; }).then(function (r) {
         if (!r || r.bytes.length > PHOTO_MAX) { skipped++; return next(); }
         if (used + r.bytes.length > BUDGET) { cut = true; return; }
         used += r.bytes.length;
         var c = typeof it.c === "string" ? it.c : captionOf(it.name || it.path || "");
-        done.push({ bytes: r.bytes, w: r.w, h: r.h, c: c });
+        var e = { bytes: r.bytes, w: r.w, h: r.h, c: c, it: it };
+        if (r.f !== undefined) e.f = r.f;
+        done.push(e);
         return next();
       });
     }
     return next().then(function () {
       progress(list.length, list.length);
-      var pl = place(done.map(function (x) { return x.bytes.length; }));
-      var bin = new Uint8Array(pl.total), p = [];
-      for (var j = 0; j < pl.keep; j++) {
-        bin.set(done[j].bytes, pl.at[j]);
-        var q = { o: pl.at[j], n: done[j].bytes.length, m: "image/jpeg", w: done[j].w, h: done[j].h };
-        if (done[j].c) q.c = done[j].c.slice(0, 300);
-        p.push(q);
-      }
-      return { data: { t: String(opts.title || "").slice(0, 120), p: p }, bin: bin, skipped: skipped, cut: cut };
+      var out = pack(done, opts.title);
+      out.skipped = skipped;
+      out.cut = cut;
+      out.list = done.slice(0, out.data.p.length);
+      return out;
     });
+  }
+  // The item's picture: its blob, or read(path); null when unreadable.
+  function sourceOf(it, read) {
+    if (it && it.blob) return Promise.resolve(it.blob);
+    if (it && it.path && typeof read === "function") return Promise.resolve(read(it.path)).then(null, function () { return null; });
+    return Promise.resolve(null);
+  }
+  // [{ bytes, w, h, c }] → { data: { t, p }, bin } (what fits, in order).
+  function pack(done, title) {
+    var pl = place(done.map(function (x) { return x.bytes.length; }));
+    var bin = new Uint8Array(pl.total), p = [];
+    for (var j = 0; j < pl.keep; j++) {
+      bin.set(done[j].bytes, pl.at[j]);
+      var q = { o: pl.at[j], n: done[j].bytes.length, m: "image/jpeg", w: done[j].w, h: done[j].h };
+      if (done[j].c) q.c = done[j].c.slice(0, 300);
+      p.push(q);
+    }
+    return { data: { t: String(title || "").slice(0, 120), p: p }, bin: bin };
   }
 
   var api = { MAX: MAX, EDGE: EDGE, BUDGET: BUDGET, captionOf: captionOf, place: place, isPicture: isPicture,
-              redraw: redraw, prepare: prepare };
+              drawn: drawn, redraw: redraw, prepare: prepare, pack: pack, sourceOf: sourceOf };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosShareAlbum = api;
 })(typeof window !== "undefined" ? window : globalThis);

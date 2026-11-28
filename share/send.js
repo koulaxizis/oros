@@ -73,7 +73,16 @@
       mastoGo: "Continue", sms: "SMS",
       pv: "Show the cover in chats", pvNote: "The preview link sends the song's details (not the file) through the orOS server so chat apps can show its cover and title; nothing is stored.",
       sh: "Short link", shNote: "The song's public details (title, artist, cover, the source's address; never who sent it) stay on the orOS server so the link can be short. Anyone with the link can open it, it cannot be taken back, and it stops working if nobody opens it for a year.",
-      shFail: "No short link right now, so the long one is used."
+      shFail: "No short link right now, so the long one is used.",
+      fx: "Blur faces", fxNote: "Faces are found on this device and blurred only in the copies you send; your photos do not change. It finds where a face is, never who it is.",
+      fxNeed: "The first time downloads about {mb} MB, once.", fxNeedRt: "The first time downloads about 0.3 MB, once.",
+      "fx.blur": "Blur", "fx.pixelate": "Pixelate", "fx.fill": "Cover",
+      fxLoad: "Downloading the face finder… {p}%", fxRun: "Looking for faces… {n} of {all}",
+      fxFound: "{f} faces blurred in {p} of {all} photos. A face can be missed: tap a photo to check it.", fxNone: "No faces found. Tap a photo to mark one by hand.",
+      fxFail: "Faces could not be blurred ({why}), so blurring is off. Nothing was sent.",
+      fxCheck: "Check faces", fxHint: "Tap a face to keep it clear (dashed) or blur it again. Drag over the photo to add a face that was missed.",
+      fxDone: "Done", fxCancel: "Cancel", fxPhoto: "Photo {n}: {f} faces", fxWait: "Wait until the photos are ready.",
+      fxBad: "the download was damaged, try again", fxNet: "no connection to the download"
     },
     el: {
       title: "Στείλε σε κάποιον", close: "Κλείσιμο",
@@ -109,7 +118,16 @@
       mastoGo: "Συνέχεια", sms: "SMS",
       pv: "Εξώφυλλο στις συνομιλίες", pvNote: "Ο σύνδεσμος με προεπισκόπηση στέλνει τα στοιχεία του τραγουδιού (όχι το αρχείο) μέσω του server του orOS, ώστε οι εφαρμογές συνομιλίας να δείχνουν εξώφυλλο και τίτλο· τίποτα δεν αποθηκεύεται.",
       sh: "Σύντομος σύνδεσμος", shNote: "Τα δημόσια στοιχεία του τραγουδιού (τίτλος, καλλιτέχνης, εξώφυλλο, η διεύθυνση της πηγής· ποτέ ποιος το έστειλε) μένουν στον server του orOS, για να είναι σύντομος ο σύνδεσμος. Όποιος έχει τον σύνδεσμο μπορεί να τον ανοίξει, δεν παίρνεται πίσω και σταματά να λειτουργεί αν δεν τον ανοίξει κανείς για έναν χρόνο.",
-      shFail: "Δεν βγαίνει σύντομος σύνδεσμος αυτή τη στιγμή, οπότε μπαίνει ο μεγάλος."
+      shFail: "Δεν βγαίνει σύντομος σύνδεσμος αυτή τη στιγμή, οπότε μπαίνει ο μεγάλος.",
+      fx: "Θόλωμα προσώπων", fxNote: "Τα πρόσωπα βρίσκονται σε αυτή τη συσκευή και θολώνουν μόνο στα αντίγραφα που στέλνεις· οι φωτογραφίες σου δεν αλλάζουν. Βρίσκει πού είναι ένα πρόσωπο, ποτέ ποιος είναι.",
+      fxNeed: "Την πρώτη φορά κατεβαίνουν περίπου {mb} MB, μία φορά.", fxNeedRt: "Την πρώτη φορά κατεβαίνουν περίπου 0,3 MB, μία φορά.",
+      "fx.blur": "Θόλωμα", "fx.pixelate": "Ψηφιδωτό", "fx.fill": "Κάλυψη",
+      fxLoad: "Λήψη του εντοπισμού προσώπων… {p}%", fxRun: "Αναζήτηση προσώπων… {n} από {all}",
+      fxFound: "Θόλωσαν {f} πρόσωπα σε {p} από {all} φωτογραφίες. Κάποιο πρόσωπο μπορεί να ξέφυγε: πάτα μια φωτογραφία για έλεγχο.", fxNone: "Δεν βρέθηκαν πρόσωπα. Πάτα μια φωτογραφία για να σημειώσεις ένα με το χέρι.",
+      fxFail: "Τα πρόσωπα δεν θόλωσαν ({why}), οπότε το θόλωμα έκλεισε. Τίποτα δεν στάλθηκε.",
+      fxCheck: "Έλεγχος προσώπων", fxHint: "Πάτα ένα πρόσωπο για να μείνει καθαρό (διακεκομμένο) ή να θολώσει ξανά. Σύρε πάνω στη φωτογραφία για να προσθέσεις πρόσωπο που ξέφυγε.",
+      fxDone: "Έτοιμο", fxCancel: "Άκυρο", fxPhoto: "Φωτογραφία {n}: {f} πρόσωπα", fxWait: "Περίμενε να ετοιμαστούν οι φωτογραφίες.",
+      fxBad: "η λήψη χάλασε, δοκίμασε ξανά", fxNet: "δεν υπάρχει σύνδεση για τη λήψη"
     }
   };
   // The shell's language (a pack language too: orosI18n, ../i18n.js).
@@ -196,6 +214,19 @@
     "color:var(--text);font:inherit;font-size:12.5px;cursor:pointer;min-height:34px}" +
     "#osh-dlg .osh-im button:not(:disabled):hover{border-color:var(--accent)}" +
     "#osh-dlg .osh-im button:disabled{opacity:.45;cursor:default}" +
+    "#osh-dlg .osh-fx{margin:0 0 10px;padding:10px;border:1px solid var(--border);border-radius:10px}" +
+    "#osh-dlg .osh-fx .osh-lock{margin:0}" +
+    "#osh-dlg .osh-fx .osh-days{margin:8px 0 6px}" +
+    "#osh-dlg .osh-fx .osh-warn{margin:6px 0 0}" +
+    "#osh-dlg .osh-fxs{display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px}" +
+    "#osh-dlg .osh-fxs button{position:relative;flex:0 0 auto;width:64px;height:64px;padding:0;border:1px solid var(--border);" +
+    "border-radius:8px;overflow:hidden;background:transparent;cursor:pointer}" +
+    "#osh-dlg .osh-fxs button:hover,#osh-dlg .osh-fxs button:focus-visible{border-color:var(--accent)}" +
+    "#osh-dlg .osh-fxs img{width:100%;height:100%;object-fit:cover;display:block}" +
+    "#osh-dlg .osh-fxs span{position:absolute;right:3px;bottom:3px;min-width:18px;padding:1px 5px;border-radius:999px;" +
+    "background:rgba(0,0,0,.7);color:#fff;font-size:11px;font-weight:700;line-height:16px;text-align:center}" +
+    "#osh-dlg .fk-ed{margin:0 0 8px}" +
+    "#osh-dlg .fk-cv{display:block;max-width:100%;max-height:calc(100dvh - 240px);width:auto;height:auto;margin:0 auto;border-radius:8px;cursor:crosshair}" +
     "@media (max-width:420px){#osh-dlg .osh-acts{grid-template-columns:1fr}}";
   function ensureCss() {
     if (document.getElementById("osh-css")) return;
@@ -400,7 +431,9 @@
     send(opts, env, null, null);
   }
   // An album: the photos are prepared first (share/album.js), then the
-  // usual window opens with "With an expiry" on for good.
+  // usual window opens with "With an expiry" on for good. "Blur faces"
+  // (FACE-BLUR, facekit.js) works on the copies being prepared: the
+  // person's photos never change.
   function openAlbum(opts) {
     var A = window.OrosShareAlbum;
     if (!A || !R || !OUT) { toast(T("nostore")); return; }
@@ -409,26 +442,227 @@
     msg.setAttribute("role", "status");
     f.body.appendChild(msg);
     var stop = false;
-    f.foot.appendChild(btn(T("close"), "", function () { stop = true; f.dlg.close(); }));
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    f.foot.appendChild(btn(T("close"), "", function () { f.dlg.close(); }));
+    f.dlg.addEventListener("close", function () { stop = true; if (ctl) ctl.abort(); if (fx) fx.drop(); });
     f.show();
-    var fs = window.orosFS;
-    A.prepare(opts.photos || [], {
-      title: opts.data && opts.data.t,
-      read: function (p) { return fs && typeof fs.read === "function" ? fs.read(p) : Promise.resolve(null); },
-      onProgress: function (n, all) { msg.textContent = T("preparing", { n: n, all: all }); }
-    }).then(function (r) {
+    var fx = faceCtl(opts, A, f, ctl);
+    fx.prepare(function (n, all, what) { msg.textContent = what || T("preparing", { n: n, all: all }); }).then(function (r) {
       if (stop) return;
-      var env = r.data.p.length ? K.pack("album", r.data) : null;
-      if (!env) { msg.textContent = T("noPhotos"); return; }
-      var notes = [T("albumWarn")];
-      if (r.skipped) notes.push(T("skipped", { n: r.skipped }));
-      if (r.cut) notes.push(T("cut", { n: env.d.p.length }));
-      send(opts, env, r.bin, notes.join(" "), f);
+      var b = albumEnv(r);
+      if (!b.env) { msg.textContent = T("noPhotos"); return; }
+      send(opts, b.env, b.bin, b.note, f, fx);
     }, function () { if (!stop) msg.textContent = T("failed"); });
+  }
+  // A prepared album → { env, bin, note } for send().
+  function albumEnv(r) {
+    var env = r.data.p.length ? K.pack("album", r.data) : null;
+    var notes = [T("albumWarn")];
+    if (r.skipped) notes.push(T("skipped", { n: r.skipped }));
+    if (r.cut && env) notes.push(T("cut", { n: env.d.p.length }));
+    return { env: env, bin: r.bin, note: notes.join(" ") };
+  }
+
+  // ---------- Blur faces (FACE-BLUR) ----------
+  // The choice (on / off, the style) is this device's: localStorage
+  // "oros-share-faces", off until the person turns it on. The face
+  // boxes live only in this window.
+  var FACES_KEY = "oros-share-faces", FX_STYLES = ["blur", "pixelate", "fill"];
+  function facePref() {
+    try {
+      var o = JSON.parse(localStorage.getItem(FACES_KEY) || "null");
+      if (o && typeof o === "object") return { on: !!o.on, st: FX_STYLES.indexOf(o.st) >= 0 ? o.st : "blur" };
+    } catch (e) {}
+    return { on: false, st: "blur" };
+  }
+  function setFacePref(p) {
+    try { localStorage.setItem(FACES_KEY, JSON.stringify({ on: p.on ? 1 : 0, st: p.st })); } catch (e) {}
+  }
+  var fkLoad = null;
+  function facekit() {
+    if (window.OrosFaces) return Promise.resolve(window.OrosFaces);
+    if (!fkLoad) {
+      fkLoad = new Promise(function (ok, fail) {
+        var s = document.createElement("script");
+        s.src = "facekit.js?v=" + encodeURIComponent(window.__orosShareV || "");
+        s.onload = function () { if (window.OrosFaces) ok(window.OrosFaces); else fail(new Error("facekit")); };
+        s.onerror = function () { fail(new Error("facekit")); };
+        document.head.appendChild(s);
+      });
+      fkLoad.catch(function () { fkLoad = null; });
+    }
+    return fkLoad;
+  }
+  function whyOf(e) {
+    var m = String(e && e.message || e || "");
+    if (m === "checksum") return T("fxBad");
+    if (/http|fetch|network|Failed/i.test(m)) return T("fxNet");
+    return m.slice(0, 80);
+  }
+  // The faces part of an album's window. prepare() makes the album
+  // (with faces blurred when on); block(update) is the part shown in the
+  // send window; update(env, bin, note) hands send() a new album.
+  function faceCtl(opts, A, f, ctl) {
+    var pref = facePref(), fx = { on: pref.on, st: pref.st, busy: false, err: "", r: null, urls: [] };
+    var photos = opts.photos || [], title = opts.data && opts.data.t, fs = window.orosFS;
+    function read(p) { return fs && typeof fs.read === "function" ? fs.read(p) : Promise.resolve(null); }
+    function signal() { return ctl ? ctl.signal : undefined; }
+    // FK: the face finder; boxes given → no detection, only blurring
+    function hookOf(FK, onProgress, all) {
+      if (!FK) return null;
+      var n = 0;
+      return function (c) {
+        n++;
+        return FK.detect(c, {
+          signal: signal(),
+          onProgress: function (p) { onProgress(0, all, T("fxLoad", { p: Math.round(p * 100) })); },
+          onRun: function () { onProgress(n - 1, all, T("fxRun", { n: n, all: all })); }
+        }).then(function (boxes) { FK.blurCanvas(c, boxes, fx.st); return boxes; });
+      };
+    }
+    fx.prepare = function (onProgress) {
+      fx.busy = true;
+      var all = Math.min(photos.length, A.MAX);
+      return (fx.on ? facekit() : Promise.resolve(null)).then(function (FK) {
+        return A.prepare(photos, { title: title, read: read, signal: signal(), onProgress: onProgress, faces: hookOf(FK, onProgress, all) });
+      }).then(function (r) { fx.busy = false; fx.r = r; return r; }, function (e) {
+        if (ctl && ctl.signal.aborted) { fx.busy = false; throw e; }
+        if (!fx.on) { fx.busy = false; throw e; }
+        // the face step failed: say so, and prepare them unblurred with the
+        // switch off (the person sees it before anything is sent)
+        fx.on = false;
+        fx.err = T("fxFail", { why: whyOf(e) });
+        return fx.prepare(onProgress);
+      });
+    };
+    // One photo again, with the boxes it has (style change, review).
+    function redo(e) {
+      return A.sourceOf(e.it, read).then(function (blob) {
+        if (!blob) throw new Error("read");
+        return facekit().then(function (FK) {
+          return A.redraw(blob, function (c) { FK.blurCanvas(c, e.f || [], fx.st); return e.f || []; });
+        });
+      }).then(function (r) {
+        if (!r) throw new Error("read");
+        e.bytes = r.bytes; e.w = r.w; e.h = r.h;
+      });
+    }
+    function repack() {
+      var p = A.pack(fx.r.list, title);
+      fx.r.data = p.data; fx.r.bin = p.bin;
+      fx.r.cut = fx.r.cut || p.data.p.length < fx.r.list.length;
+      fx.r.list = fx.r.list.slice(0, p.data.p.length);
+      return fx.r;
+    }
+    fx.drop = function () { fx.urls.forEach(function (u) { try { URL.revokeObjectURL(u); } catch (e) {} }); fx.urls = []; };
+    fx.block = function (update, back) {
+      var box = el("div", "osh-fx");
+      var lab = el("label", "osh-lock"), cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = fx.on;
+      cb.disabled = fx.busy;
+      lab.appendChild(cb);
+      lab.appendChild(el("span", "", T("fx")));
+      box.appendChild(lab);
+      var stat = el("p", "osh-warn");
+      stat.setAttribute("role", "status");
+      function done(r) { update(albumEnv(r)); }
+      function busyRun(job) {
+        fx.busy = true;
+        cb.disabled = true;
+        [].forEach.call(box.querySelectorAll("button"), function (b) { b.disabled = true; });
+        return job.then(done, function (e) {
+          if (ctl && ctl.signal.aborted) return;
+          fx.busy = false;
+          fx.on = false;
+          fx.err = T("fxFail", { why: whyOf(e) });
+          fx.prepare(function (n, all, what) { stat.textContent = what || T("preparing", { n: n, all: all }); }).then(done, function () {});
+        });
+      }
+      cb.addEventListener("change", function () {
+        fx.on = cb.checked;
+        fx.err = "";
+        setFacePref({ on: fx.on, st: fx.st });
+        busyRun(fx.prepare(function (n, all, what) { stat.textContent = what || T("preparing", { n: n, all: all }); }));
+      });
+      if (!fx.on) {
+        box.appendChild(el("p", "osh-warn", T("fxNote")));
+        var need = el("p", "osh-warn");
+        box.appendChild(need);
+        facekit().then(function (FK) { return FK.needMB(); }).then(function (mb) {
+          if (mb >= 1) need.textContent = T("fxNeed", { mb: Math.round(mb) });
+          else if (mb > 0) need.textContent = T("fxNeedRt");
+          else need.remove();
+        }, function () { need.remove(); });
+      } else {
+        var row = el("div", "osh-days");
+        FX_STYLES.forEach(function (id) {
+          var b = btn(T("fx." + id), "", function () {
+            if (fx.busy || fx.st === id) return;
+            fx.st = id;
+            setFacePref({ on: fx.on, st: fx.st });
+            var i = 0, list = fx.r.list;
+            busyRun(list.reduce(function (p, e) {
+              return p.then(function () { stat.textContent = T("preparing", { n: i++, all: list.length }); return redo(e); });
+            }, Promise.resolve()).then(repack));
+          });
+          b.setAttribute("aria-pressed", id === fx.st ? "true" : "false");
+          row.appendChild(b);
+        });
+        box.appendChild(row);
+        var list = fx.r ? fx.r.list : [], faces = 0, withF = 0;
+        list.forEach(function (e) { var n = (e.f || []).filter(function (b) { return !b.off; }).length; faces += n; if (n) withF++; });
+        stat.textContent = faces ? T("fxFound", { f: faces, p: withF, all: list.length }) : T("fxNone");
+        var strip = el("div", "osh-fxs");
+        fx.drop();
+        list.forEach(function (e, i) {
+          var n = (e.f || []).filter(function (b) { return !b.off; }).length;
+          var b = btn("", "", function () { if (fx.busy) { stat.textContent = T("fxWait"); return; } review(e, i, update, back); });
+          b.setAttribute("aria-label", T("fxPhoto", { n: i + 1, f: n }));
+          var u = URL.createObjectURL(new Blob([e.bytes], { type: "image/jpeg" }));
+          fx.urls.push(u);
+          var im = el("img");
+          im.alt = "";
+          im.loading = "lazy";
+          im.src = u;
+          b.appendChild(im);
+          b.appendChild(el("span", "", String(n)));
+          strip.appendChild(b);
+        });
+        box.appendChild(strip);
+      }
+      if (fx.err) { stat.className = "osh-msg err"; stat.textContent = fx.err; }
+      box.appendChild(stat);
+      return box;
+    };
+    // One photo, its faces outlined (facekit editor), in the same window.
+    function review(e, i, update, back) {
+      A.sourceOf(e.it, read).then(function (blob) { return blob ? A.drawn(blob) : null; }).then(function (cv) {
+        if (!cv) { toast(T("failed")); return; }
+        return facekit().then(function (FK) {
+          f.h.textContent = T("fxCheck");
+          f.body.textContent = "";
+          f.foot.textContent = "";
+          f.body.appendChild(el("p", "osh-warn", T("fxHint")));
+          var ed = FK.editor(cv, e.f || [], { label: T("fxPhoto", { n: i + 1, f: (e.f || []).length }) });
+          f.body.appendChild(ed.el);
+          f.foot.appendChild(btn(T("fxCancel"), "", function () { cv.width = cv.height = 0; back(); }));
+          var ok = btn(T("fxDone"), "", function () {
+            ok.disabled = true;
+            e.f = ed.boxes();
+            cv.width = cv.height = 0;
+            redo(e).then(function () { update(albumEnv(repack())); }, function () { toast(T("failed")); back(); });
+          });
+          f.foot.appendChild(ok);
+        });
+      }).then(null, function () { toast(T("failed")); });
+    }
+    return fx;
   }
   // bin: an album's photo bytes (share/relay.js flag 2); note: a line
   // shown under the warning; f: the frame already open.
-  function send(opts, env, bin, note, f0) {
+  // fx: an album's faces part (faceCtl), or none.
+  function send(opts, env, bin, note, f0, fx) {
     var f = f0 || frame(), dlg = f.dlg, body = f.body;
 
     var cache = {};                       // JSON [days (0 = plain link), password] → code
@@ -444,6 +678,7 @@
       f.foot.appendChild(btn(T("close"), "", function () { dlg.close(); }));
       body.textContent = "";
       body.appendChild(el("p", "osh-sum", K.summary(env, lang())));
+      if (fx) body.appendChild(fx.block(function (a) { env = a.env || env; bin = a.bin; note = a.note; cache = {}; main(); }, main));
       var warn = el("p", "osh-warn");
       body.appendChild(warn);
       if (note) body.appendChild(el("p", "osh-warn", note));
@@ -610,6 +845,7 @@
       }
       function act(what) {
         if (busy) return;
+        if (fx && fx.busy) { msg.className = "osh-msg"; msg.textContent = T("fxWait"); return; }
         if (lockOn && curPass.length < MIN_PASS) { check(); pw.focus(); return; }
         var d = expOn ? days : 0, pass = lockOn ? curPass : "";
         busy = true;

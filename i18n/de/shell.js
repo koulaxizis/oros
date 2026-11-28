@@ -442,6 +442,7 @@ orosPack("de", "shell", {
  "cr.transitous": "Öffentlicher Verkehr: Verbindungen, Abfahrten, Fahrzeuge live (Karten)",
  "cr.trello-api": "Verbundene Dienste: Boards importieren (Kanban)",
  "cr.u2-net": "Das Modell zum Entfernen des Hintergrunds (Atelier)",
+ "cr.yunet": "Gesichter finden, um sie unkenntlich zu machen (Fotos senden, Photo Lab)",
  "cr.usda-fooddata": "Nährwerte gängiger Lebensmittel (Essensplaner)",
  "cr.vsco": "21 aufgenommene Instrumente, beim ersten Gebrauch heruntergeladen (Studio), und die Oberflächenklänge",
  "cr.web-push": "Optionale Benachrichtigungen bei geschlossenem orOS, auf dem Gerät verschlüsselt (Einstellungen › Benachrichtigungen)",
