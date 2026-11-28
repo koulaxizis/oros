@@ -14975,11 +14975,13 @@
   // Close when you leave them, as before, even with multitasking on:
   // another window writes their data while they would be hidden
   // (the M1 writer scan's "check" list: mail, radio, television,
-  // weather, calendar, assistant), they hold the camera or microphone
+  // weather, calendar), they hold the camera or microphone
   // (getUserMedia), they unlock secrets (passwords), or they mirror
-  // shell state (settings).
+  // shell state (settings). The Assistant left this list on AS-KEEP
+  // (Chris 2026-11-28): it stops its microphone on __orosAppPause and
+  // merges its own key when another window writes it (MT_SELF_MERGE).
   var MT_CLOSE_ON_LEAVE = {
-    mail: 1, radio: 1, television: 1, weather: 1, calendar: 1, assistant: 1,
+    mail: 1, radio: 1, television: 1, weather: 1, calendar: 1,
     flashcards: 1, meals: 1, montage: 1, qr: 1, scanpdf: 1, stock: 1, storage: 1, studio: 1,
     passwords: 1, settings: 1
   };
@@ -14991,8 +14993,13 @@
   // pickSide: the next app chosen in the menu opens beside
   var mtOnChange = null;     // set by the switcher (10c): repaint on change
   var mtNoKeep = false;      // the switcher closes the app in front
+  var mtAsSide = false;      // AS-KEEP: the app leaving the front goes beside the one coming
   function mtChanged() {
     if (typeof mtOnChange === "function") { try { mtOnChange(); } catch (e) {} }
+    // AS-KEEP: an app that draws its own side-by-side button hears of it
+    appFrames().forEach(function (f) {
+      try { if (typeof f.contentWindow.__orosMtNote === "function") f.contentWindow.__orosMtNote(); } catch (e) {}
+    });
     if (typeof appsLastNote === "function") appsLastNote(false);   // RS-1: what is open, for the next start (absent in the section-10 test sandbox)
   }
 
@@ -15096,9 +15103,14 @@
   // are screens over their own shell host follow its change events and
   // are left alone.
   var MT_HOSTED = { music: 1, podcasts: 1, today: 1, stickies: 1, newsletter: 1 };
+  // AS-KEEP: apps that read their own key back on every write by
+  // another window and merge it with what they hold (the Assistant:
+  // "oros-assistant-data" through C.mergeAssist), so no stale copy can
+  // undo that write; like the hosted apps they are left alone.
+  var MT_SELF_MERGE = { assistant: 1 };
   var mtKeyOwner = {};       // key → id of the app seen writing it
   function mtOwns(id, key) {
-    if (!key || MT_HOSTED[id]) return false;
+    if (!key || MT_HOSTED[id] || MT_SELF_MERGE[id]) return false;
     return key.indexOf("oros-" + id + "-") === 0 || mtKeyOwner[key] === id;
   }
   // The app of a document URL of this orOS ("…/todo/index.html" → "todo").
@@ -15166,6 +15178,11 @@
     el.style.display = "";
     mtVis(el, false);
   }
+  // An app at work behind (the Assistant writing an answer) says so
+  // through window.__orosAppBusy(); it is never the one closed for room.
+  function mtBusy(el) {
+    try { var f = el.contentWindow.__orosAppBusy; return typeof f === "function" && !!f(); } catch (e) { return false; }
+  }
   // Oldest hidden apps close until front + hidden fit the slots.
   function mtFit(front) {
     var slots = mtSlotsHere();
@@ -15173,8 +15190,11 @@
     if (mt.side) used += mtWeight(mt.side.app.id);
     mt.hidden.forEach(function (r) { used += mtWeight(r.app.id); });
     mt.hidden.sort(function (a, b) { return a.at - b.at; });
-    while (used > slots && mt.hidden.length) {
-      var r = mt.hidden.shift();
+    var i = 0;
+    while (used > slots && i < mt.hidden.length) {
+      var r = mt.hidden[i];
+      if (mtBusy(r.el)) { i++; continue; }   // AS-KEEP: busy apps wait
+      mt.hidden.splice(i, 1);
       used -= mtWeight(r.app.id);
       mtDrop(r.el);
     }
@@ -15274,12 +15294,74 @@
     mtDropAll();
     if (state.running) mtClose(state.running.id);
   }
+  // AS-KEEP (Chris 2026-11-28): an app's own "side by side" button
+  // (the Assistant's). Where it is: "front" | "side" | "".
+  function mtWhere(id) {
+    if (mtSideIs(id)) return "side";
+    return state.running && state.running.id === id ? "front" : "";
+  }
+  function mtBesideState(id) {
+    return { can: mtActive() && mtSplitFits(), where: mtWhere(id), split: !!mt.side };
+  }
+  // The button: in side by side it takes the whole screen again (the
+  // other app waits behind, live); alone in front it goes beside the
+  // app used last, which comes in front; with none behind, the menu
+  // picks the app ("swap": the pick comes in front, this app beside).
+  // → "full" | "split" | "pick" | "no"
+  function mtBesideMe(id) {
+    if (!mtActive() || !mtSplitFits() || !state.running) return "no";
+    var run = document.getElementById("oros-running");
+    if (mtSideIs(id)) {
+      var sd = mt.side;
+      mt.side = null;
+      sd.el.removeAttribute("data-oros-side");
+      run.classList.remove("mt-split");
+      appFrames().concat([sd.el]).forEach(function (f) { if (f.classList) f.classList.remove("mt-focus"); });
+      mt.hidden.push({ app: sd.app, el: sd.el, at: Date.now() });
+      openApp(sd.app);   // the app in front steps back, kept
+      return "full";
+    }
+    if (state.running.id !== id) return "no";
+    if (mt.side) { mtSideEnd(true); mtChanged(); return "full"; }
+    var last = null;
+    mtList().forEach(function (r) { if (!appHiddenNow(r.app.id) && (!last || r.at > last.at)) last = r; });
+    if (last) {
+      mtAsSide = true;
+      try { openApp(last.app); } finally { mtAsSide = false; }
+      return mtSideIs(id) ? "split" : "no";
+    }
+    mt.pickSide = "swap";
+    if (typeof openMenuSearch === "function") openMenuSearch();
+    return "pick";
+  }
+  window.__orosMtState = mtBesideState;
+  window.__orosMtBeside = mtBesideMe;
+  // Quick access mini window → the full app beside the app in front,
+  // at `target` (a live one keeps its window and takes the target).
+  function mtOpenBeside(appId, target) {
+    var app = null;
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === appId) app = state.apps[i];
+    if (!app || app.type !== "internal" || !appLockOk(app.id)) return false;
+    if (!mtActive() || !mtSplitFits() || !state.running || state.running.id === appId || state.running.type !== "internal") return false;
+    var live = appLive(appId), t = null;
+    try { t = JSON.parse(JSON.stringify(target === undefined ? null : target)); } catch (e) { t = null; }
+    if (!live && t) { try { sessionStorage.setItem("oros-open-at", JSON.stringify({ app: appId, target: t })); } catch (e) {} }
+    if (!mtSideOpen(app)) return false;
+    if (live && t) {
+      try { var w = appFrameOf(appId).contentWindow; if (typeof w.__orosOpenAt === "function") w.__orosOpenAt(t); } catch (e) {}
+    }
+    return true;
+  }
   // openApp with multitasking on: `prev` was in front, `app` comes.
   function mtSwitch(prev, app, at) {
     var front = document.getElementById("app-frame");
     if (prev && prev.id === app.id) { frameGo(front, app.url + (at || "")); return; }   // reopen = reload, as before
     var back = mtTake(app.id);
-    if (prev && !mtNoKeep && mtKeepable(prev) && mtHasDoc(front)) { mtHide(front, prev); front = null; }
+    if (prev && mtAsSide && !mt.side && !mtNoKeep && mtKeepable(prev) && mtHasDoc(front) && mtSplitFits()) {
+      front.removeAttribute("id");   // AS-KEEP: the app leaving goes beside, live
+      mtSideShow(prev, front);
+      front = null;
+    } else if (prev && !mtNoKeep && mtKeepable(prev) && mtHasDoc(front)) { mtHide(front, prev); front = null; }
     if (back) {
       if (front) mtDrop(front);
       mtShow(back.el);
@@ -15667,8 +15749,15 @@
     if (typeof scrWins !== "undefined" && scrElsewhere(app)) return;   // SS1: it lives on the other screen
     if (app && app.id === "assistant" && aiHelper() === "claude") { claudeInstead(""); return; }   // HELPER-1 (desktop, Dock, links)
     if (app && app.type === "internal") { davBgStop(app.id); bankBgStop(app.id); }   // 10e/10f: the background frame of this app goes first
-    var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
+    var pickMode = mt.pickSide;
+    var pick = pickMode && document.getElementById("app-menu").classList.contains("open");
     mt.pickSide = false;
+    if (pick && pickMode === "swap" && state.running && state.running.id !== app.id) {
+      // AS-KEEP: the app picked comes in front, the one asking goes beside
+      mtAsSide = true;
+      try { openApp(app, at); } finally { mtAsSide = false; }
+      return;
+    }
     if (mtActive() && app.type === "internal" && (mtSideIs(app.id) || pick) && mtSideOpen(app, at)) {
       closeMenu();
       menuReset();
@@ -18669,6 +18758,9 @@
       open: openApp,
       running: function () { return state.running || null; },
       isOpen: function (id) { return mtActive() && appLive(id); },   // multitasking: alive behind
+      // AS-KEEP: the mini window hands over to the full app beside the app in front
+      canBeside: function () { return mtActive() && mtSplitFits() && !!state.running && state.running.type === "internal" && state.running.id !== "assistant"; },
+      beside: function (id, target) { return mtOpenBeside(id, target); },
       icons: ICONS,
       lang: function () { return langBase(); },
       label: function (app) {
