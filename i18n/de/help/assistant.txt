@@ -282,6 +282,9 @@ Der Assistent liest den Text eines Bildes oder eines gescannten PDFs auf der orO
 ## GitHub (nur lesen)
 Mit einem GitHub-Konto in den orOS-Einstellungen › Verbundene Dienste (am besten ein feingranulares Token, das nur liest und seine Repositories nennt) frag zum Beispiel „Was ist das neueste Noxpress-Release und wie oft wurde es heruntergeladen?“, „Zeig mir updates.json auf main“ oder „Ist der letzte Actions-Lauf fehlgeschlagen?“. Der Assistent kann nur lesen: Releases, Dateien, Actions-Läufe, Pull-Requests, Commits und Issues. Das Token sieht er nie. Eine Routine liest GitHub nur, wenn du `Darf GitHub lesen` ankreuzt.
 
+## Printful (nur lesen)
+Mit deinem Printful-Store in den orOS-Einstellungen › Verbundene Dienste (ein Token für einen Store, das nur liest) frag zum Beispiel „Welche Printful-Produkte sind noch nicht synchronisiert?“, „Wie viele Bestellungen sind angehalten?“ oder „Was kostet das Unisex-T-Shirt im Katalog, und ist es in Europa vorrätig?“. Der Assistent kann nur lesen: deine synchronisierten Produkte und ihre Varianten, deine Bestellungen nach Nummer und Status (nie Name oder Adresse des Kunden) und den Printful-Katalog. Das Token sieht er nie. Eine Routine liest Printful nur, wenn du `Darf Printful lesen` ankreuzt.
+
 ## Bilder in Photo Lab
 Bitte zum Beispiel „mach mein offenes Foto schwarzweiß“, „schreib Winter statt Sommer auf das Strandbild“, „mach alle meine Bilder an der langen Seite 1200 Pixel groß“, „schneide es quadratisch zu und setz meinen Namen unten rechts“ oder „gib dem Titel einen Schatten“. Der Assistent liest die Ebenen des Bildes (mit deiner Erlaubnis für [Photo Lab](app:photolab)) und zeigt eine Karte mit den Änderungen und wie viele Dinge sich in jedem Bild ändern.
 - `Anwenden` öffnet Photo Lab, das die Bilder nacheinander öffnet, die Änderungen mit seinen eigenen Befehlen vornimmt und speichert; `Stopp` dort beendet es früher.

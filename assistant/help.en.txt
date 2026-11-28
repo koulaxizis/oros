@@ -282,6 +282,9 @@ The assistant reads the text of a picture or a scanned PDF on the orOS disk on y
 ## GitHub (read only)
 With a GitHub account in orOS Settings › Connected services (best a fine-grained token that may only read, naming its repositories), ask for example "what is the latest Noxpress release and how often was it downloaded?", "show me updates.json on main" or "did the last Actions run fail?". The assistant can only read: releases, files, Actions runs, pull requests, commits and issues. It never sees the token. A routine reads GitHub only when you tick `May read GitHub`.
 
+## Printful (read only)
+With your Printful store in orOS Settings › Connected services (a token for one store that may only read), ask for example "which Printful products are not synced yet?", "how many orders are on hold?" or "what does the Unisex tee cost in the catalogue, and is it in stock in Europe?". The assistant can only read: your synced products and their variants, your orders by number and status (never the customer's name or address), and Printful's catalogue. It never sees the token. A routine reads Printful only when you tick `May read Printful`.
+
 ## Pictures in Photo Lab
 Ask, for example, "make my open photo black and white", "write Winter instead of Summer on the beach picture", "make all my pictures 1200 pixels on the long side", "crop it square and add my name at the bottom right" or "give the title a shadow". The assistant reads the picture's layers (with your permission for [Photo Lab](app:photolab)) and shows a card with the changes and how many things each picture gets.
 - `Apply` opens Photo Lab, which opens each picture in turn, makes the changes as its own commands and saves it; `Stop` in Photo Lab ends it early.
