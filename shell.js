@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "9.03.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "9.04.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -18555,6 +18555,8 @@
       },
       desktop: document.getElementById("oros-desktop"),
       menuChanged: function () { renderMenu(); },
+      // DOCK-GRP: a new group of two apps of one category takes its name.
+      category: function (c) { var k = "category." + String(c).toLowerCase(), v = window.t(k); return v === k ? "" : v; },
       // The Pocket's button at the Dock's end (POCKET-1), or null.
       dockExtra: function () { return window.orosPocket ? window.orosPocket.dockButton() : null; }
     });

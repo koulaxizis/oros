@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 52847 of 52896 (99%)
+- Strings: 52853 of 52902 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -142,7 +142,7 @@ en and el); translators change them there, not in a pack.
 | settings | 100% | 2126 / 2126 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1651 / 1651 |
+| shell | 100% | 1657 / 1657 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
