@@ -3743,9 +3743,16 @@
     apps.forEach(function (a) { byId[a.id] = a; });
     var ids = apps.map(function (a) { return a.id; });
     var q = words.join(", ");
-    return Promise.all(words.map(function (w) {
+    var calls = words.map(function (w) {
       return Promise.resolve().then(function () { return p.orosAssistSearch(w, ids); }).catch(function () { return []; });
-    })).then(function (lists) {
+    });
+    // MEANING-1: with search by meaning on, the whole message also finds
+    // items that say the same in other words (after the word hits; same
+    // Always / Ask first / Never rules below). Off, it answers [].
+    calls.push(Promise.resolve().then(function () {
+      return p.orosAssistSearch(String(um.text || "").slice(0, 500), ids, { meaning: true });
+    }).catch(function () { return []; }));
+    return Promise.all(calls).then(function (lists) {
       var items = C.packHits(C.mergeHits(lists), function (id) { return byId[id] ? byId[id].name : id; });
       if (!items.length) {
         um.found = { q: q, text: C.searchResult(q, [], {}) };
@@ -3906,6 +3913,12 @@
     }
     var p = shell();
     var search = (p && typeof p.orosAssistSearch === "function") ? p.orosAssistSearch(q, ids, { all: !q }) : Promise.resolve([]);
+    // MEANING-1: a query also brings the items that mean the same (they
+    // rank after the word hits); not for a label filter.
+    if (q && !label && p && typeof p.orosAssistSearch === "function") {
+      search = Promise.all([search, Promise.resolve(p.orosAssistSearch(q, ids, { meaning: true })).catch(function () { return []; })])
+        .then(function (l) { return C.mergeHits(l); });
+    }
     // What the user sees on the consent card: the words, or the label.
     var shown = q || t("lbl.search", { label: C.isNoLabel(label) ? t("lbl.none") : label });
     return Promise.resolve(search).then(function (groups) {

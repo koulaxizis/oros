@@ -6267,11 +6267,129 @@
     home: function () { if (state.running) returnToDesktop(); },
     open: function (id) { openAppById(id); }
   };
+  // ---------- Search by meaning (MEANING-1) ----------
+  // semantic.js (with semantic-core.js and modelfetch.js) loads only
+  // when the switch in Settings › Language & search is on, never at
+  // boot otherwise. Its index covers MEANING_APPS whose search is on
+  // and that no app lock hides; it is built from the providers' every-
+  // item answers (ctx.words empty), a few items at a time when the page
+  // is idle. Results show under the word results ("By meaning") and
+  // reach the Assistant through orosAssistSearch(q, ids, { meaning }).
+  var MEANING_APPS = ["notes", "mail", "files", "feeds"];
+  var meaningLoading = null, meaningTimer = null, meaningLast = 0;
+  function meaningOn() {
+    try { var p = JSON.parse(localStorage.getItem("oros-meaning-prefs") || "null"); return !!(p && p.on === true); }
+    catch (e) { return false; }
+  }
+  function meaningLoad() {
+    if (window.orosMeaning) return Promise.resolve(window.orosMeaning);
+    if (!meaningLoading) {
+      meaningLoading = Promise.all([
+        window.OrosModelFetch ? null : recScript("modelfetch.js"),
+        window.OrosSemanticCore ? null : recScript("semantic-core.js")
+      ]).then(function () {
+        return window.orosMeaning ? null : recScript("semantic.js");
+      }).then(function () {
+        if (!window.orosMeaning) throw new Error("semantic");
+        return window.orosMeaning;
+      }, function (e) { meaningLoading = null; throw e; });
+    }
+    return meaningLoading;
+  }
+  window.orosMeaningLoad = meaningLoad;     // Settings › Language & search
+  window.orosMeaningSync = function () { meaningLast = 0; meaningSync(); };
+  // The meaning apps this search may read: installed, search on, not locked.
+  function meaningAllowed(ids) {
+    var want = {};
+    (ids || MEANING_APPS).forEach(function (id) { want[String(id)] = true; });
+    return searchApps().filter(function (a) {
+      return want[a.id] && MEANING_APPS.indexOf(a.id) >= 0 && !a.alias && searchEnabled(a.id) && !appLockSet(a.id);
+    });
+  }
+  // Every item of these apps: [{ id, hits }] (an app that fails or
+  // takes over 8 s is left out, and keeps its index entries).
+  function meaningLists(apps) {
+    var S = window.orosSearch;
+    if (!S || !apps.length) return Promise.resolve([]);
+    if (!searchReader) searchReader = S.makeReader(localStorage);
+    var allow = {};
+    apps.forEach(function (a) { allow[a.id] = true; });
+    return S.load(apps, APP_VERSION).then(function () {
+      var ctx = { q: "", words: [], fold: S.fold, lang: langBase(), code: state.lang, limit: 5000, readJSON: searchReader };
+      return Promise.all((window.orosSearchProviders || []).filter(function (pv) {
+        return pv && typeof pv.search === "function" && allow[pv.id];
+      }).map(function (pv) {
+        var out;
+        try { out = pv.search(ctx); } catch (e) { out = null; }
+        return Promise.race([Promise.resolve(out), new Promise(function (r) { setTimeout(function () { r(null); }, 8000); })])
+          .then(function (list) {
+            if (!Array.isArray(list)) return null;
+            return { id: pv.id, hits: list.map(S.cleanHit).filter(Boolean).slice(0, 5000) };
+          }, function () { return null; });
+      }));
+    }).then(function (l) { return l.filter(Boolean); });
+  }
+  // One index round; more rounds follow while items are left.
+  function meaningSync() {
+    clearTimeout(meaningTimer);
+    meaningTimer = null;
+    if (!meaningOn() || document.hidden) return;
+    meaningLast = Date.now();
+    meaningLoad().then(function (M) {
+      if (M.busy()) return null;
+      return M.ready().then(function (ok) {
+        if (!ok) return null;
+        return meaningLists(meaningAllowed()).then(function (lists) { return M.sync(lists); });
+      });
+    }).then(function (r) {
+      if (r && r.left > 0) meaningTimer = setTimeout(meaningSync, 3000);
+    }, function () {});
+  }
+  function meaningSoon() {
+    if (meaningOn() && !meaningTimer && Date.now() - meaningLast > 60000) meaningTimer = setTimeout(meaningSync, 5000);
+  }
+  if (meaningOn()) setTimeout(meaningSync, 45000);
+  setInterval(function () { if (meaningOn() && Date.now() - meaningLast > 600000) meaningSync(); }, 120000);
+  // Meaning hits as search groups { id, total, hits, meaning: true },
+  // the hits exactly as the providers gave them, best first.
+  function meaningFind(q, ids) {
+    if (!meaningOn() || String(q || "").trim().length < 3) return Promise.resolve([]);
+    var apps = meaningAllowed(ids);
+    if (!apps.length) return Promise.resolve([]);
+    return meaningLoad().then(function (M) {
+      return M.ready().then(function (ok) {
+        if (!ok) return [];
+        return Promise.all([M.search(String(q), apps.map(function (a) { return a.id; })), meaningLists(apps)]).then(function (r) {
+          var byKey = {};
+          r[1].forEach(function (g) { g.hits.forEach(function (h) { byKey[g.id + "\n" + h.id] = h; }); });
+          var groups = {}, order = [];
+          r[0].forEach(function (x) {
+            var h = byKey[x.app + "\n" + x.k];
+            if (!h) return;
+            if (!groups[x.app]) { groups[x.app] = { id: x.app, total: 0, hits: [], best: x.s, meaning: true }; order.push(x.app); }
+            var hit = JSON.parse(JSON.stringify(h));
+            hit.score = Math.round(x.s * 1000) / 1000;
+            hit.snippet = window.orosSearch.snippet(hit.text, []);
+            groups[x.app].hits.push(hit);
+            groups[x.app].total++;
+          });
+          meaningSoon();
+          return order.map(function (id) { return groups[id]; });
+        });
+      });
+    }).catch(function () { return []; });
+  }
+
   window.orosAssistSearch = function (q, ids, opts) {
     var S = window.orosSearch;
     if (!S) return Promise.resolve([]);
     var allow = {};
     (Array.isArray(ids) ? ids : []).forEach(function (id) { if (!appLockSet(String(id))) allow[String(id)] = true; });   // APPLOCK-1: never a locked app
+    // { meaning: true } (MEANING-1): the items that mean what q says,
+    // from the same allowed apps (only those in the meaning index).
+    if (opts && opts.meaning) {
+      return meaningFind(q, Object.keys(allow)).then(function (g) { return JSON.parse(JSON.stringify(g)); });
+    }
     var apps = searchApps().filter(function (a) { return allow[a.id]; });
     if (!apps.length) return Promise.resolve([]);
     if (!searchReader) searchReader = S.makeReader(localStorage);
@@ -7102,6 +7220,19 @@
           if (token !== searchToken) return;          // a newer query won
           searchRes = { q: q, groups: groups, pending: false, at: Date.now() };
           renderResults();
+          // MEANING-1: the items that mean the same, under the word hits.
+          if (meaningOn()) {
+            meaningFind(q).then(function (mg) {
+              if (token !== searchToken || searchRes.q !== q) return;
+              var seen = {};
+              (searchRes.groups || []).forEach(function (g) { g.hits.forEach(function (h) { seen[g.id + "\n" + h.id] = true; }); });
+              var flat = [];
+              mg.forEach(function (g) { g.hits.forEach(function (h) { if (!seen[g.id + "\n" + h.id]) flat.push({ id: g.id, hit: h }); }); });
+              flat.sort(function (a, b) { return b.hit.score - a.hit.score; });
+              searchRes.meaning = flat.slice(0, 6);
+              if (flat.length) renderResults();
+            });
+          }
         }, function () {
           if (token !== searchToken) return;
           searchRes = { q: q, groups: [], pending: false, at: Date.now() };
@@ -7143,10 +7274,13 @@
       }
       var groups = (searchRes.groups || []).slice();
       if (!groups.length) {
-        var none = document.createElement("div");
-        none.className = "menu-empty menu-search-none";
-        none.textContent = window.t("search.none");
-        host.appendChild(none);
+        if (!(searchRes.meaning && searchRes.meaning.length)) {   // MEANING-1: no "nothing" over meaning hits
+          var none = document.createElement("div");
+          none.className = "menu-empty menu-search-none";
+          none.textContent = window.t("search.none");
+          host.appendChild(none);
+        }
+        appendMeaning(host);
         appendAsk(host, q);
         return;
       }
@@ -7237,7 +7371,52 @@
         wrap.setAttribute("data-app", g.id);
         host.appendChild(wrap);
       });
+      appendMeaning(host);
       appendAsk(host, q);
+    }
+
+    // MEANING-1: "By meaning", the items that say the same thing in
+    // other words (not already among the word hits). Plain text only.
+    function appendMeaning(host) {
+      var list = searchRes.meaning;
+      if (!Array.isArray(list) || !list.length) return;
+      var byId = {};
+      state.apps.forEach(function (a) { byId[a.id] = a; });
+      var wrap = document.createElement("div");
+      wrap.className = "menu-category menu-hit-group menu-meaning";
+      var h = document.createElement("h4");
+      h.className = "menu-hit-app";
+      var ht = document.createElement("span");
+      ht.textContent = window.t("search.meaning");
+      h.appendChild(ht);
+      wrap.appendChild(h);
+      list.forEach(function (x) {
+        var hit = x.hit, b = document.createElement("button");
+        b.type = "button";
+        b.className = "menu-item menu-hit";
+        var top = document.createElement("span");
+        top.className = "menu-hit-top";
+        var tt = document.createElement("span");
+        tt.className = "menu-hit-title";
+        tt.textContent = hit.title;
+        top.appendChild(tt);
+        var w = document.createElement("span");
+        w.className = "menu-hit-when";
+        var k = "app." + x.id, v = window.t(k);
+        w.textContent = v === k ? ((byId[x.id] && byId[x.id].name) || x.id) : v;
+        top.appendChild(w);
+        b.appendChild(top);
+        if (hit.snippet) {
+          var sn = document.createElement("span");
+          sn.className = "menu-hit-snip";
+          sn.textContent = hit.snippet;
+          b.appendChild(sn);
+        }
+        b.addEventListener("click", function () { openSearchHit(x.id, hit); });
+        wrap.appendChild(b);
+      });
+      wrap.setAttribute("data-app", "meaning");
+      host.appendChild(wrap);
     }
 
     renderCmdRow();
@@ -10305,6 +10484,9 @@
         { name: "Firefox Translations models", url: "https://github.com/mozilla/translations",
           by: "Mozilla", lic: "MPL-2.0",
           k: "cr.firefox-translations" },
+        { name: "multilingual-e5-small (ONNX export by Xenova)", url: "https://huggingface.co/intfloat/multilingual-e5-small",
+          by: "Liang Wang, Nan Yang, Xiaolong Huang, Linjun Yang, Rangan Majumder, Furu Wei; ONNX export by Joshua Lochner", lic: "MIT; Apache-2.0 (export)",
+          k: "cr.e5-small" },
         { name: "NULL JSFX", url: "https://nulljsfx.tech",
           by: "Christos Koulaxizis", lic: "MIT",
           k: "cr.null-jsfx" },
@@ -11385,7 +11567,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-files-photos", "oros-files-thumbs", "oros-files-dupes", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-music-meta", "oros-music-srv", "oros-music-lb", "oros-lyricsync", "oros-dav", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-files-photos", "oros-files-thumbs", "oros-files-dupes", "oros-meaning", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-music-meta", "oros-music-srv", "oros-music-lb", "oros-lyricsync", "oros-dav", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
