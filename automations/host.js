@@ -178,6 +178,7 @@
       });
       log(rule, d.key, d.at, id ? (d.late ? "late" : "sent") : "off");
       if (id) sendOut(rule, d.key, d.at, l, "");
+      if (id) runSelf(rule, d.key);
     });
     // Forget rules that are gone, so the record stays small.
     Object.keys(local.done).forEach(function (k) { if (!C.find(data, k)) { delete local.done[k]; touched = true; } });
@@ -439,8 +440,22 @@
   // Do one action now (a tap in the app or on the notice is the
   // person's go-ahead). → true when a receiving app was opened (or, for
   // a file step, its reading started). key = the run, for a file step.
+  // AS-RT wave 4: "routine" steps run by themselves on the device that
+  // sent the notice (never on the others: the inbox has it there).
+  function runSelf(rule, key) {
+    (rule && rule["do"] || []).forEach(function (a) { if (a.a === "routine") routineStep(a, key); });
+  }
+  function routineStep(a, key) {
+    var H = root.orosRoutineHost;
+    function go(h) { return !!(h && typeof h.runAuto === "function" && h.runAuto(a.r, String(key || ""))); }
+    if (H) return go(H);
+    routinesTick();
+    setTimeout(function () { go(root.orosRoutineHost); }, 2000);
+    return true;
+  }
   function runAction(action, at, said, key) {
     if (action && C.LOCAL[action.a]) { runLocal({ "do": [action] }); return true; }
+    if (action && C.SELF && C.SELF[action.a]) return routineStep(action, key || "now" + Date.now());
     var c = C.call(action, at || Date.now(), lang(), C.from(lang()), said);
     if (c && (c.fn === "bridgeFile" || c.fn === "bridgePrint")) return fileStep(c, refFor(key));
     if (!c || installed().indexOf(c.app) < 0) return false;

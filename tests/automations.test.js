@@ -310,3 +310,35 @@ test("A5: outside steps are never tap steps, and the notice names only the host"
   assert.ok(!/secret-topic/.test(n.body));
   assert.deepStrictEqual(C.outSteps(r).map((a) => a.a), ["push"]);
 });
+
+// AS-RT wave 4: a "routine" step starts one of the Assistant's routines
+// by itself (no tap), on the device that sent the run's notice.
+test("routine step: cleaned, needs the Assistant, runs by itself (AS-RT wave 4)", () => {
+  assert.deepEqual(C.cleanAction({ a: "routine", r: "rabc1234", name: " Morning check " }),
+    { a: "routine", r: "rabc1234", name: "Morning check" });
+  assert.equal(C.cleanAction({ a: "routine", r: "x" }), null);
+  assert.equal(C.cleanAction({ a: "routine", r: "rABC1234" }), null);
+  assert.equal(C.cleanAction({ a: "routine" }), null);
+  assert.equal(C.SELF.routine, true);
+  const r = C.cleanRule(rule({ id: "rt", do: [{ a: "routine", r: "rabc1234", name: "Morning check" }] }));
+  assert.ok(r);
+  assert.deepEqual(C.pending(r), []);                       // no tap step
+  assert.equal(C.call(r.do[0], T0, "en", "x"), null);       // never a receiving app
+  assert.equal(C.needs(r.do[0]), "assistant");
+  assert.equal(C.runnable(r, ["notes"]), false);
+  assert.equal(C.runnable(r, ["assistant"]), true);
+  const n = C.notice(r, T0, "en");
+  assert.match(n.body, /run the routine “Morning check”/);
+  assert.doesNotMatch(n.body, /Tap to continue/);
+  assert.match(C.notice(r, T0, "el").body, /ρουτίνας «Morning check»/);
+});
+
+test("routine step: the host runs it only after its own notice, through runAuto (AS-RT wave 4)", () => {
+  const host = fs.readFileSync(path.join(__dirname, "../automations/host.js"), "utf8");
+  assert.match(host, /if \(id\) runSelf\(rule, d\.key\);/);
+  assert.match(host, /h\.runAuto\(a\.r, String\(key \|\| ""\)\)/);
+  const rth = fs.readFileSync(path.join(__dirname, "../assistant/rthost.js"), "utf8");
+  assert.match(rth, /runAuto: function[\s\S]*?\(d\.rp && d\.rp\.on\)[\s\S]*?return false/);
+  const as = fs.readFileSync(path.join(__dirname, "../assistant/assistant.js"), "utf8");
+  assert.match(as, /if \(job\.auto && data\.rp && data\.rp\.on\) \{ resolve\(\{ ok: false, why: "off" \}\); return; \}/);
+});

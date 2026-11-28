@@ -97,7 +97,7 @@
   var SOON_MIN = 10, SOON_MAX = 120;
   var WORD_MAX = 60;
   var SIG_KEY_MAX = 200;
-  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook", "file", "print", "track", "pause", "sound", "card", "crm", "record", "focus"];
+  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook", "file", "print", "track", "pause", "sound", "card", "crm", "record", "focus", "routine"];
   // SB2: steps this device does by itself, with no tap and no data
   // written anywhere: pause what plays in orOS (music, podcasts, radio,
   // Sound Mixer) and a short chime. Every device the rule runs on does
@@ -106,6 +106,12 @@
   // minutes, 0 = until turned off) or off (mode "off"); the mode then
   // holds on every device (focus D1).
   var LOCAL = { pause: true, sound: true, focus: true };
+  // AS-RT wave 4 (Chris 2026-11-28): routine = start one of the
+  // Assistant's routines. It runs by itself, with no tap, on the ONE
+  // device that sent the run's notice (host.js), read-only as every
+  // routine run; its report lands in the routine's own conversation.
+  var SELF = { routine: true };
+  var RT_ID = /^r[a-z0-9]{6,24}$/;
   var FOCUS_MAX_MIN = 1440;
   var FILE_ACTS = { file: true, print: true };
   // Wave A5: steps that leave the device by themselves (AUTO-2 "each
@@ -118,7 +124,7 @@
   // Apps an action needs (the shell offers the action only when it is installed).
   var NEEDS = { todo: "todo", event: "calendar", note: "notes", mail: "mail", budget: "budget",
                 timer: "time", ask: "assistant", track: "timesheet",
-                card: "kanban", crm: "crm", record: "base" };       // BR-EV-2 tap steps
+                card: "kanban", crm: "crm", record: "base", routine: "assistant" };       // BR-EV-2 tap steps
   // BR-EV-2: what a CRM history entry can be (crm/core.js ACT_KINDS).
   var CRM_KINDS = ["call", "mail", "meet", "msg", "note"];
   // AUTO-4: never offered, never run.
@@ -288,6 +294,13 @@
       return fo;
     }
     if (LOCAL[a]) return { a: a };
+    if (a === "routine") {
+      if (typeof x.r !== "string" || !RT_ID.test(x.r)) return null;
+      var ro = { a: a, r: x.r };
+      var rn = line(x.name, 80);
+      if (rn) ro.name = rn;
+      return ro;
+    }
     if (OUT[a]) {
       var url = cleanUrl(x.url);
       if (!url) return null;
@@ -572,7 +585,7 @@
       "notice.tap": "Tap to continue: {what}",
       "act.todo": "add {n} to To-Do", "act.event": "add to Calendar", "act.note": "add a note",
       "act.mail": "write an e-mail", "act.budget": "add to Budget", "act.open": "open {app}",
-      "act.timer": "start a {n} min timer", "act.ask": "ask the Assistant",
+      "act.timer": "start a {n} min timer", "act.ask": "ask the Assistant", "act.routine": "run the routine “{name}”",
       "act.track": "Timesheet: start \u201c{t}\u201d", "act.trackStop": "Timesheet: stop the timer",
       "act.push": "a push to your phone through {host}", "act.hook": "a webhook to {host}",
       "tpl.week-plan": "Plan the week",
@@ -640,7 +653,7 @@
       "notice.tap": "Πάτησε για να συνεχίσεις: {what}",
       "act.todo": "{n} στο To-Do", "act.event": "στο Ημερολόγιο", "act.note": "νέα σημείωση",
       "act.mail": "νέο e-mail", "act.budget": "στον Προϋπολογισμό", "act.open": "άνοιγμα: {app}",
-      "act.timer": "χρονόμετρο {n} λεπτών", "act.ask": "ερώτηση στον Βοηθό",
+      "act.timer": "χρονόμετρο {n} λεπτών", "act.ask": "ερώτηση στον Βοηθό", "act.routine": "εκτέλεση της ρουτίνας «{name}»",
       "act.track": "Timesheet: έναρξη «{t}»", "act.trackStop": "Timesheet: διακοπή χρονομέτρου",
       "act.push": "ειδοποίηση στο κινητό μέσω {host}", "act.hook": "webhook προς {host}",
       "tpl.week-plan": "Πρόγραμμα εβδομάδας",
@@ -728,7 +741,7 @@
   // dates), `from` the source label the receiver shows.
   function call(action, at, lang, from, said) {
     var a = cleanAction(action);
-    if (!a || a.a === "notify" || OUT[a.a] || LOCAL[a.a]) return null;
+    if (!a || a.a === "notify" || OUT[a.a] || LOCAL[a.a] || SELF[a.a]) return null;
     var f = function (s) { return fill(s, at, lang, said); };
     if (a.a === "todo") {
       var add = { from: from, items: a.items.map(function (s) { return { text: f(s).slice(0, LINE_MAX) }; }) };
@@ -849,6 +862,7 @@
       return sub(w(lang, a.min ? "act.focusMin" : "act.focus"), { mode: mname, n: a.min || 0 });
     }
     if (OUT[a.a]) return sub(w(lang, "act." + a.a), { host: hostOf(a.url) });
+    if (a.a === "routine") return sub(w(lang, "act.routine"), { name: a.name || a.r });
     return a.a === "notify" ? "" : w(lang, "act." + a.a);
   }
   // The notice for one run → { title, body }.
@@ -856,7 +870,7 @@
     var parts = [], rest = [];
     rule["do"].forEach(function (a) {
       if (a.a === "notify") parts.push(fill(a.text, at, lang, said));
-      else if (OUT[a.a] || LOCAL[a.a]) parts.push(actText(a, lang, appName));
+      else if (OUT[a.a] || LOCAL[a.a] || SELF[a.a]) parts.push(actText(a, lang, appName));
       else rest.push(actText(a, lang, appName));
     });
     if (rest.length) parts.push(sub(w(lang, "notice.tap"), { what: rest.join(", ") }));
@@ -884,7 +898,7 @@
     return out;
   }
   function pending(rule) {
-    return (rule && rule["do"] || []).filter(function (a) { return a.a !== "notify" && !OUT[a.a] && !LOCAL[a.a]; });
+    return (rule && rule["do"] || []).filter(function (a) { return a.a !== "notify" && !OUT[a.a] && !LOCAL[a.a] && !SELF[a.a]; });
   }
 
   // ---------- Ready-made rules (templates) ----------
@@ -973,7 +987,7 @@
     lastAt: lastAt, nextAt: nextAt, due: due, fill: fill, call: call, needs: needs, runnable: runnable,
     whenText: whenText, actText: actText, notice: notice, pending: pending,
     OUT: OUT, cleanUrl: cleanUrl, hostOf: hostOf, outbound: outbound, outSteps: outSteps,
-    LOCAL: LOCAL, GOALS: GOALS, SOON_MIN: SOON_MIN, SOON_MAX: SOON_MAX, amountText: amountText,
+    LOCAL: LOCAL, SELF: SELF, GOALS: GOALS, SOON_MIN: SOON_MIN, SOON_MAX: SOON_MAX, amountText: amountText,
     EVENTS: EVENTS.slice(), EVENT_APP: EVENT_APP, bridgeEvent: bridgeEvent, FILE_TO: FILE_TO.slice(), FILE_ACTS: FILE_ACTS, cleanIf: cleanIf, inWindow: inWindow, matches: matches, fold: fold,
     templates: templates, fromTemplate: fromTemplate, ymdOf: ymdOf, from: from, STRINGS: STRINGS,
     CRM_KINDS: CRM_KINDS.slice(), OVERDUE_DAYS: OVERDUE_DAYS, overdueList: overdueList, FOCUS_MAX_MIN: FOCUS_MAX_MIN

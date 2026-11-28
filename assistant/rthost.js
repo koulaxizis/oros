@@ -184,6 +184,16 @@
       pump();
       return true;
     },
+    // An Automations rule's "routine" step (wave 4): the person's own
+    // rule, so it runs like Run now, but never while "Pause all" is on.
+    runAuto: function (id, ruleKey) {
+      id = String(id || "");
+      var d = read(), r = live(d).filter(function (x) { return x.id === id; })[0];
+      if (!r || (d.rp && d.rp.on) || queued(id)) return false;
+      queue.push({ id: id, key: id + "@auto" + R.ymdhm(Date.now()), manual: 1, auto: String(ruleKey || "").slice(0, 120) });
+      pump();
+      return true;
+    },
     running: function () { return cur ? cur.id : ""; },
     queued: function (id) { return queued(String(id || "")); },
     frameReady: function () { if (frameReady) frameReady(); },
