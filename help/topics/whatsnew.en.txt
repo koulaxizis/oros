@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.11.00
+- **Island in the centre.** The top bar can gather the live pills and what plays into one dark pill at the top centre: a thin line with the line being sung (Music's synced lyrics) or the title, growing on hover or tap into the cover, the time played and left, Previous, Play and Next. Off at first, windows at least 760 px wide, this device only: Settings › Appearance › Top bar › Island in the centre.
+
 ## Version 9.10.01
 - **Koulaxizis Apps 1.4.0 (Android): fewer questions.** On Android 12 and newer, apps that Koulaxizis Apps installed now update without Android's question, one by one or with Update all, which ends with one line on what it did. In its menu, both off at first: Automatic updates (on Wi-Fi, the updates that need no question install by themselves) and Install without questions (Shizuku) for first installs. Its new Help explains the questions that stay and Google Play Protect, which it never bypasses.
 
