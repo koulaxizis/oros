@@ -224,7 +224,10 @@
       var e = src[k];
       if (!e || typeof e !== "object") return;
       var spec = fieldSpec(k);
-      if (spec ? !spec.ok(e.v) : !foreignOk(e.v)) return;
+      // FWD-1 (2026-11-28): a value a newer orOS gave a field we know
+      // (a new Easter rule, a new amount…) is kept like a field we do
+      // not know, never used here (get() answers the default).
+      if (!(spec && spec.ok(e.v)) && !foreignOk(e.v)) return;
       var t = (typeof e.t === "number" && isFinite(e.t) && e.t >= 0) ? Math.floor(e.t) : 0;
       f[k] = { v: e.v, t: t };
     });

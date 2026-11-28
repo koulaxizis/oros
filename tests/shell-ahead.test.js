@@ -43,6 +43,7 @@ function device(knows) {
     line(/var AHEAD_VMAX = [^;]+;/),
     line(/var AHEAD_NAME_RE = [^;]+;/),
     line(/var SHELL_RESERVED = [^;]+;/),
+    line(/var SHELL_AHEAD_ORD = [^;]+;/),
     `function shellDefault(n) { return { lang: "en", theme: "dark", skin: "oros", wallpaper: "dusk", syncInterval: 3, autoexport: "off", wpart: null, wpland: null, wpviz: null, icons: "classic", fopen: {}, keys: {} }[n] || { on: false, auto: false, lat: null, lon: null, label: "" }; }`,
     `function shellCanon(n, v) {
        if (n === "wallpaper") return (typeof v === "string" && KNOWS.indexOf(v) >= 0) ? v : undefined;
@@ -57,7 +58,7 @@ function device(knows) {
     "function alarmsRead() { return []; }",
     "function alarmTombsRead() { return {}; }",
     "function aheadPromote() { ENV.promoted++; }",
-    ...["aheadOwn", "aheadName", "aheadVal", "aheadWins", "aheadRead", "aheadWrite",
+    ...["aheadOwn", "aheadName", "aheadVal", "aheadOrd", "shellOrdered", "aheadWins", "aheadRead", "aheadWrite",
         "alarmCanon", "alarmBetter", "alarmTombsClean", "alarmTombsLive", "alarmIsTimer", "alarmsCanonical",
         "shellSide", "shellBuild", "shellSliceGet", "shellMerge"].map((n) => cut(SHELL, n)),
     "return { shellSide, shellBuild, shellSliceGet, shellMerge, aheadRead, aheadWrite, SHELL_FIELDS };",
@@ -80,6 +81,7 @@ function device(knows) {
     }
     Object.assign(ah, side.ex);
     api.aheadWrite(ah);
+    if (side.ord) store.set("oros-shell-ahead-ord", JSON.stringify(side.ord)); else store.delete("oros-shell-ahead-ord");
   };
   api.env = env;
   api.store = store;
@@ -147,20 +149,29 @@ test("an older device's own newer stamp beats it in the merge too, both orders a
   assert.equal(JSON.stringify(usb.shellMerge(b, c)), JSON.stringify(usb.shellMerge(c, b)));
 });
 
-test("fields a newer orOS added travel through an older one unchanged", () => {
+test("fields a newer orOS added travel through an older one unchanged, in their places", () => {
   const usb = device(ALL);
-  const cloud = usb.shellSliceGet();
-  cloud.dock = { size: "l", style: "3d" };
-  cloud.sm.dock = 1500;
+  const mine = usb.shellSliceGet();
+  // a newer orOS puts its field "dock" before ver, its stamp after keys
+  const cloud = {};
+  for (const k of Object.keys(mine)) {
+    if (k === "ver") cloud.dock = { size: "l", style: "3d" };
+    cloud[k] = mine[k];
+  }
+  cloud.sm = {};
+  for (const k of Object.keys(mine.sm)) { cloud.sm[k] = mine.sm[k]; if (k === "keys") cloud.sm.dock = 1500; }
+  cloud.wallpaper = "viz"; cloud.sm.wallpaper = 1400;
   const r = pull(usb, cloud);
-  assert.deepEqual(r.up.dock, { size: "l", style: "3d" });
-  assert.equal(r.up.sm.dock, 1500);
+  assert.equal(JSON.stringify(r.up), JSON.stringify(cloud), "byte for byte the cloud copy");
   assert.equal(r.stale, false, "kept, so nothing is uploaded");
-  // merge of two copies with different versions of the field: newer stamp
+  // and it stays so on the next getter call (order kept on the device)
+  assert.equal(JSON.stringify(usb.shellSliceGet()), JSON.stringify(cloud));
+  // merge of two copies with different versions of the field: newer stamp, same answer both ways
   const older = JSON.parse(JSON.stringify(cloud)); older.dock = { size: "s" }; older.sm.dock = 900;
   const m1 = usb.shellMerge(older, cloud), m2 = usb.shellMerge(cloud, older);
   assert.equal(JSON.stringify(m1), JSON.stringify(m2));
   assert.deepEqual(m1.dock, { size: "l", style: "3d" });
+  assert.deepEqual(Object.keys(m1), Object.keys(cloud));
 });
 
 test("without anything from a newer orOS the slice is exactly what it was", () => {
@@ -197,7 +208,7 @@ test("once this orOS knows the value it is applied (promotion is asked for)", ()
 test("shell.js: the pull keeps what is ahead, the getter and the merge carry it", () => {
   assert.match(cut(SHELL, "shellSliceSet"), /aheadWrite\(ahNew\)/);
   assert.match(cut(SHELL, "shellSliceGet"), /aheadRead\(\)/);
-  assert.match(cut(SHELL, "shellMerge"), /, tombs, extras\);/);
+  assert.match(cut(SHELL, "shellMerge"), /, tombs, extras, ord\);/);
   assert.match(cut(SHELL, "aheadPromote"), /shellSliceSet\(shellSliceGet\(\)\)/);
 });
 

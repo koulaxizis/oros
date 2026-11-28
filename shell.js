@@ -7917,6 +7917,10 @@
     return {
       f: f,
       ex: ex,
+      // FWD-1: where a newer orOS put its fields, so this one writes
+      // them back in the same places (the engine compares the JSON
+      // text: another key order would read as a change, an upload).
+      ord: Object.keys(ex).length ? { body: Object.keys(x), sm: legacy ? [] : Object.keys(x.sm) } : null,
       alarms: Array.isArray(x.alarms) ? x.alarms : [],
       // Expired tombstones are dropped per side, BEFORE the union: an
       // entry that is already dead must not lend its stamp to a live
@@ -7944,6 +7948,7 @@
   var AHEAD_VMAX = 8192;         // characters of JSON per value at most
   var AHEAD_NAME_RE = /^[a-z][a-zA-Z0-9]{0,31}$/;
   var SHELL_RESERVED = ["alarms", "ver", "sm", "alarmTombs"];
+  var SHELL_AHEAD_ORD = "oros-shell-ahead-ord";   // { body:[keys], sm:[keys] } of the copy the extras came in
 
   function aheadOwn(o, k) { return !!o && typeof o === "object" && Object.prototype.hasOwnProperty.call(o, k); }
   // A field name a newer orOS may have added (not ours, not reserved).
@@ -7958,6 +7963,13 @@
     try { s = JSON.stringify(v); } catch (e) { return undefined; }
     if (typeof s !== "string" || s.length > AHEAD_VMAX) return undefined;
     return JSON.parse(s);
+  }
+  // A stored key order, checked: two short lists of field names.
+  function aheadOrd(o) {
+    function names(a) {
+      return Array.isArray(a) ? a.filter(function (k) { return typeof k === "string" && /^[A-Za-z][A-Za-z0-9]{0,31}$/.test(k); }).slice(0, 96) : [];
+    }
+    return (o && typeof o === "object") ? { body: names(o.body), sm: names(o.sm) } : null;
   }
   // Same order as shellMerge: newer stamp, then the larger JSON.
   function aheadWins(e, mine) {
@@ -8030,7 +8042,7 @@
   // `extras` (FWD-1): fields of a newer orOS, after the known ones,
   // sorted; absent when there are none, so the slice of a device
   // without them is exactly what it was before FWD-1.
-  function shellBuild(vals, stamps, alarms, tombs, extras) {
+  function shellBuild(vals, stamps, alarms, tombs, extras, ord) {
     var sm = {};
     for (var i = 0; i < SHELL_FIELDS.length; i++) sm[SHELL_FIELDS[i]] = stamps[SHELL_FIELDS[i]];
     var out = {
@@ -8052,13 +8064,29 @@
       sm:           sm,
       alarmTombs:   tombs
     };
-    if (extras) {
-      Object.keys(extras).sort().forEach(function (k) {
-        out[k] = extras[k].v;
-        sm[k] = extras[k].t;
-      });
-    }
-    return out;
+    if (!extras || !Object.keys(extras).length) return out;
+    var smx = {};
+    Object.keys(extras).forEach(function (k2) { smx[k2] = extras[k2].t; });
+    var body = {};
+    Object.keys(extras).forEach(function (k2) { body[k2] = extras[k2].v; });
+    var res = shellOrdered(out, body, ord && ord.body);
+    res.sm = shellOrdered(sm, smx, ord && ord.sm);
+    return res;
+  }
+
+  // `base` (our keys, our order) and `more` (a newer orOS's fields)
+  // laid out in the order `keys` gives; what `keys` does not name
+  // follows: ours in our order, then the rest sorted.
+  function shellOrdered(base, more, keys) {
+    var res = {};
+    (Array.isArray(keys) ? keys : []).forEach(function (k) {
+      if (typeof k !== "string" || aheadOwn(res, k)) return;
+      if (aheadOwn(base, k)) res[k] = base[k];
+      else if (aheadOwn(more, k)) res[k] = more[k];
+    });
+    Object.keys(base).forEach(function (k) { if (!aheadOwn(res, k)) res[k] = base[k]; });
+    Object.keys(more).sort().forEach(function (k) { if (!aheadOwn(res, k)) res[k] = more[k]; });
+    return res;
   }
 
   function shellSliceGet() {
@@ -8079,7 +8107,9 @@
     });
     if (drop) aheadWrite(ah);
     if (promote) aheadPromote();
-    return shellBuild(vals, stamps, alarmsCanonical(alarmsRead(), tombs, now), tombs, extras);
+    var ord = null;
+    if (extras) { try { ord = JSON.parse(localStorage.getItem(SHELL_AHEAD_ORD)); } catch (eO) {} }
+    return shellBuild(vals, stamps, alarmsCanonical(alarmsRead(), tombs, now), tombs, extras, aheadOrd(ord));
   }
 
   // mergeFn(local, remote) — symmetric: shellMerge(a, b) and
@@ -8118,7 +8148,10 @@
       });
     });
     tombs = alarmTombsLive(tombs, now);
-    return shellBuild(vals, stamps, alarmsCanonical(A.alarms.concat(B.alarms), tombs, now), tombs, extras);
+    // The order of the copy that brought them; both did: the larger
+    // key list (the same answer in both argument orders).
+    var ord = A.ord && B.ord ? (JSON.stringify(A.ord) >= JSON.stringify(B.ord) ? A.ord : B.ord) : (A.ord || B.ord);
+    return shellBuild(vals, stamps, alarmsCanonical(A.alarms.concat(B.alarms), tombs, now), tombs, extras, ord);
   }
 
   function shellSliceSet(data) {
@@ -8216,6 +8249,10 @@
     }
     Object.keys(side.ex).forEach(function (k) { ahNew[k] = side.ex[k]; });
     aheadWrite(ahNew);
+    try {
+      if (side.ord) localStorage.setItem(SHELL_AHEAD_ORD, JSON.stringify(aheadOrd(side.ord)));
+      else localStorage.removeItem(SHELL_AHEAD_ORD);
+    } catch (eOrd) {}
     aheadNotice(ahNew);
     if (Array.isArray(data.alarms)) {
       var tombsNew = alarmTombsLive(side.tombs, nowSet);

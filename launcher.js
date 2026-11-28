@@ -79,6 +79,59 @@
   var GID_RE = /^g[a-z0-9]{1,23}$/;          // DOCK-GRP group ids
   var GNAME_MAX = 40, MAX_GROUPS = 60;
 
+  // ---------- FWD-1: fields of a newer orOS survive this one ----------
+  // (Chris 2026-11-28, sync audit proposal 6.) An older orOS used to
+  // drop what it did not know; its copy then differed from the cloud,
+  // so it uploaded it without them, the newer device put them back,
+  // and so on. Now unknown fields (name ^[a-z][a-zA-Z0-9]{0,23}$, at
+  // most MORE_N, MORE_MAX characters of JSON each) are kept as they
+  // came, in the key order they came in (the engine compares JSON
+  // text), and never used here. Without such fields nothing changes.
+  var MORE_RE = /^[a-z][a-zA-Z0-9]{0,23}$/, MORE_N = 16;
+  function moreOwn(o, k) { return !!o && typeof o === "object" && Object.prototype.hasOwnProperty.call(o, k); }
+  // `out` (cleaned, our key order) plus the fields of `src` this orOS
+  // does not know (`known`: ours, also those it drops on purpose).
+  function withMore(src, out, known, max) {
+    if (!src || typeof src !== "object" || Array.isArray(src)) return out;
+    var more = {}, n = 0;
+    Object.keys(src).forEach(function (k) {
+      if (n >= MORE_N || known.indexOf(k) >= 0 || moreOwn(out, k) || !MORE_RE.test(k)) return;
+      var s;
+      try { s = JSON.stringify(src[k]); } catch (e) { return; }
+      if (typeof s !== "string" || s.length > (max || 1024)) return;
+      more[k] = JSON.parse(s);
+      n++;
+    });
+    if (!n) return out;
+    var res = {};
+    Object.keys(src).forEach(function (k) {
+      if (moreOwn(out, k)) res[k] = out[k];
+      else if (moreOwn(more, k)) res[k] = more[k];
+    });
+    Object.keys(out).forEach(function (k) { if (!moreOwn(res, k)) res[k] = out[k]; });
+    return res;
+  }
+  // Two whole copies as one source for withMore: per field the larger
+  // JSON, in the key order of the copy with the larger key list (the
+  // same answer in both argument orders).
+  function moreSrc(a, b) {
+    var A = (a && typeof a === "object") ? a : {}, B = (b && typeof b === "object") ? b : {};
+    var first = JSON.stringify(Object.keys(A)) >= JSON.stringify(Object.keys(B)) ? A : B;
+    var second = first === A ? B : A, src = {};
+    Object.keys(first).concat(Object.keys(second)).forEach(function (k) {
+      if (moreOwn(src, k)) return;
+      var p = moreOwn(A, k) ? A[k] : undefined, q = moreOwn(B, k) ? B[k] : undefined;
+      src[k] = p === undefined ? q : q === undefined ? p : (JSON.stringify(p) >= JSON.stringify(q) ? p : q);
+    });
+    return src;
+  }
+
+  var ITEM_KNOWN = ["id", "desk", "dock", "grp", "mtime"];
+  var GROUP_KNOWN = ["id", "name", "dock", "mtime"];
+  var MENU_KNOWN = ["id", "hidden", "mtime"];
+  var TOP_KNOWN = ["ver", "items", "groups"];
+  var MENU_TOP_KNOWN = ["ver", "apps"];
+
   // ---------- 1. Model (pure) ----------
   function num(v) {
     return (typeof v === "number" && isFinite(v)) ? v : null;
@@ -90,7 +143,7 @@
     var out = { id: it.id, desk: num(it.desk), dock: num(it.dock) };
     if (out.dock !== null && typeof it.grp === "string" && GID_RE.test(it.grp)) out.grp = it.grp;   // DOCK-GRP
     out.mtime = m;
-    return out;
+    return withMore(it, out, ITEM_KNOWN);
   }
 
   // DOCK-GRP: a group in the Dock { id, name, dock, mtime }; dock null =
@@ -98,7 +151,7 @@
   function cleanGroup(g) {
     if (!g || typeof g !== "object" || typeof g.id !== "string" || !GID_RE.test(g.id)) return null;
     var m = (typeof g.mtime === "number" && isFinite(g.mtime) && g.mtime >= 0) ? Math.floor(g.mtime) : 0;
-    return { id: g.id, name: groupName(g.name), dock: num(g.dock), mtime: m };
+    return withMore(g, { id: g.id, name: groupName(g.name), dock: num(g.dock), mtime: m }, GROUP_KNOWN);
   }
   function groupName(v) {
     return String(typeof v === "string" ? v : "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, GNAME_MAX);
@@ -136,12 +189,13 @@
     var gids = Object.keys(gById).sort();
     if (gids.length > MAX_GROUPS) gids = gids.slice(0, MAX_GROUPS);
     if (gids.length) out.groups = gids.map(function (id) { return gById[id]; });
-    return out;
+    return withMore(data, out, TOP_KNOWN, 8192);
   }
 
   function merge(a, b) {
     var na = normalize(a), nb = normalize(b);
-    return normalize({ items: na.items.concat(nb.items), groups: (na.groups || []).concat(nb.groups || []) });
+    var out = normalize({ items: na.items.concat(nb.items), groups: (na.groups || []).concat(nb.groups || []) });
+    return withMore(moreSrc(na, nb), out, TOP_KNOWN, 8192);
   }
 
   function find(data, id) {
@@ -167,12 +221,13 @@
   function withItem(data, id, fields, now) {
     var d = normalize(data);
     var it = find(d, id);
-    var next = { id: id, desk: it ? it.desk : null, dock: it ? it.dock : null, mtime: Math.max(now, it ? it.mtime + 1 : 0) };
-    if (it && it.grp) next.grp = it.grp;
+    // FWD-1: a stored item keeps its fields (and their order).
+    var next = it ? JSON.parse(JSON.stringify(it)) : { id: id, desk: null, dock: null, mtime: 0 };
+    next.mtime = Math.max(now, it ? it.mtime + 1 : 0);
     Object.keys(fields).forEach(function (k) { next[k] = fields[k]; });
     var items = d.items.filter(function (x) { return x.id !== id; });
     items.push(next);
-    return normalize({ items: items, groups: d.groups });
+    return withMore(d, normalize({ items: items, groups: d.groups }), TOP_KNOWN, 8192);
   }
 
   // Pin goes to the END of the place; unpin clears it. No-op when the
@@ -253,11 +308,12 @@
   function withGroup(data, gid, fields, now) {
     var d = normalize(data);
     var g = findGroup(d, gid);
-    var next = { id: gid, name: g ? g.name : "", dock: g ? g.dock : null, mtime: Math.max(now, g ? g.mtime + 1 : 0) };
+    var next = g ? JSON.parse(JSON.stringify(g)) : { id: gid, name: "", dock: null, mtime: 0 };   // FWD-1: keeps its fields
+    next.mtime = Math.max(now, g ? g.mtime + 1 : 0);
     Object.keys(fields).forEach(function (k) { next[k] = fields[k]; });
     var gs = (d.groups || []).filter(function (x) { return x.id !== gid; });
     gs.push(next);
-    return normalize({ items: d.items, groups: gs });
+    return withMore(d, normalize({ items: d.items, groups: gs }), TOP_KNOWN, 8192);
   }
   function setGrp(d, id, gid, dockKey, now) {
     var f = { grp: gid || undefined };
@@ -399,7 +455,7 @@
   function cleanMenuItem(it) {
     if (!it || typeof it !== "object" || typeof it.id !== "string" || !ID_RE.test(it.id)) return null;
     var m = (typeof it.mtime === "number" && isFinite(it.mtime) && it.mtime >= 0) ? Math.floor(it.mtime) : 0;
-    return { id: it.id, hidden: it.hidden === true, mtime: m };
+    return withMore(it, { id: it.id, hidden: it.hidden === true, mtime: m }, MENU_KNOWN);
   }
 
   function menuNormalize(data) {
@@ -412,12 +468,12 @@
     }
     var ids = Object.keys(byId).sort();
     if (ids.length > MAX_ITEMS) ids = ids.slice(0, MAX_ITEMS);
-    return { ver: 1, apps: ids.map(function (id) { return byId[id]; }) };
+    return withMore(data, { ver: 1, apps: ids.map(function (id) { return byId[id]; }) }, MENU_TOP_KNOWN, 8192);
   }
 
   function menuMerge(a, b) {
     var na = menuNormalize(a), nb = menuNormalize(b);
-    return menuNormalize({ apps: na.apps.concat(nb.apps) });
+    return withMore(moreSrc(na, nb), menuNormalize({ apps: na.apps.concat(nb.apps) }), MENU_TOP_KNOWN, 8192);
   }
 
   // Ids hidden from the menu, sorted.
@@ -439,11 +495,11 @@
       if (typeof id !== "string" || !ID_RE.test(id)) return;
       var cur = byId[id];
       if ((cur ? cur.hidden : false) === want) return;
-      byId[id] = { id: id, hidden: want, mtime: Math.max(now, cur ? cur.mtime + 1 : 0) };
+      byId[id] = Object.assign(cur ? JSON.parse(JSON.stringify(cur)) : { id: id }, { hidden: want, mtime: Math.max(now, cur ? cur.mtime + 1 : 0) });   // FWD-1: keeps its fields
       changed = true;
     });
     if (!changed) return d;
-    return menuNormalize({ apps: Object.keys(byId).map(function (id) { return byId[id]; }) });
+    return withMore(d, menuNormalize({ apps: Object.keys(byId).map(function (id) { return byId[id]; }) }), MENU_TOP_KNOWN, 8192);
   }
 
   // First-run profile (profiles.js): hide `ids` with mtime 1, and only
@@ -462,7 +518,7 @@
       changed = true;
     });
     if (!changed) return d;
-    return menuNormalize({ apps: Object.keys(byId).map(function (id) { return byId[id]; }) });
+    return withMore(d, menuNormalize({ apps: Object.keys(byId).map(function (id) { return byId[id]; }) }), MENU_TOP_KNOWN, 8192);
   }
 
   // ---------- 1c. Dock position (pure) ----------
