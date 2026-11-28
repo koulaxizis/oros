@@ -205,6 +205,7 @@ If your WooCommerce shop runs Production Ledger (a Noxpress plugin, with its orO
 - A cancelled or refunded order, or a cost deleted or marked historical there, leaves here by itself. A change of amount or date follows; your category, note and account stay. An entry you delete here doesn't come back.
 - Budget reads the shop when it opens and when you come back to it, at most every 6 hours, and every time you press `Save and read now`. Each read checks every month's totals against the shop's own, to the cent, and tells you if one differs.
 - When you then import a bank statement, a bank transfer for an order, a cost you paid from the bank, and the payouts of Viva, Stripe, PayPal or the courier (cash on delivery) are left unticked: that money is already here, order by order. You can still tick one that really is something else.
+- Bank lines you imported before the shop's records were read are the same money twice. `Shop records` lists them under `Already here from the bank` (same kind and amount, at most 10 days apart): leave ticked the pairs that are the same money and press `Join ticked`. Each shop entry moves into the bank line's account and the bank line goes, so the account's balance stays right. `Undo` brings them back. A bank statement imported for an account also puts a shop entry without an account into that account.
 - Don't also import the shop's Stripe account with `Import from Stripe or Invoice Ninja`: its charges are the same orders.
 - Unticking a shop stops reading it; its entries stay. orOS only reads the shop.
 

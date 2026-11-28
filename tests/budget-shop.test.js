@@ -164,3 +164,55 @@ test("areas: shop entries get the shop's area when made; per-area month totals",
   const f = O.perArea(p.put.concat([{ d: "2026-12-10", k: "o", a: 500, dm: "gone" }, { d: "2026-11-10", k: "o", a: 9, dm: "pub" }]), "2026-12", ["pub", "snd"]);
   assert.deepEqual(f, { by: { pub: { inc: 1272, out: 12400 }, snd: { inc: 0, out: 0 } }, none: { inc: 0, out: 500 } });
 });
+
+// PL-3 (Chris 2026-11-28): bank lines kept BEFORE the shop's records were
+// read are paired with them afterwards (shopTwins), and a bank import for
+// an account adopts a shop record that has no account.
+test("bank import for an account: the shop record without an account is adopted", () => {
+  const tx = L.plan(budget(), "pl", L.shopRows([P1, P2, SH], TAG, {})).put;
+  const r = K.plan([{ d: "2026-12-04", amt: 2426, text: "VIVA BUSINESS 812" }], { ac: "acc1", tx });
+  assert.equal(r[0].st, "dup");
+  assert.equal(r[0].dk, "shop");
+  assert.equal(r[0].adopt, 1);
+  assert.deepEqual(K.adopts(r, "acc1"), { ["l-pl-" + TAG + "-o812"]: "acc1" });
+  // already in an account: not moved again
+  const inAcc = tx.map((x) => Object.assign({}, x, { ac: "acc2" }));
+  assert.ok(!K.plan([{ d: "2026-12-04", amt: 2426, text: "X" }], { ac: "acc1", tx: inAcc })[0].adopt);
+  // without an account: nothing to adopt
+  assert.ok(!K.plan([{ d: "2026-12-04", amt: 2426, text: "X" }], { ac: "", tx })[0].adopt);
+});
+
+test("shopTwins: bank lines kept before the shop's records, nearest day first, each once", () => {
+  const shop = L.plan(budget(), "pl", L.shopRows([P1, P2, SH, E1], TAG, {})).put;
+  const bank = (id, d, a, k, extra) => Object.assign({ id, m: 1, d, a, k, c: "", n: "", src: "bank", ac: "acc1", ot: "VIVA " + id }, extra || {});
+  const tx = shop.concat([
+    bank("b1", "2026-12-10", 2426, "i"),            // 7 days: farther
+    bank("b2", "2026-12-04", 2426, "i"),            // 1 day: taken
+    bank("b3", "2026-12-06", 12400, "o"),           // the printer
+    bank("b4", "2026-12-04", 2426, "o"),            // other kind
+    bank("b5", "2026-12-03", 2426, "i", { ac: "gone" }),   // account removed
+    bank("b6", "2026-12-04", 2426, "i", { dm: "snd" })     // another area
+  ]);
+  const out = K.shopTwins(tx, "pub", ["acc1"]);
+  assert.deepEqual(out.map((p) => [p.bank.id, p.shop.id]).sort(), [["b2", "l-pl-" + TAG + "-o812"], ["b3", "l-pl-" + TAG + "-e7"]].sort());
+  // no area set: another area's line can pair
+  assert.equal(K.shopTwins(tx.filter((x) => x.id !== "b2" && x.id !== "b1"), "", ["acc1"]).length, 2);
+  // a shop record already in an account is not paired again
+  const kept = tx.map((x) => (x.src === "pl" ? Object.assign({}, x, { ac: "acc1" }) : x));
+  assert.deepEqual(K.shopTwins(kept, "pub", ["acc1"]), []);
+  // more than 10 days apart: not the same money
+  assert.deepEqual(K.shopTwins(shop.filter((x) => x.k === "i").concat([bank("b9", "2026-12-14", 2426, "i")]), "", ["acc1"]), []);
+  assert.deepEqual(K.shopTwins(null, "", null), []);
+});
+
+test("budget.js: shop twins are joined in one write with one Undo, and wired into the shop dialog", () => {
+  const fs = require("fs");
+  const src = fs.readFileSync(path.join(__dirname, "..", "budget/budget.js"), "utf8");
+  const shop = fs.readFileSync(path.join(__dirname, "..", "budget/shop.js"), "utf8");
+  assert.match(src, /function fixShopTwins\(pairs\)/);
+  assert.match(src, /twins: shopTwinPairs,\s*joinTwins: fixShopTwins/);
+  assert.match(src, /tombstone\("tx", b\.id\)/);
+  assert.match(src, /undoToast\(t\("na\.joined"/);
+  assert.match(shop, /A\.joinTwins\(sel\)/);
+  assert.match(shop, /showTwins\(\);\s*busy = false;/);
+});

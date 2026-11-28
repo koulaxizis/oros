@@ -53,7 +53,10 @@
       "shop.err.keys": "This device doesn't have the shop's key yet. Enter it in Settings › Connected services.",
       "shop.err.offline": "You're offline.", "shop.err.busy": "The shop asks to slow down. Try again in a minute.",
       "shop.err.notfound": "This shop doesn't answer as Production Ledger. Install it (1.0 or later) and turn on its orOS module.",
-      "shop.err.other": "Couldn't reach the shop. Try again later."
+      "shop.err.other": "Couldn't reach the shop. Try again later.",
+      "shop.tw.title": "Already here from the bank",
+      "shop.tw.hint": "These bank lines were kept before the shop's records were read, so the same money counts twice. Join puts each shop record into the bank line's account and removes the bank line. Untick a pair that is not the same money.",
+      "shop.tw.join": "Join ticked ({n})"
     },
     el: {
       "shop.btn": "Εγγραφές καταστήματος", "shop.title": "Εγγραφές καταστήματος",
@@ -78,7 +81,10 @@
       "shop.err.keys": "Αυτή η συσκευή δεν έχει ακόμα το κλειδί του καταστήματος. Πέρασέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
       "shop.err.offline": "Είσαι εκτός σύνδεσης.", "shop.err.busy": "Το κατάστημα ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
       "shop.err.notfound": "Αυτό το κατάστημα δεν απαντά ως Production Ledger. Εγκατάστησέ το (1.0 ή νεότερο) και άνοιξε τη λειτουργία orOS.",
-      "shop.err.other": "Δεν ήταν δυνατή η σύνδεση με το κατάστημα. Δοκίμασε αργότερα."
+      "shop.err.other": "Δεν ήταν δυνατή η σύνδεση με το κατάστημα. Δοκίμασε αργότερα.",
+      "shop.tw.title": "Ήδη εδώ από την τράπεζα",
+      "shop.tw.hint": "Αυτές οι γραμμές τράπεζας μπήκαν πριν διαβαστούν οι εγγραφές του καταστήματος, οπότε τα ίδια χρήματα μετρούν δύο φορές. Η ένωση βάζει κάθε εγγραφή καταστήματος στον λογαριασμό της γραμμής τράπεζας και σβήνει τη γραμμή τράπεζας. Ξετίκαρε ένα ζεύγος που δεν είναι τα ίδια χρήματα.",
+      "shop.tw.join": "Ένωση επιλεγμένων ({n})"
     }
   };
   // orosI18n (../i18n.js): S[<pack language>] from the pack "budget".
@@ -287,6 +293,49 @@
       areaSel.value = A.set().pld && areas.some(function (x) { return x.id === A.set().pld; }) ? A.set().pld : "";
       dlg.appendChild(A.field(t("shop.area"), areaSel, "bd-shop-area"));
     }
+    // PL-3: bank lines kept before the shop's records (same money twice)
+    var tw = el("div", "shop-tw");
+    tw.setAttribute("data-k", "shop.tw");
+    dlg.appendChild(tw);
+    function showTwins() {
+      tw.textContent = "";
+      var pairs = A.twins ? A.twins() : [];
+      if (!pairs.length) { tw.hidden = true; return; }
+      tw.hidden = false;
+      tw.appendChild(el("h3", "", t("shop.tw.title")));
+      tw.appendChild(el("p", "pay-hint", t("shop.tw.hint")));
+      var picks = [], join = null;
+      function count() {
+        var n = picks.filter(function (x) { return x.cb.checked; }).length;
+        join.textContent = t("shop.tw.join", { n: n });
+        join.disabled = !n;
+      }
+      pairs.forEach(function (p) {
+        var lab = el("label", "shop-chk");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = true;
+        lab.appendChild(cb);
+        var bank = p.bank.ot || p.bank.n || "", acc = A.accName(p.bank.ac);
+        lab.appendChild(el("span", "", A.date(p.bank.d) + " · " + (p.bank.k === "o" ? "−" : "+") + A.money(p.bank.a) + " · " +
+          bank + (acc ? " (" + acc + ")" : "") + " = " + A.date(p.shop.d) + " " + (p.shop.n || "")));
+        tw.appendChild(lab);
+        picks.push({ cb: cb, p: p });
+        cb.addEventListener("change", function () { count(); });
+      });
+      join = A.button("", "", function () {
+        var sel = picks.filter(function (x) { return x.cb.checked; }).map(function (x) { return { bank: x.p.bank.id, shop: x.p.shop.id }; });
+        if (!sel.length) return;
+        A.joinTwins(sel);
+        showTwins();
+      });
+      join.setAttribute("data-k", "shop.tw.join");
+      count();
+      var row = el("div", "dlg-actions");
+      row.appendChild(join);
+      tw.appendChild(row);
+    }
+    showTwins();
     var msg = el("div", "pay-msg");
     msg.setAttribute("aria-live", "polite");
     dlg.appendChild(msg);
@@ -320,6 +369,7 @@
         });
       }, Promise.resolve()).then(function () {
         if (allOk && ids.length) line(t("shop.checkOk"));
+        showTwins();
         busy = false;
         go.disabled = false;
       });

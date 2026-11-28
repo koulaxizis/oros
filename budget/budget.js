@@ -181,7 +181,7 @@
       "xf.twin": "The same money on the other account", "xf.noTwin": "None (not in Budget)",
       "xf.convDone": "The entry is now a transfer", "xf.convDone2": "The two entries are now one transfer",
       "err.same": "Pick two different accounts", "flt.xfer": "Transfers only", "flt.accs": "Accounts", "flt.noAcc": "Without an account",
-      "na.gone": "{n} duplicates removed", "na.moved": "{n} entries moved to an account",
+      "na.gone": "{n} duplicates removed", "na.moved": "{n} entries moved to an account", "na.joined": "{n} bank lines joined with shop records",
       "xf.aria": "Transfer {a} from {f} to {t}, {d}", "col.acc": "Account",
       "exp.sheet": "Open in Spreadsheet", "exp.sheetCap": "Only the first {n} entries fit in one sheet",
       "menu.bank": "Import bank statement", "menu.banks": "Banks (automatic)", "menu.rules": "Rules", "menu.areas": "Areas",
@@ -343,7 +343,7 @@
       "xf.twin": "Τα ίδια χρήματα στον άλλο λογαριασμό", "xf.noTwin": "Καμία (δεν είναι στο Budget)",
       "xf.convDone": "Η εγγραφή έγινε μεταφορά", "xf.convDone2": "Οι δύο εγγραφές έγιναν μία μεταφορά",
       "err.same": "Διάλεξε δύο διαφορετικούς λογαριασμούς", "flt.xfer": "Μόνο μεταφορές", "flt.accs": "Λογαριασμοί", "flt.noAcc": "Χωρίς λογαριασμό",
-      "na.gone": "Σβήστηκαν {n} διπλές", "na.moved": "{n} κινήσεις μπήκαν σε λογαριασμό",
+      "na.gone": "Σβήστηκαν {n} διπλές", "na.moved": "{n} κινήσεις μπήκαν σε λογαριασμό", "na.joined": "{n} γραμμές τράπεζας ενώθηκαν με εγγραφές καταστήματος",
       "xf.aria": "Μεταφορά {a} από {f} προς {t}, {d}", "col.acc": "Λογαριασμός",
       "exp.sheet": "Άνοιγμα στα Λογιστικά φύλλα", "exp.sheetCap": "Χωρούν μόνο οι πρώτες {n} κινήσεις σε ένα φύλλο",
       "menu.bank": "Εισαγωγή κίνησης λογαριασμού", "menu.banks": "Τράπεζες (αυτόματα)", "menu.rules": "Κανόνες", "menu.areas": "Τομείς",
@@ -3090,6 +3090,55 @@
     });
     return gone.length + moved.length;
   }
+  // PL-3 (Chris 2026-11-28): bank lines kept here before the shop's
+  // records were read are the same money as those records. For each pair
+  // the shop record goes into the bank line's account (with its bank
+  // FITID and text when it has none, so the next statement finds it as
+  // "already here") and the bank line goes (tombstoned, not read again).
+  // One write, one Undo.
+  function shopTwinPairs() {
+    var B = window.OrosBudgetBank;
+    if (!B || !B.shopTwins) return [];
+    var ids = data.acc.map(function (a) { return a.id; });
+    var pld = data.set.pld && areas().some(function (x) { return x.id === data.set.pld; }) ? data.set.pld : "";
+    return B.shopTwins(data.tx, pld, ids);
+  }
+  function fixShopTwins(pairs) {
+    var gone = [], moved = [];
+    (pairs || []).forEach(function (p) {
+      var b = findIn(data.tx, p.bank), s = findIn(data.tx, p.shop);
+      if (!b || !s || b.src !== "bank" || s.src !== "pl" || !b.ac || !findIn(data.acc, b.ac)) return;
+      if (s.ac && findIn(data.acc, s.ac)) return;
+      if (b.a !== s.a || b.k !== s.k) return;
+      moved.push(JSON.parse(JSON.stringify(s)));
+      s.ac = b.ac;
+      if (b.fit && !s.fit) s.fit = b.fit;
+      if (b.ot && !s.ot) s.ot = b.ot;
+      s.m = stamp(s.m);
+      gone.push(JSON.parse(JSON.stringify(b)));
+      data.tx = data.tx.filter(function (z) { return z.id !== b.id; });
+      tombstone("tx", b.id);
+    });
+    if (!gone.length) return 0;
+    commit();
+    if (!document.querySelector("dialog[open]")) renderAll();
+    undoToast(t("na.joined", { n: gone.length }), function () {
+      gone.forEach(function (c) {
+        untomb("tx", c.id);
+        c.m = stamp(Math.max(c.m, data.tombs["tx:" + c.id] || 0));
+        if (!findIn(data.tx, c.id)) data.tx.push(c);
+      });
+      moved.forEach(function (w) {
+        var s = findIn(data.tx, w.id);
+        if (!s) return;
+        ["ac", "fit", "ot"].forEach(function (f) { if (w[f] === undefined) delete s[f]; else s[f] = w[f]; });
+        s.m = stamp(s.m);
+      });
+      commit();
+      if (!document.querySelector("dialog[open]")) renderAll();
+    });
+    return gone.length;
+  }
   function initPay() {
     if (!PAY) return;
     PAY.init({
@@ -4228,7 +4277,11 @@
         if (n) { commit(); if (!document.querySelector("dialog[open]")) renderAll(); }
         return n;
       },
-      refresh: function () { renderAll(); }
+      refresh: function () { renderAll(); },
+      twins: shopTwinPairs,
+      joinTwins: fixShopTwins,
+      accName: accName,
+      date: dateShort
     });
   }
 

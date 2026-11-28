@@ -922,6 +922,9 @@
       if (cross) {
         if (cross.x) used[cross.x.id] = 1;
         row.st = "dup"; row.on = false; row.why = cross.x ? cross.x.id : ""; row.dk = cross.dk;
+        // PL-3: a shop record without an account goes into this one, so
+        // the account's balance keeps the money the bank line carried
+        if (cross.dk === "shop" && ac && !cross.x.ac) row.adopt = 1;
       }
       return row;
     });
@@ -972,6 +975,34 @@
     });
     return { dups: dups, rest: rest };
   }
+  // PL-3 (Chris 2026-11-28): bank lines already kept here that carry
+  // the same money as a shop record (src "pl") read later, the rule of
+  // crossTwin "shop": same kind and amount within 10 days, not a line
+  // whose area is another than the shop's. Only shop records without an
+  // account are paired (one already in an account was paired before);
+  // each side is used once, the nearest day first.
+  // → [{ bank, shop }]
+  function shopTwins(txs, plArea, accIds) {
+    var known = {}, used = {}, out = [];
+    (accIds || []).forEach(function (id) { known[id] = 1; });
+    var shop = (txs || []).filter(function (x) {
+      return x && x.src === "pl" && !(x.ac && known[x.ac]) && typeof x.d === "string";
+    }).sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : (a.id < b.id ? -1 : 1); });
+    var bank = (txs || []).filter(function (x) {
+      return x && x.src === "bank" && x.ac && known[x.ac] && typeof x.d === "string" &&
+        !(x.dm && plArea && x.dm !== plArea);
+    });
+    shop.forEach(function (p) {
+      var best = null, gap = 99;
+      bank.forEach(function (b) {
+        if (used[b.id] || b.k !== p.k || b.a !== p.a) return;
+        var g = dayGap(b.d, p.d);
+        if (g <= 10 && (g < gap || (g === gap && best && b.id < best.id))) { best = b; gap = g; }
+      });
+      if (best) { used[best.id] = 1; out.push({ bank: best, shop: p }); }
+    });
+    return out;
+  }
   function counts(rows) {
     var c = { "new": 0, dup: 0, same: 0, gone: 0, skip: 0, on: 0 };
     rows.forEach(function (r) { c[r.st]++; if (r.on) c.on++; });
@@ -984,7 +1015,7 @@
     parseCsv: parseCsv, guessSep: guessSep, findHeader: findHeader, guessMap: guessMap, csvItems: csvItems,
     headerSig: headerSig, parseOfx: parseOfx, parseMt940: parseMt940, paypalMap: paypalMap, paypalItems: paypalItems, revolutMap: revolutMap, revolutItems: revolutItems, parseQif: parseQif, qifDates: qifDates, parseCamt: parseCamt,
     detectFormat: detectFormat, ruleMatches: ruleMatches, matchRule: matchRule, noteFor: noteFor, rerun: rerun,
-    suggestQ: suggestQ, matchArea: matchArea, merchantKey: merchantKey, learnMap: learnMap, learned: learned, bankId: bankId, similar: similar, plan: plan, entries: entries, adopts: adopts, noAccount: noAccount, counts: counts
+    suggestQ: suggestQ, matchArea: matchArea, merchantKey: merchantKey, learnMap: learnMap, learned: learned, bankId: bankId, similar: similar, plan: plan, entries: entries, adopts: adopts, noAccount: noAccount, shopTwins: shopTwins, counts: counts
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosBudgetBank = api;
