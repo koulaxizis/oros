@@ -113,7 +113,7 @@ test("voicekit: the German voice Thorsten from orOS's own copy, SHA-256 pinned, 
 
 test("wiring: the shell offers Thorsten, Settings states each licence, the worker loads the voice's language", () => {
   const shell = read("shell.js"), st = read("settings/settings.js"), worker = read("voicekit/worker.js");
-  assert.match(shell, /de: "de-thorsten"/);
+  assert.match(shell, /de: \["de-thorsten"\]/);
   assert.match(shell, /k: "cr\.piper-thorsten"/);
   assert.match(st, /ac\.read\.nat\.hint" \+ free/);
   assert.match(worker, /importScripts\(m\.g2p\)/);

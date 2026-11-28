@@ -155,6 +155,7 @@ orosPack("de", "settings", {
  "ac.read.novoices": "Für diese Sprache ist auf diesem Gerät keine Stimme installiert.",
  "ac.read.voices.hint": "Es werden nur die auf diesem Gerät installierten Stimmen gezeigt, nie Online-Stimmen. Weitere fügst du in den Spracheinstellungen deines Systems hinzu (Windows: Zeit und Sprache › Spracheingabe; Android: Sprachausgabe).",
  "ac.read.nat": "Natürliche Stimme {name} (orOS, auf diesem Gerät)",
+ "ac.read.nat.many": "Natürliche Stimmen {name} (orOS, auf diesem Gerät)",
  "ac.read.nat.opt": "{name} · natürliche Stimme von orOS",
  "ac.read.nat.hint": "Eine Stimme aus einem neuronalen Netz, die diese Sprache viel natürlicher vorliest. Sie wird einmal geladen ({mb} MB) und liest danach ohne Internet; der Text verlässt nie dieses Gerät. Lizenz {licence}: kostenlos für nicht kommerzielle Nutzung, verkaufe also keine Aufnahmen, die du damit machst.",
  "ac.read.nat.hint.free": "Eine Stimme aus einem neuronalen Netz, die diese Sprache viel natürlicher vorliest. Sie wird einmal geladen ({mb} MB) und liest danach ohne Internet; der Text verlässt nie dieses Gerät. Lizenz {licence}: frei für jede Nutzung.",

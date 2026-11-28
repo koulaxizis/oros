@@ -9991,6 +9991,12 @@
         { name: "Piper voice de_DE-thorsten-medium", url: "https://huggingface.co/rhasspy/piper-voices",
           by: "Thorsten Müller (Thorsten-Voice) & the Piper voices project (rhasspy)", lic: "CC0",
           k: "cr.piper-thorsten" },
+        { name: "Kokoro-82M v1.0 (voices Heart and Michael)", url: "https://huggingface.co/hexgrad/Kokoro-82M",
+          by: "hexgrad, ONNX export by onnx-community; CC BY training audio: Koniwa, SIWIS", lic: "Apache-2.0",
+          k: "cr.kokoro" },
+        { name: "misaki English dictionaries", url: "https://github.com/hexgrad/misaki",
+          by: "hexgrad", lic: "Apache-2.0",
+          k: "cr.misaki" },
         { name: "U²-Net (u2netp model)", url: "https://github.com/xuebinqin/U-2-Net",
           by: "Xuebin Qin & contributors", lic: "Apache-2.0",
           k: "cr.u2-net" },
@@ -18826,7 +18832,9 @@
     // VOICE-1: orOS's own natural voices (voicekit/voicekit.js, loaded
     // only when Settings or a reading needs it). nat[id] = { ready, pct, err }
     // on this device; the download is the person's own click in Settings.
-    var NAT = { el: "el-joy", de: "de-thorsten" }, nat = {}, vkLoading = null, natAbort = null;   // VOICE-2: + German
+    // VOICE-2: + German. VOICE-3: + English, two voices in one download
+    // (the first is the one Automatic uses); nat is kept per voice id.
+    var NAT = { el: ["el-joy"], de: ["de-thorsten"], en: ["en-heart", "en-michael"] }, nat = {}, vkLoading = null, natAbort = null;
     function vkLoad() {
       if (window.OrosVoice) return Promise.resolve(window.OrosVoice);
       if (!vkLoading) vkLoading = new Promise(function (res, rej) {
@@ -18840,8 +18848,9 @@
     }
     function natCheck() {
       return vkLoad().then(function (OV) {
-        return Promise.all(Object.keys(NAT).map(function (l) {
-          var id = NAT[l];
+        var all = [];
+        Object.keys(NAT).forEach(function (l) { all = all.concat(NAT[l]); });
+        return Promise.all(all.map(function (id) {
           return OV.ready(id).then(function (r) {
             var was = nat[id] && nat[id].ready;
             nat[id] = nat[id] || {};
@@ -18853,30 +18862,40 @@
     }
     // the natural voice that reads lang now: downloaded, and chosen or Automatic
     function natFor(l) {
-      var id = NAT[l];
-      if (!id || !nat[id] || !nat[id].ready) return "";
+      var ids = (NAT[l] || []).filter(function (id) { return nat[id] && nat[id].ready; });
+      if (!ids.length) return "";
       var pick = raPrefs().vo[l] || "";
-      return !pick || pick === "oros:" + id ? id : (raAvailable() ? "" : id);
+      if (/^oros:/.test(pick)) return ids.indexOf(pick.slice(5)) !== -1 ? pick.slice(5) : ids[0];
+      return !pick || !raAvailable() ? ids[0] : "";
     }
     function natSnap() {
+      var VS = window.OrosVoice ? window.OrosVoice.VOICES : {};
       return Object.keys(NAT).map(function (l) {
-        var id = NAT[l], n = nat[id] || {}, V = window.OrosVoice && window.OrosVoice.VOICES[id];
-        return { lang: l, id: id, name: V ? V.name : "", mb: V ? V.mb : 63, licence: V ? V.licence : "",
-                 free: !!(V && V.free), ready: !!n.ready, pct: n.pct == null ? null : n.pct, err: !!n.err };
+        var ids = NAT[l], id = ids[0], n = nat[id] || {}, V = VS[id];
+        var voices = ids.map(function (k) { return { id: k, name: VS[k] ? VS[k].name : "", ready: !!(nat[k] && nat[k].ready) }; });
+        return { lang: l, id: id, name: voices.map(function (v) { return v.name; }).filter(Boolean).join(", "),
+                 many: ids.length > 1, voices: voices, mb: V ? V.mb : 63, licence: V ? V.licence : "", free: !!(V && V.free),
+                 ready: voices.every(function (v) { return v.ready; }), pct: n.pct == null ? null : n.pct, err: !!n.err };
       });
     }
+    // every voice of the language, one after the other (a shared file is
+    // downloaded once); the first sets the progress
     function natGet(l) {
-      var id = NAT[l];
+      var ids = NAT[l], id = ids && ids[0];
       if (!id || (nat[id] && nat[id].pct != null)) return;
-      nat[id] = { ready: false, pct: 0 };
+      nat[id] = { ready: !!(nat[id] && nat[id].ready), pct: 0 };
       settingsNotify();
       natAbort = typeof AbortController === "function" ? new AbortController() : null;
-      var last = 0;
+      var last = 0, signal = natAbort && natAbort.signal;
       vkLoad().then(function (OV) {
-        return OV.prepare(id, function (f) {
-          var pct = Math.round(f * 100);
-          if (pct !== last) { last = pct; nat[id].pct = pct; settingsNotify(); }
-        }, natAbort && natAbort.signal);
+        return ids.reduce(function (p, k, i) {
+          return p.then(function () {
+            return OV.download(k, function (f) {
+              var pct = Math.min(99, Math.round(((i ? 0.99 : 0) + f * (i ? 0.01 : 0.99)) * 100));
+              if (pct !== last) { last = pct; nat[id].pct = pct; settingsNotify(); }
+            }, signal).then(function () { if (k !== id) nat[k] = { ready: true, pct: null }; });
+          });
+        }, Promise.resolve());
       }).then(function () {
         nat[id] = { ready: true, pct: null };
         settingsNotify();
@@ -18887,14 +18906,14 @@
     }
     function natCancel() { if (natAbort) { try { natAbort.abort(); } catch (e) {} natAbort = null; } }
     function natRemove(l) {
-      var id = NAT[l];
-      if (!id) return;
+      var ids = NAT[l];
+      if (!ids) return;
       natCancel();
       if (raEngine) raEngine.stop();
-      vkLoad().then(function (OV) { return OV.forget(id); }).then(function () {
-        nat[id] = { ready: false, pct: null };
+      vkLoad().then(function (OV) { return OV.forget(ids); }).then(function () {
+        ids.forEach(function (id) { nat[id] = { ready: false, pct: null }; });
         var p = raPrefs();
-        if (p.vo[l] === "oros:" + id) { delete p.vo[l]; raWrite(p); }
+        if (/^oros:/.test(p.vo[l] || "")) { delete p.vo[l]; raWrite(p); }
         settingsNotify();
       }, function () {});
     }

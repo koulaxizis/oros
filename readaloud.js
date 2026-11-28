@@ -44,6 +44,9 @@
 //     Automatic or picked it (prefs vo = "oros:<id>"); it also reads
 //     where the device has no voices at all. The host gives
 //     natural(lang) → voice id and voices() → Promise(window.OrosVoice).
+//   • 1.3.0 (VOICE-3, Chris 2026-11-28): the English voices Heart and
+//     Michael (Kokoro) run in up to 3 workers, so the next parts of a
+//     text are asked for together (OrosVoice.ahead).
 //
 // The pure part (section 1) is the same code as Library's
 // library/core.js speechParts / localVoice / speechText / guessLang;
@@ -54,7 +57,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.2.0";
+  var VER = "1.3.0";
   var KEY = "oros-readaloud";
   var RATES = [0.8, 1, 1.2, 1.4, 1.6, 2];
   var MAX_TEXT = 20000;
@@ -507,6 +510,13 @@
     var my = st.gen, k = st.k, p = st.parts[k];
     natStop();
     mark(p);
+    // VOICE-3: a voice with more than one worker makes the next parts
+    // side by side (OrosVoice.ahead)
+    host.voices().then(function (OV) {
+      if (!st || st.gen !== my) return;
+      var n = OV.ahead ? OV.ahead(nid) : 1;
+      for (var j = 1; j < n && k + j < st.parts.length; j++) clipOf(nid, k + j);
+    }).catch(function () {});
     clipOf(nid, k).then(function (clip) {
       if (!st || st.gen !== my || st.k !== k || !st.playing) return;
       return host.voices().then(function (OV) {
