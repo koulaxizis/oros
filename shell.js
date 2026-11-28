@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "9.04.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "9.05.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -982,9 +982,23 @@
     if (!C) return;
     var covered = wpVizCovered();
     var p = covered ? null : wpVizPlaying();
-    wpVizListen(p);
+    // MU-VIZ-BEAT: with nothing playing the wallpaper already listens to
+    // Music (nothing is read until a song plays), so the first song
+    // that streams is asked about before it starts and can move the
+    // light from its first beat.
+    var mu = hostApi(window.__orosMusicHost);
+    var pre = !p && !covered && mu && typeof mu.viz === "function" && typeof mu.vizFrame === "function" ? { id: "music", h: mu } : null;
+    wpVizListen(p || pre);
     var was = C.playing;
     C.playing = !!p;
+    // MU-VIZ-BEAT: playing with no sound to read (a stream whose server
+    // does not allow it): Settings says why the light moves on its own.
+    // Kept while covered (Settings itself covers the desktop).
+    if (!covered) {
+      var fr = null;
+      if (p) { try { fr = p.h.vizFrame(); } catch (e) { fr = null; } }
+      C.calm = !!p && !(fr && fr.live);
+    }
     if (C.v && !covered && (C.playing || was !== C.playing || C.wasCovered)) C.v.wake();
     C.wasCovered = covered;
   }
@@ -994,7 +1008,7 @@
       if (wpVizCtl.v) { wpVizCtl.v.setStyle(wpVizNow().style); wpVizCtl.v.redraw(); }
       return;
     }
-    var C = wpVizCtl = { cv: null, v: null, src: null, iv: 0, playing: false, wasCovered: false };
+    var C = wpVizCtl = { cv: null, v: null, src: null, iv: 0, playing: false, wasCovered: false, calm: false };
     wpVizKit().then(function (V) {
       if (wpVizCtl !== C) return;
       var cv = document.getElementById("wp-viz");
@@ -14037,7 +14051,7 @@
       gamemode: SOLO ? null : { on: gameModeOn(), active: gameNow },     // GAMEMODE-1
       wpdir: wpdirSnapshot(),                 // WPDIR-1
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
-      viz: (!pic && state.wallpaper === "viz") ? { style: wpVizNow().style, styles: WP_VIZ_STYLES.slice(), still: wpVizStill() } : null,   // VIZWALL-1, VIZ-SLOW
+      viz: (!pic && state.wallpaper === "viz") ? { style: wpVizNow().style, styles: WP_VIZ_STYLES.slice(), still: wpVizStill(), calm: !!(wpVizCtl && wpVizCtl.calm) } : null,   // VIZWALL-1, VIZ-SLOW, MU-VIZ-BEAT
       land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style, motion: !!wpLandNow().motion, light: wpLandNow().light !== 0, styles: WP_LAND_STYLES.slice() } : null,
       wallpapers: WALLPAPERS.map(function (w) {
         var css = w.css;

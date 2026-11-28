@@ -574,6 +574,7 @@
         function (v) { set("wpviz:style", v); }, t("a.wallpaper.viz.style")), { stack: true }));
       c3.appendChild(el("p", "hint", t("a.wallpaper.viz.hint")));
       if (WP_STILL.indexOf(s.viz.still) >= 0) c3.appendChild(el("p", "hint wp-still", t("a.wallpaper.still." + s.viz.still)));   // VIZ-SLOW
+      else if (s.viz.calm) c3.appendChild(el("p", "hint wp-still", t("a.wallpaper.viz.calm")));   // MU-VIZ-BEAT
     }
     if (s.land) {                                      // Living land: style, motion, another shape
       var lst = (s.land.styles || ["islands"]).map(function (v) { return { value: v, label: t("a.wallpaper.land." + v) }; });
