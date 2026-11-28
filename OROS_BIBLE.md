@@ -14483,3 +14483,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** mail/local.js (new), mail/wire/* (new), mail/mail.js, mail/notify.js, mail/mail.css, help EN/EL/DE, i18n/de/mail.js, i18n/de/STATUS.md, whatsnew EN/EL, shell.js, OROS_BIBLE.md; tests mail-local (new). sw.js unchanged on purpose: local.js and wire/* are used only under the launcher, which serves the app.
 - **Tests:** full `node --test tests/*.test.js`; Chromium end to end against the real launcher and a scripted Bridge (add account, fingerprint equal to openssl's, inbox, read, reply over 1025, background check through the socket, no relay requests, Greek at 360 px).
 - **Not tested:** a real Proton Mail Bridge, a real provider through the socket, Windows at run time, macOS (no orOS launcher for Mac exists yet).
+
+### 2026-11-28 — 9.22.00 — The Assistant reads the Printful store (AS-PF, #1341)
+- **Why:** Chris 2026-11-28, approved Assistant plan AH-5 (Printful GET only, key in the Assistant's Connected services, sealed).
+- **What:** platform `printful` in Connected services; 7 GET rows in links/core.js and relay/ext.js (Mail thread OK at 636c623e); `printful_read` (stores, synced products, a product, orders, an order, the catalogue) with orders by number and status only; routine switch `pf`. Rule in Part II (AS-PF).
+- **Files:** assistant/core.js, assistant.js, routines.js, help EN/EL, links/core.js, relay/ext.js, settings (core.js strings, settings.js picker, settings.css), i18n/de (assistant, settings, help), whatsnew EN/EL, shell.js, OROS_BIBLE.md, tests (assistant-printful new, gate-parity, assistant-github, assistant-calc, fonts-list).
+- **Tests:** full `node --test tests/*.test.js`; pfShape run on real answers of the owner's store; relay owner's tests 121 pass. Relay deploy through Workers Builds from main.
+- **Not tested:** orders on a real store (the test token had no Orders scope), the relay path from a browser.
