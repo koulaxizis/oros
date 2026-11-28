@@ -4391,6 +4391,15 @@
       return;
     }
     
+    // Standalone (?standalone, no shell parent): there is no sync by
+    // design, so say so once as info instead of retrying into an error.
+    var embedded = false;
+    try { embedded = window.parent !== window; } catch (e) { embedded = true; }
+    if (!embedded) {
+      console.info('[notes] Standalone without the orOS shell: sync is off here');
+      return;
+    }
+
     // Retry for up to 5 seconds — shell may still be booting
     console.warn('[notes] orosSync not ready yet, retrying for 5s...');
     var attempts = 0;
