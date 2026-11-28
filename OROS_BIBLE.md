@@ -14443,3 +14443,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** vault.js, gate/gate.js, assistant/claudefiles.js, assistant/assistant.js, assistant/core.js, relay/gate.js, shell.js, help/topics/whatsnew.en/el.txt; tests vault-od-idb (new), gate-pc (new), gate-filecopy, vault-harness.
 - **Tests:** full `node --test tests/*.test.js`; Playwright Chromium (LANG=C.UTF-8): IndexedDB `oros-vault-od` made at boot, a localStorage list moves to it and survives reloads, `orosGate.folders()` maps `C:/Users/koulaxizis/Documents` to `/internal/Drive/ckDesktop/Documents` with a stubbed vault, no page errors.
 - **Not tested:** a real phone, Safari, the real 84k-entry manifest on a phone (time and memory of a pull), the live relay before deploy.
+
+### 2026-11-28 — 9.17.00 — The Assistant reads GitHub (read only) and counts exactly (AS-GH, AS-CALC, #1320)
+- **Why:** Chris 2026-11-28, approved AH spec: AH-5 (GitHub token in Connected services, never Passwords), AH-7 (fixed tools, never run_js), AH-PNoxpress-1 and AH-PWaymark-3/4.
+- **What:** `github_read` through the Connected services GitHub account (GET-only allowlist rows in links/core.js and relay/ext.js; routine switch `gh`); `calc` with Spreadsheet's engine (`OrosSheetFx`) and `file_hash` (SHA-256), both in routines. Rules in Part II (AS-GH, AS-CALC).
+- **Files:** assistant/core.js, assistant.js, routines.js, help EN/EL, links/core.js, relay/ext.js, i18n/de (assistant, help), whatsnew EN/EL, shell.js, OROS_BIBLE.md, tests (assistant-github, assistant-calc, linkskanban, gate-parity, fonts-list).
+- **Tests:** full `node --test tests/*.test.js`; relay owner's ext/links tests (115 pass). Relay deploy through Workers Builds from main.
+- **Not tested:** a real GitHub call with a real token.
