@@ -159,3 +159,23 @@ test("no rule puts a fixed colour on content inside an accent fill", () => {
   }
   assert.deepEqual(bad, []);
 });
+
+// ACCENT-INK-4 (Tux follow-up 4, 2026-11-28): the widgets gallery dialog
+// ("All" chip, "Done") used var(--wg-on, #fff). --wg-on is set only on
+// the desktop widget box, so the dialog outside it fell back to white on
+// the near-white Tux dark accent. A local on-accent token may be used,
+// but its fallback must be --accent-ink, never a fixed colour.
+test("on-accent tokens fall back to --accent-ink, never a fixed colour", () => {
+  const bad = [];
+  const re = /var\(\s*--([\w-]*-on(?:-accent)?)\s*(?:,\s*(#[0-9a-fA-F]{3,8}|white|black)\s*)?\)/g;
+  for (const f of ALL) {
+    const src = fs.readFileSync(f, "utf8");
+    src.split("\n").forEach((line, i) => {
+      for (let m; (m = re.exec(line)); ) {
+        if (!/background[^;]*var\(--accent/.test(line)) continue;
+        bad.push(path.relative(ROOT, f) + ":" + (i + 1) + " --" + m[1]);
+      }
+    });
+  }
+  assert.deepEqual(bad, []);
+});

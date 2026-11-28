@@ -5,6 +5,18 @@
    gradient stripe (gold, doctrine-compliant brand color).
    ============================================================ */
 
+/* TUX-CONTRAST: the neutral tokens follow the shell palette, which the
+   app copies onto :root. They were never set before, so the app stayed
+   dark under light skins while --accent turned dark (Tux light). */
+:root {
+  --bg-body:       var(--bg, #14120d);
+  --bg-card:       var(--panel-bg, #1b1914);
+  --bg-surface:    color-mix(in srgb, var(--panel-bg, #1b1914) 90%, var(--text, #e8eaf0));
+  --bg-hover:      color-mix(in srgb, var(--panel-bg, #1b1914) 84%, var(--text, #e8eaf0));
+  --border-subtle: var(--border, #2a2824);
+  --text-primary:  var(--text, #e8eaf0);
+}
+
 /* ============ RESET & BASE ============ */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -198,13 +210,13 @@ small {
 }
 
 .btn-done {
-  background: #4caf50;
+  background: #2e7d32;
   color: #fff;
   flex: 1;
 }
 
 .btn-done:hover {
-  background: #45a049;
+  background: #276b2b;
 }
 
 .btn-skip {

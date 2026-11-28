@@ -315,7 +315,7 @@
   --bg-desktop:   #191919;
   --bar-bg:       rgba(19, 19, 19, 0.95);
   --text:         #f0f0f0;
-  --text-dim:     #9c9c9c;
+  --text-dim:     #a6a6a6;
   --accent:       #e0e0e0;
   --accent-hover: #ffffff;
   --accent-soft:  rgba(224, 224, 224, 0.14);
@@ -1848,12 +1848,12 @@ body.till-mode #pocket-chip { display: none !important; }
 }
 #ld-dock .ld-pocket .ld-pk-n {
   position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box;
-  border-radius: 9px; background: var(--accent); color: var(--bg, #fff); font-size: 11px; font-weight: 700;
+  border-radius: 9px; background: var(--accent); color: var(--accent-ink, #fff); font-size: 11px; font-weight: 700;
   line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; pointer-events: none;
 }
 /* W2: while something is dragged, both buttons show as a drop place */
 #pocket-chip.pk-drag { outline: 1.5px dashed var(--accent); outline-offset: -4px; }
-#pocket-chip.pk-over, #ld-dock .ld-pocket.pk-over .ld-pk-tile { background: var(--accent); color: var(--bg, #fff); }
+#pocket-chip.pk-over, #ld-dock .ld-pocket.pk-over .ld-pk-tile { background: var(--accent); color: var(--accent-ink, #fff); }
 #ld-dock .ld-pocket.pk-over .ld-pk-tile { border-style: solid; }
 @media (prefers-reduced-motion: no-preference) {
   #pocket-chip.pk-drag, #ld-dock .ld-pocket.pk-drag .ld-pk-tile { transition: background .12s ease, color .12s ease; }
