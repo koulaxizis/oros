@@ -1145,8 +1145,10 @@
     // source window), the newest one wins.
     // v10: Passwords' autofill too (PW-AF2/3): the fill lists it seals,
     // logins to save, and the autofill state. Nothing else either way.
+    // v14 (PW-CLIP): Passwords' copies of secrets, marked sensitive by
+    // the app ({t:"clip"} and its done/error answers).
     var bioPort = null, bioFn = null;
-    var TO_APP = { "pw-bio": 1, "af-keys": 1, "af-index": 1, "af-state": 1 };
+    var TO_APP = { "pw-bio": 1, "af-keys": 1, "af-index": 1, "af-state": 1, "clip": 1 };
     var TO_PAGE = { "pw-bio": 1, "af-keys": 1, "af-state": 1, "af-save": 1 };
     function bioMsg(raw, toApp) {
       var m = null;
@@ -1154,7 +1156,8 @@
       if (!m || typeof m !== "object" || typeof m.t !== "string") return null;
       if ((toApp ? TO_APP : TO_PAGE)[m.t] === 1) return m;
       if (toApp) return (m.t === "clear" && m.what === "af") || (m.t === "applied" && m.what === "af-save") ? m : null;
-      return (m.t === "done" && m.what === "af-index") || (m.t === "error" && (m.what === "af-index" || m.what === "af-keys")) ? m : null;
+      return (m.t === "done" && m.what === "af-index") || (m.t === "error" && (m.what === "af-index" || m.what === "af-keys"))
+        || ((m.t === "done" || m.t === "error") && m.what === "clip") ? m : null;
     }
     if (id === "passwords") {
       win.addEventListener("message", function (ev) {

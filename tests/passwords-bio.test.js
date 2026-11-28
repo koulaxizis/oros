@@ -127,7 +127,7 @@ test("PW-BIO single app: solo.js relays only pw-bio and autofill, and only for P
   const so = read("solo.js");
   assert.match(so, /if \(id === "passwords"\) \{\s*win\.addEventListener\("message"/);
   assert.match(so, /if \(!ev\.ports \|\| !ev\.ports\[0\] \|\| ev\.source\) return;/, "only a port the browser posted");
-  assert.match(so, /var TO_APP = \{ "pw-bio": 1, "af-keys": 1, "af-index": 1, "af-state": 1 \};/);
+  assert.match(so, /var TO_APP = \{ "pw-bio": 1, "af-keys": 1, "af-index": 1, "af-state": 1, "clip": 1 \};/);
   assert.match(so, /var TO_PAGE = \{ "pw-bio": 1, "af-keys": 1, "af-state": 1, "af-save": 1 \};/);
   assert.match(so, /\(m\.t === "clear" && m\.what === "af"\) \|\| \(m\.t === "applied" && m\.what === "af-save"\)/);
   assert.match(so, /\(m\.t === "done" && m\.what === "af-index"\) \|\| \(m\.t === "error" && \(m\.what === "af-index" \|\| m\.what === "af-keys"\)\)/);
