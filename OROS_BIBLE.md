@@ -14248,3 +14248,11 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Stamp:** by the owner thread on main 9.00.00.
 - **Tests:** full `node --test tests/*.test.js`; Playwright in the real shell at 360px, Greek and English (a 357 K plain mailbox packed at boot, all entries read back, Space per app lists them under their apps); CI.
 - **Not tested:** a real phone (Brave/Chrome Android), Safari, real Dropbox.
+
+### 2026-11-28 — 9.00.02 — orOS Gate: pictures from files_read reach Claude as pictures (GATE-IMG, #1303)
+- **Why:** Chris 2026-11-27 (the Layout paging session): through orOS Gate the model could not see page images; 9.00.00 left the Gate OCR-only. The Mail thread (owner of relay/) approved with six conditions (issuecomment-7230294704).
+- **What:** the relay passes up to 3 pictures of an open device's files_read answer as MCP image parts (png/jpeg/webp/gif with matching first bytes, ≤ 512 KB by base64 length), deletes them from the answer at once and never stores them, never for NEVER_APPS or Mail/Passwords/Assistant paths (a leading ./ stripped, the reviewer's nit); anything dropped becomes a text note. The Assistant in the Gate frame sends the picture (shrunk under 260 KB) instead of OCR only. See Part II GATE-IMG.
+- **Files:** relay/gate.js, gate/gate.js, assistant/assistant.js, tests/gate-images.test.js (new), tests/assistant-layoutfix.test.js, help/topics/whatsnew.{en,el}.txt, shell.js, OROS_BIBLE.md.
+- **Stamp:** by the owner thread on main 9.00.01. Relay deploys via Workers Builds from main only.
+- **Tests:** full `node --test tests/*.test.js`; CI. **Not tested:** a real Claude connector call through the deployed relay.
+

@@ -57,7 +57,7 @@ test("at most 3 pictures per answer; only files_read; never the apps that are ne
   assert.equal(p.dropped, 1);
   assert.equal(G.gateImages("search_data", {}, four).imgs.length, 0);
   assert.equal(G.gateImages("files_read", { app: "passwords" }, four).imgs.length, 0);
-  for (const pa of ["/internal/Mail/a.png", "Mail/x.jpg", "internal/Passwords/v.png", "Assistant/Chats/a.png"]) {
+  for (const pa of ["/internal/Mail/a.png", "Mail/x.jpg", "internal/Passwords/v.png", "Assistant/Chats/a.png", "./Mail/a.png", "././internal/Passwords/b.png"]) {
     assert.equal(G.gateImages("files_read", { path: pa }, four).imgs.length, 0, pa);
   }
   assert.equal(G.gateImages("files_read", { path: "Mailbox art/a.png" }, four).imgs.length, 3);

@@ -3437,7 +3437,7 @@ export function gateImages(name, args, list) {
   const out = { imgs: [], dropped: 0 };
   if (!Array.isArray(list) || !list.length) return out;
   const a = args && typeof args === "object" ? args : {};
-  if (IMG_TOOLS.indexOf(name) < 0 || neverIn(a) || IMG_NEVER_RE.test(String(a.path || "").trim())) { out.dropped = list.length; return out; }
+  if (IMG_TOOLS.indexOf(name) < 0 || neverIn(a) || IMG_NEVER_RE.test(String(a.path || "").trim().replace(/^(\.\/)+/, ""))) { out.dropped = list.length; return out; }
   for (const x of list) {
     const d = x && typeof x.data === "string" ? x.data : "", mt = x && typeof x.mimeType === "string" ? x.mimeType : "";
     let ok = out.imgs.length < IMG_MAX && !!IMG_HEAD[mt] && d.length >= 16 && d.length <= IMG_B64 && d.length % 4 === 0;
