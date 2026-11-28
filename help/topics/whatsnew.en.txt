@@ -3,6 +3,19 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.21.00
+- **Proton Mail in orOS Mail, through Proton Mail Bridge.** In installed orOS, orOS Portable and orOS USB, Mail now talks to every provider from your own computer, without the orOS relay. That includes Proton Mail Bridge (127.0.0.1, ports 1143 and 1025): add your Proton address, use the password Bridge shows, and trust Bridge's certificate once when Mail asks. In orOS in the browser and on the phone Mail works as before.
+
+## Version 9.20.00
+- **The Assistant reads the text in pictures and scans.** Ask about a receipt, a scanned letter or a photo of a page on the orOS disk, also in a routine: its text is read on your device (Greek and English). In a PDF only the scanned pages are read, up to 15 when you ask for more, and pictures in orOS Drive folders that are only in the cloud are fetched first.
+- **Fixed:** a PDF attached to the Assistant was not read and the message could not be sent.
+
+## Version 9.19.00
+- **The Assistant checks web sites.** With web search on, ask "is noxpress.tech up?", "what are the MX records of my domain?" or "how many pages does its sitemap list?". The page is checked through the orOS relay and DNS through Cloudflare, and only sites you named are checked. A routine that may search the web can check your sites on its own schedule.
+
+## Version 9.18.00
+- **Time zones side by side in Calendar.** `More` › `Time zones…` puts up to 3 places from Time's World clock next to your own hours. The Day view shows their hours in columns, with +1 or −1 when it is already another day there; the Week view shows how far ahead or behind each place is, and an event's tooltip gives its time in each place. The choice syncs to all your devices.
+
 ## Version 9.17.00
 - **The Assistant reads GitHub and counts exactly.** With a GitHub account in Connected services, the Assistant can read releases and how often they were downloaded, files such as updates.json, Actions runs, pull requests, commits and issues. It only reads, and it never sees the token. A routine reads GitHub only when you tick its switch. Totals, VAT, percentages, dates and loans now come from Spreadsheet's formulas instead of mental arithmetic, and the Assistant can give a file's SHA-256 to check a download.
 

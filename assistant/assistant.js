@@ -805,7 +805,7 @@
       "entry.invoice": "New invoice · {app}",
       "tool.sum": "Summary of {app}", "tool.sumNo": "You kept the summary of {app} back", "tool.shopFind": "Products of {shop} for “{q}”: {n}", "tool.shopErr": "The shop could not be asked",
       "tool.gh": "GitHub {repo}: {what}", "tool.ghErr": "GitHub could not be read ({repo})",
-      "tool.calc": "Computed with Spreadsheet's formulas: {n}", "tool.hash": "SHA-256 of {path}",
+      "tool.calc": "Computed with Spreadsheet's formulas: {n}", "tool.wchk.status": "Checked {host}", "tool.wchk.dns": "DNS of {host}", "tool.wchk.sitemap": "Sitemap of {host}", "tool.hash": "SHA-256 of {path}",
       "gh.w.releases": "releases", "gh.w.latest_release": "latest release", "gh.w.file": "file", "gh.w.runs": "Actions runs", "gh.w.pulls": "pull requests", "gh.w.commits": "commits", "gh.w.issues": "issues",
       "f.pweight": "Weight", "f.length": "Length", "f.width": "Width", "f.height": "Height", "f.saleprice": "Sale price", "f.stock": "In stock", "f.managestock": "Stock counted", "f.stockstatus": "Availability",
       "v.ms.true": "yes", "v.ms.false": "no", "v.ss.instock": "in stock", "v.ss.outofstock": "out of stock", "v.ss.onbackorder": "on backorder",
@@ -1628,7 +1628,7 @@
       "entry.invoice": "Νέο τιμολόγιο · {app}",
       "tool.sum": "Σύνοψη: {app}", "tool.sumNo": "Κράτησες τη σύνοψη ({app})", "tool.shopFind": "Προϊόντα του {shop} για «{q}»: {n}", "tool.shopErr": "Το κατάστημα δεν απάντησε",
       "tool.gh": "GitHub {repo}: {what}", "tool.ghErr": "Το GitHub δεν διαβάστηκε ({repo})",
-      "tool.calc": "Υπολογισμός με τους τύπους του Υπολογιστικού φύλλου: {n}", "tool.hash": "SHA-256 του {path}",
+      "tool.calc": "Υπολογισμός με τους τύπους του Υπολογιστικού φύλλου: {n}", "tool.wchk.status": "Έλεγχος: {host}", "tool.wchk.dns": "DNS του {host}", "tool.wchk.sitemap": "Χάρτης σελίδων του {host}", "tool.hash": "SHA-256 του {path}",
       "gh.w.releases": "εκδόσεις", "gh.w.latest_release": "τελευταία έκδοση", "gh.w.file": "αρχείο", "gh.w.runs": "εκτελέσεις Actions", "gh.w.pulls": "pull requests", "gh.w.commits": "commits", "gh.w.issues": "issues",
       "f.pweight": "Βάρος", "f.length": "Μήκος", "f.width": "Πλάτος", "f.height": "Ύψος", "f.saleprice": "Τιμή προσφοράς", "f.stock": "Απόθεμα", "f.managestock": "Μέτρηση αποθέματος", "f.stockstatus": "Διαθεσιμότητα",
       "v.ms.true": "ναι", "v.ms.false": "όχι", "v.ss.instock": "σε απόθεμα", "v.ss.outofstock": "εξαντλημένο", "v.ss.onbackorder": "με προπαραγγελία",
@@ -3234,7 +3234,7 @@
   var attText = attStore.text;    // id → text read on the device ("" = none found)
   var PDF_SRC = "../vendor/pdfjs/pdf.min.js", PDF_WORKER = "../vendor/pdfjs/pdf.worker.min.js";
   var OCR_BASE = "../vendor/tesseract/";
-  var READ_PAGES = 40, OCR_PAGES = 5;
+  var READ_PAGES = 40, OCR_PAGES = 5, OCR_PAGES_MORE = 15;
   var pdfjsP = null, ocrP = null, ocrW = null;
   var attPages = attStore.pages;  // id → a PDF's page count (0 = couldn't count), for a service with a page limit
   function needsText(a) {
@@ -3319,38 +3319,49 @@
     var blob = new Blob([b64Bytes(attMem[a.id])], { type: a.type });
     return ocrImage(blob, onProgress);
   }
-  function pdfBytesText(bytes, onProgress) {
+  // AS-OCR: an attached PDF (the reader was lost in 9.00.00, when a
+  // same-named Layout report helper stayed and attached PDFs stalled).
+  function pdfAttText(a, onProgress) { return pdfBytesText(b64Bytes(attMem[a.id]), onProgress); }
+  function pdfBytesText(bytes, onProgress, opts) {
     return pdfjs().then(function (lib) {
       return lib.getDocument({ data: bytes, isEvalSupported: false, enableXfa: false,
                                disableAutoFetch: true, disableStream: true, stopAtErrors: false }).promise;
     }).then(function (pdf) {
-      var n = Math.min(pdf.numPages, READ_PAGES), parts = [], chain = Promise.resolve();
+      var n = Math.min(pdf.numPages, READ_PAGES), parts = [], pics = [], chain = Promise.resolve();
+      var OPS = lib.OPS || {}, IMG_OPS = [OPS.paintImageXObject, OPS.paintInlineImageXObject, OPS.paintJpegXObject, OPS.paintImageXObjectRepeat].filter(function (x) { return typeof x === "number"; });
       for (var k = 1; k <= n; k++) (function (k) {
-        chain = chain.then(function () { return pdf.getPage(k); }).then(function (pg) { return pg.getTextContent(); }).then(function (tc) {
+        var page = null;
+        chain = chain.then(function () { return pdf.getPage(k); }).then(function (pg) { page = pg; return pg.getTextContent(); }).then(function (tc) {
           var line = (tc.items || []).map(function (it) { return (it.str || "") + (it.hasEOL ? "\n" : " "); }).join("");
           parts.push(line.replace(/[ \t]+/g, " ").trim());
           if (onProgress) onProgress({ progress: k / n });
+          // A page with little text: does it draw a picture (a scanned page)?
+          if (parts[k - 1].replace(/\s/g, "").length >= C.OCR_PAGE_MIN || !IMG_OPS.length) { pics.push(false); return; }
+          return page.getOperatorList().then(function (ol) {
+            pics.push((ol.fnArray || []).some(function (f) { return IMG_OPS.indexOf(f) >= 0; }));
+          }, function () { pics.push(false); });
         });
       })(k);
       return chain.then(function () {
-        var text = parts.filter(Boolean).join("\n\n");
-        if (pdf.numPages > n) text += "\n[" + (pdf.numPages - n) + " more pages not read]";
-        if (text.replace(/\s/g, "").length >= 40) return text;
-        // No text layer (a scan): read the first pages as pictures.
-        var m = Math.min(pdf.numPages, OCR_PAGES), out = [], c2 = Promise.resolve();
-        for (var j = 1; j <= m; j++) (function (j) {
-          c2 = c2.then(function () { return pdf.getPage(j); }).then(function (pg) {
+        // AS-OCR: pages with (almost) no text of their own are scans; read
+        // them as pictures (a whole scan, or the scanned pages of a mixed PDF).
+        var plan = C.ocrPlan(parts.map(function (x) { return x.replace(/\s/g, "").length; }), pics, opts && opts.ocr ? OCR_PAGES_MORE : OCR_PAGES);
+        var c2 = Promise.resolve();
+        plan.pages.forEach(function (i, at) {
+          c2 = c2.then(function () { return pdf.getPage(i + 1); }).then(function (pg) {
             var vp = pg.getViewport({ scale: 2 });
             var cv = document.createElement("canvas");
             cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
             return pg.render({ canvasContext: cv.getContext("2d"), viewport: vp, background: "#ffffff" }).promise
-              .then(function () { return ocrImage(cv, onProgress); }).then(function (tx) { out.push(tx.trim()); });
+              .then(function () { return ocrImage(cv, onProgress ? function (m) { onProgress({ progress: (at + (m.progress || 0)) / plan.pages.length }); } : null); })
+              .then(function (tx) { parts[i] = String(tx || "").replace(/[ \t]+\n/g, "\n").trim(); }, function () {});
           });
-        })(j);
+        });
         return c2.then(function () {
-          var t2 = out.filter(Boolean).join("\n\n");
-          if (pdf.numPages > m && t2) t2 += "\n[" + (pdf.numPages - m) + " more pages not read]";
-          return t2;
+          var text = parts.filter(Boolean).join("\n\n");
+          if (pdf.numPages > n && text) text += "\n[" + (pdf.numPages - n) + " more pages not read]";
+          if (plan.left && text) text += "\n[" + plan.left + " more scanned pages not read with OCR" + (opts && opts.ocr ? "" : "; ocr true reads up to " + OCR_PAGES_MORE) + "]";
+          return text;
         });
       });
     });
@@ -3390,7 +3401,7 @@
     renderAtt();
     return todo.reduce(function (pr, a) {
       return pr.then(function () {
-        var k = C.attKind(a.type), fn = k === "pdf" ? pdfText : k === "doc" ? docText : photoText;
+        var k = C.attKind(a.type), fn = k === "pdf" ? pdfAttText : k === "doc" ? docText : photoText;
         return fn(a, function (m) { attReadPct = Math.round((m.progress || 0) * 100); renderAtt(); })
           .then(function (tx) { attText[a.id] = String(tx || "").trim(); }, function (e) {
             attText[a.id] = "";
@@ -3543,6 +3554,60 @@
     });
   }
 
+  // AS-WCHK (wave 5b, AH-6): is a site up, its DNS, its sitemap. The
+  // page goes through the orOS relay's "web" operation (Reader's network
+  // layer, feeds/fetch.js: Sensitive work respected), DNS through
+  // Cloudflare's DNS-over-HTTPS straight from the browser.
+  var RELAY_DEFAULT = "https://oros-mail-relay.koulaxizis.workers.dev";
+  function feedsFetch() {
+    return loadOnce("../feeds/core.js").then(function () { return loadOnce("../feeds/fetch.js"); }).then(function () { return window.orosFeedsFetch || null; });
+  }
+  function webCheck(c, a) {
+    a = a && typeof a === "object" ? a : {};
+    var what = String(a.what || ""), raw = String(a.url || "").trim();
+    function fail(msg, host) { return { content: "Error: " + msg, err: 1, ui: { k: "toolErr", why: "args", name: "web_check" } }; }
+    if (C.WCHK_WHAT.indexOf(what) < 0) return Promise.resolve(fail("what must be status, dns or sitemap."));
+    if (what === "dns") {
+      var du = C.dohUrl(raw, a.type), host = C.dnsName(raw);
+      if (!du) return Promise.resolve(fail("url must be a host name such as noxpress.tech."));
+      var t0 = Date.now();
+      return webFetch({ url: du, headers: { Accept: "application/dns-json" } }).then(function (r) {
+        if (!r.ok) throw { why: webWhy(null, r) };
+        return r.json();
+      }).then(function (j) {
+        var o = C.dohShape(j);
+        o.host = host; o.type = C.dohUrl(raw, a.type).split("type=")[1]; o.ms = Date.now() - t0; o.via = "Cloudflare DNS-over-HTTPS";
+        return { content: JSON.stringify(o), ui: { k: "wchk", what: "dns", host: host } };
+      }).catch(function (e) { return fail("the DNS lookup did not work (" + ((e && e.why) || webWhy(e)) + ")."); });
+    }
+    var url = what === "sitemap" ? C.sitemapUrl(raw) : C.pageUrl(raw);
+    if (!url) return Promise.resolve(fail("url is not a web address (https://…)."));
+    if (!C.pageAllowed(c.msgs, url)) return Promise.resolve(fail("web_check opens only a site the owner wrote (in this conversation or the routine's instructions) or one web_search returned."));
+    var hostOfUrl = hostOf(url);
+    return feedsFetch().then(function (F) {
+      if (!F) throw { code: "relay" };
+      var t1 = Date.now();
+      return F.fetchOne(url, { via: "relay", relay: function () { return F.relayUrl({}) || RELAY_DEFAULT; }, timeout: 15000 }).then(function (r) {
+        var ms = Date.now() - t1;
+        if (what === "status") {
+          var o = { url: url, status: r.status, final_url: r.finalUrl || r.url || url, redirected: !!(r.finalUrl && r.finalUrl !== url), type: r.type || "",
+                    size: r.bytes ? r.bytes.length : 0, last_modified: r.lm || "", ms: ms, via: "orOS relay", note: "ms includes the relay; no TLS expiry here." };
+          return { content: JSON.stringify(o), ui: { k: "wchk", what: "status", host: hostOfUrl } };
+        }
+        if (r.status < 200 || r.status > 299) return fail("the sitemap answered " + r.status + ".");
+        var sm = C.sitemapParse(r.text || "");
+        sm.url = r.finalUrl || url;
+        return { content: JSON.stringify(sm), ui: { k: "wchk", what: "sitemap", host: hostOfUrl } };
+      });
+    }).catch(function (e) {
+      var code = (e && e.code) || "network";
+      if (code === "strict") return fail("Sensitive work is on: orOS sends nothing through the relay.");
+      return what === "status"
+        ? { content: JSON.stringify({ url: url, up: false, error: code, note: "The site could not be reached through the orOS relay (" + code + ")." }), ui: { k: "wchk", what: "status", host: hostOfUrl } }
+        : fail("the sitemap could not be read (" + code + ").");
+    });
+  }
+
   // A catalog too big for the Assistant's first open (Slides needs its
   // core.js) is loaded before the first turn that may use it.
   // again: how many times this turn already went and failed before any
@@ -3616,7 +3681,7 @@
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native", page: wmode === "native",
                                             actions: acts, history: hiOn,
                                             recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn, epub: rbOn, mockup: !builtin && !!installed().mockups,
-                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps), fonts: !data.set.chat && !ro, github: ghOn, calc: true });
+                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps), fonts: !data.set.chat && !ro, github: ghOn, calc: true, check: !builtin && !!wmode });
     if (ro) tools = tools.filter(function (x) { return !!RT_READ[x.name]; }).concat(builtin ? [] : RT.TOOLS);
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
@@ -3896,6 +3961,7 @@
     if (call.name === "web_search") return webSearch(call.args);
     if (call.name === "github_read") return ghRead(call.args);
     if (call.name === "calc") return calcTool(call.args);
+    if (call.name === "web_check") return webCheck(c, call.args);
     if (call.name === "file_hash") return fileHash(call.args, apps);
     if (call.name === "read_page") return readPage(c, call.args);
     // Claude knows Anthropic's own page tool as web_fetch: the same
@@ -5415,7 +5481,7 @@
   // (PARITY). A file's version is the first 16 hex of its SHA-256 (a
   // cloud-only file's from its manifest entry); a file over 32 MB gets
   // one from its size and time instead of reading it all.
-  var CF_HASH_MAX = 32 * 1024 * 1024, CF_TEXT_MAX = 50 * 1024 * 1024;
+  var CF_HASH_MAX = 32 * 1024 * 1024, CF_TEXT_MAX = 50 * 1024 * 1024, PIC_CLOUD_MAX = 60 * 1024 * 1024;
   // The Assistant offers the files tools once the owner picked folders
   // and Files may always be read; the changes once Files takes changes.
   function cfOn(apps, chg) {
@@ -5729,7 +5795,7 @@
       return f.arrayBuffer().then(function (buf) {
         var bytes = new Uint8Array(buf);
         if (kind === "text") return new TextDecoder("utf-8").decode(bytes);
-        if (kind === "pdf") return pdfBytesText(bytes);
+        if (kind === "pdf") return pdfBytesText(bytes, null, { ocr: a.ocr === true });
         if (!DT) throw new Error("doctext");
         return DT.read(bytes, name, { sheets: sheets, max: CF.READ_MAX * 4 });
       }).then(function (text) {
@@ -5787,19 +5853,21 @@
         return cfVer(x.fs, p).then(function (v) {
           head.version = v;
           var ui = { k: "cfRead", path: CF.show(p) };
-          if (kind === "image" && !st.cloud) {
+          // AS-OCR: a picture in the cloud only (orOS Drive's on-demand
+          // folders) is fetched like a document (hash-checked by the vault).
+          if (kind === "image" && (!st.cloud || (st.size || 0) <= PIC_CLOUD_MAX)) {
             return cfBytes(x.fs, p).then(function (bytes) { return picResult(new Blob([bytes]), name, head, a, ui); },
-              function () { return cfErr("\"" + CF.show(p) + "\" could not be read."); });
+              function () { return cfErr("\"" + CF.show(p) + "\" could not be read" + (st.cloud ? " (it is in the cloud only and could not be fetched)." : ".")); });
           }
           if (!/^(text|document|pdf)$/.test(kind) || st.size > CF_TEXT_MAX) {
             head.note = kind === "image" || kind === "media" || kind === "other"
-              ? "Only the details: files_read gives the text of text files, documents and PDFs, and shows pictures on this device."
+              ? (kind === "image" ? "Only the details: a picture in the cloud only is read up to 60 MB." : "Only the details: files_read gives the text of text files, documents and PDFs, and shows pictures on this device.")
               : "Only the details: the file is over 50 MB.";
             return { content: JSON.stringify(head), ui: ui };
           }
           return cfBytes(x.fs, p).then(function (bytes) {
             if (kind === "text") return new TextDecoder("utf-8").decode(bytes);
-            if (kind === "pdf") return pdfBytesText(bytes);
+            if (kind === "pdf") return pdfBytesText(bytes, null, { ocr: a.ocr === true });
             if (!DT) throw new Error("doctext");
             return DT.read(bytes, name, { sheets: sheets, max: CF.READ_MAX * 4 });
           }).then(function (text) {
@@ -8780,6 +8848,7 @@
         else if (ui.k === "chgErr") txt = t("chg.err", { app: ui.app || "" });
         else if (ui.k === "shopFind") txt = t("tool.shopFind", { q: ui.q || "", n: ui.n || 0, shop: ui.shop || "" });   // AS-SHOP
         else if (ui.k === "shopErr") txt = t("tool.shopErr");
+        else if (ui.k === "wchk") txt = t("tool.wchk." + (ui.what || "status"), { host: ui.host || "" });   // AS-WCHK
         else if (ui.k === "calc") txt = t("tool.calc", { n: ui.n || 0 });   // AS-CALC
         else if (ui.k === "hash") txt = t("tool.hash", { path: ui.path || "" });
         else if (ui.k === "gh") txt = t("tool.gh", { repo: ui.repo || "", what: t("gh.w." + (ui.what || "file")) });   // AS-GH
@@ -11201,7 +11270,7 @@
   // there. Changes it would make come as numbered proposals (cards
   // that wait for the person follow in wave 3).
   var RT_READ = { search_data: 1, list_apps: 1, read_item: 1, app_summary: 1, change_history: 1,
-                  files_list: 1, files_read: 1, web_search: 1, read_page: 1, github_read: 1, calc: 1, file_hash: 1,
+                  files_list: 1, files_read: 1, web_search: 1, read_page: 1, github_read: 1, calc: 1, file_hash: 1, web_check: 1,
                   budget_lines: 1, invoice_list: 1, stock_items: 1, publish_titles: 1 };
   var rtCtx = null;            // the run going on in this frame
   var RT_FILE_MAX = 60000, RT_REF_MAX = 30000;
