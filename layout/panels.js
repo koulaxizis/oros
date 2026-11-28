@@ -635,6 +635,17 @@
       });
     });
     s.appendChild(field(t("props.alt"), alt));
+    // CAPTION (Chris 2026-11-28): a suggestion made on the device
+    // (../caption/ui.js, Florence-2) fills the field; the person checks
+    // it, and leaving the field (change) saves it as before.
+    if (it.a && window.Worker && window.indexedDB) {
+      var altNote = el("p", "hint");
+      altNote.setAttribute("role", "status");
+      var altBtn = btn(t("props.altAuto"), function () { suggestAlt(it, alt, altNote, altBtn); }, "small");
+      altBtn.disabled = alt.disabled;
+      s.appendChild(altBtn);
+      s.appendChild(altNote);
+    }
     s.appendChild(check(t("props.deco"), it.ext && it.ext.deco, function (v) {
       editSel(function (x) {
         if (x.t !== "img" || !!(x.ext && x.ext.deco) === !!v) return false;
@@ -654,6 +665,67 @@
     s.appendChild(field(t("props.mf"), mf));
     s.appendChild(el("p", "hint", t("props.mfHint")));
     return s;
+  }
+
+  var captionUiP = null;
+  function captionUi() {
+    if (window.OrosCaptionUI) return Promise.resolve(window.OrosCaptionUI);
+    if (!captionUiP) {
+      var own = document.querySelector('script[src*="panels.js"]'), v = own && /\?v=[^#]*/.exec(own.getAttribute("src") || "");
+      captionUiP = new Promise(function (resolve, reject) {
+        var sc = document.createElement("script");
+        sc.src = "../caption/ui.js" + (v ? v[0] : "");
+        sc.onload = function () { if (window.OrosCaptionUI) resolve(window.OrosCaptionUI); else reject(new Error("load")); };
+        sc.onerror = function () { reject(new Error("load")); };
+        document.head.appendChild(sc);
+      });
+      captionUiP.catch(function () { captionUiP = null; });
+    }
+    return captionUiP;
+  }
+  function askYes(text, okText, noText) {
+    return new Promise(function (resolve) {
+      var yes = false;
+      LY.openDialog(t("props.altAuto"), function (body, close) {
+        body.appendChild(el("p", "", text));
+        var act = el("div", "dlg-actions");
+        act.appendChild(btn(noText, close));
+        act.appendChild(btn(okText, function () { yes = true; close(); }, "primary"));
+        body.appendChild(act);
+        var d = body.parentNode;
+        d.addEventListener("close", function () { resolve(yes); }, { once: true });
+      });
+    });
+  }
+  function suggestAlt(it, field, note, b) {
+    if (b.disabled) return;
+    b.disabled = true;
+    var ui = null;
+    captionUi().then(function (u) {
+      ui = u;
+      return LY.A.blob(it.a);
+    }).then(function (blob) {
+      if (!blob) { var e = new Error("image"); e.code = "image"; throw e; }
+      return ui.suggest(blob, { lang: LY.LANG, task: "short", confirm: askYes,
+        status: function (txt) { note.textContent = txt; },
+        cancelled: function () { return !note.isConnected; } });
+    }).then(function (r) {
+      b.disabled = false;
+      if (!r) { note.textContent = ""; return; }
+      if (!field.isConnected) return;
+      field.value = r.text;
+      note.textContent = r.note;
+      // Saved when the person leaves the field, as a typed one is
+      // (a value set by code fires no change of its own).
+      field.addEventListener("blur", function () { field.dispatchEvent(new Event("change")); }, { once: true });
+      field.focus();
+      if (document.activeElement !== field) field.dispatchEvent(new Event("change"));   // panel hidden meanwhile
+    }, function (e) {
+      b.disabled = false;
+      note.textContent = "";
+      if (e && e.code === "cancelled") return;
+      LY.toast(ui ? ui.failText(e, LY.LANG) : t("props.altFail"));
+    });
   }
 
   function buildPageProps(body) {
