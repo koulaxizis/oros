@@ -1235,6 +1235,7 @@
       }
     }
   };
+  var lyMem = null, lyDisk = null;   // ISLAND-1: synced lines of the song, in memory only
   // Items cross from the app frame: copy them into this realm.
   function own(x) { try { return JSON.parse(JSON.stringify(x)); } catch (e) { return null; } }
   host.api = {
@@ -1291,6 +1292,30 @@
     stop: stop,
     upcoming: function (max) { return own(C.qUpcoming(local.q, max || 100)); },
     history: function () { return own(local.hist); },
+    // ISLAND-1: the line sung now, for the top bar's island. music.js
+    // hands over the synced lines of the song it found lyrics for (file,
+    // tags or LRCLIB); else the LRCLIB copy already on this device is
+    // read (never fetched here). → string ("" between lines) | null
+    lyrics: function (k, lines) {
+      lyMem = { k: String(k || ""), lines: (Array.isArray(lines) ? lines : []).filter(function (x) {
+        return x && typeof x.t === "number" && isFinite(x.t);
+      }).slice(0, 5000).map(function (x) { return { t: x.t, s: String(x.s || "").slice(0, 300) }; }) };
+    },
+    lyricNow: function () {
+      if (!cur || !cur.k) return null;
+      var k = String(cur.k), ls = lyMem && lyMem.k === k ? lyMem.lines : null;
+      if (!ls) {
+        if (!lyDisk || lyDisk.k !== k) {
+          var rec = null;
+          try { var all = JSON.parse(localStorage.getItem("oros-music-lyrics") || "null"); rec = all && all[k]; } catch (e) { rec = null; }
+          lyDisk = { k: k, lines: rec && typeof rec.s === "string" && rec.s ? C.parseLrc(rec.s).lines : [] };
+        }
+        ls = lyDisk.lines;
+      }
+      if (!ls.length) return null;
+      var i = C.lrcAt(ls, audio.currentTime || 0);
+      return i >= 0 ? ls[i].s : "";
+    },
     getState: function () {
       var q = C.normQueue(local.q);
       return {

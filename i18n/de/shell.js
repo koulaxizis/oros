@@ -1530,6 +1530,8 @@ orosPack("de", "shell", {
  "sb.k.ai": "KI-Nutzung diesen Monat (eigener Schlüssel)",
  "sb.k.battery": "Akku",
  "sb.k.playing": "Läuft gerade",
+ "sbi.label": "Insel: was läuft und was spielt",
+ "sbi.pos": "{a} von {b}",
  "sb.play.tip": "Läuft: {t} · {app}",
  "sb.k.screen": "Bildschirmzeit",
  "sb.screen.label": "heute",

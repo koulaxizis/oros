@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "9.10.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "9.11.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -14386,6 +14386,10 @@
       if (window.orosSmartBar) window.orosSmartBar.set(name.slice(9), !!value);
       return;
     }
+    if (name === "smartbar-island") {    // smartbar.js ISLAND-1: the island on/off
+      if (window.orosSmartBar && window.orosSmartBar.setIsland) window.orosSmartBar.setIsland(!!value);
+      return;
+    }
     if (name === "smartbar-live") {      // smartbar.js SB-LIVE: live pills on/off
       if (window.orosSmartBar && window.orosSmartBar.setLive) window.orosSmartBar.setLive(!!value);
       return;
@@ -19234,6 +19238,13 @@
       weather: function () { return wxPeekData(); },                 // PEEK-1
       // NOWPLAY-1: the players (never a locked app's), with their controls
       media: function () { return qsMedia().filter(function (m) { return !appLockSet(m.id); }); },
+      // ISLAND-1: the cover of what plays (mediaSession) and Music's synced line now
+      art: function (title) { return wgMediaArt(title); },
+      lyric: function (id) {
+        if (id !== "music" || appLockSet("music")) return null;
+        var mu = hostApi(window.__orosMusicHost);
+        return mu && typeof mu.lyricNow === "function" ? mu.lyricNow() : null;
+      },
       openDay: function (ymd) { window.__orosOpenCalendar("-", ymd); }   // PEEK-1: a day of the month
     });
   }
