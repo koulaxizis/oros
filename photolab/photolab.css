@@ -684,3 +684,5 @@ body.dropping .drop-hint { display: flex; }
 /* Liquify (wave PS-5) */
 .lq-cv { display: block; max-width: 100%; height: auto; margin: 10px auto; touch-action: none; cursor: crosshair;
   background: repeating-conic-gradient(#d8d8d8 0% 25%, #f4f4f4 0% 50%) 0 0 / 16px 16px; border-radius: 6px; }
+.pb-view { cursor: crosshair; touch-action: manipulation; }
+.pb-ctrls { display: grid; gap: 6px; }

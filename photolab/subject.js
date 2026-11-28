@@ -180,5 +180,28 @@
     });
   }
 
-  PL.subject = { run: run, selOf: selOf, auto: auto };
+  // PB: Portrait blur and Select by depth (portrait.js), loaded on first use
+  var pbP = null;
+  function portrait() {
+    if (PL.portrait) return Promise.resolve(PL.portrait);
+    if (!pbP) {
+      pbP = new Promise(function (ok, fail) {
+        var v = (document.querySelector('script[src*="app.js?v="]') || {}).src || "";
+        var m = v.match(/[?&]v=([^&#]+)/);
+        var s = document.createElement("script");
+        s.src = "portrait.js" + (m ? "?v=" + m[1] : "");
+        s.onload = function () { if (PL.portrait) ok(PL.portrait); else fail(new Error("portrait")); };
+        s.onerror = function () { fail(new Error("portrait")); };
+        document.head.appendChild(s);
+      });
+      pbP.catch(function () { pbP = null; });
+    }
+    return pbP;
+  }
+  function runPortrait(kind) {
+    if (!st.doc) return;
+    portrait().then(function (P) { P.run(kind); }, function () { PL.toast(t("pb.fail", { why: t("subject.noLoader") })); });
+  }
+
+  PL.subject = { run: run, selOf: selOf, auto: auto, loader: cutout, portrait: portrait, runPortrait: runPortrait };
 })();
