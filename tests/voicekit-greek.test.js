@@ -105,7 +105,7 @@ test("voicekit: speed is the length scale, kept in a safe range", () => {
 test("voicekit: one Greek voice from orOS's own copy, SHA-256 pinned, licence stated", () => {
   assert.equal(V.forLang("el"), "el-joy");
   assert.equal(V.forLang("el-GR"), "el-joy");
-  assert.equal(V.forLang("en"), "");
+  assert.equal(V.forLang("fr"), "");
   const v = V.VOICES["el-joy"];
   assert.equal(v.licence, "CC BY-NC 4.0");
   assert.match(v.model.sha, /^[0-9a-f]{64}$/);

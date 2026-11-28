@@ -854,7 +854,9 @@
         r.voices.forEach(function (g) {
           // VOICE-1: orOS's own natural voice for this language, if there is one
           var nv = (r.natural || []).filter(function (n) { return n.lang === g.lang; })[0] || null;
-          var natOpt = nv && nv.ready ? [{ value: "oros:" + nv.id, label: t("ac.read.nat.opt", { name: nv.name }) }] : [];
+          // VOICE-3: a language may have more than one (English: Heart, Michael)
+          var natOpt = !nv ? [] : (nv.voices || [{ id: nv.id, name: nv.name, ready: nv.ready }]).filter(function (v) { return v.ready; })
+            .map(function (v) { return { value: "oros:" + v.id, label: t("ac.read.nat.opt", { name: v.name }) }; });
           var vr = row(t("ac.read.voice." + g.lang), null, g.list.length || natOpt.length ? null : { hint: t("ac.read.novoices") });
           if (g.list.length || natOpt.length) {
             var opts = [{ value: "", label: t("ac.read.auto") }].concat(natOpt, g.list.map(function (v) {
@@ -875,11 +877,12 @@
     }
 
     // VOICE-1: download, progress and removal of a natural voice. The
-    // licence is said before the download (CC BY-NC 4.0 for Joy).
+    // licence is said before the download (CC BY-NC 4.0 for Joy, CC0 for Thorsten).
     function natRow(nv) {
-      var hint = nv.err ? t("ac.read.nat.err") : nv.ready ? t("ac.read.nat.ready", { licence: nv.licence })
-        : t("ac.read.nat.hint", { mb: nv.mb, licence: nv.licence });
-      var nr = row(t("ac.read.nat", { name: nv.name }), null, { hint: hint });
+      var free = nv.free ? ".free" : "";   // VOICE-2: a voice free for any use (CC0) says so
+      var hint = nv.err ? t("ac.read.nat.err") : nv.ready ? t("ac.read.nat.ready" + free, { licence: nv.licence })
+        : t("ac.read.nat.hint" + free, { mb: nv.mb, licence: nv.licence });
+      var nr = row(t(nv.many ? "ac.read.nat.many" : "ac.read.nat", { name: nv.name }), null, { hint: hint });
       var btns;
       if (nv.pct != null) {
         btns = actions(el("span", "hint", t("ac.read.nat.pct", { pct: nv.pct })),
