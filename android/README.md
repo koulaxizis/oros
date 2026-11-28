@@ -38,6 +38,18 @@ gomobile bind -target=android/arm64,android/arm,android/amd64 -androidapi 24 -ja
   -o ../oros/android/app/libs/orosdrive.aar ./mobile
 ```
 
+## Screen recording (QS-REC-1)
+
+Chrome on Android cannot share the screen with a page, so orOS Quick
+settings' Screen recording opens `intent://start[?mic=1]#Intent;scheme=oros-rec`
+(`ScreenRecordActivity`): a running recording stops; otherwise the
+microphone permission when orOS asks for the microphone, Android's own
+consent screen, then `ScreenRecordService` (foreground service, type
+mediaProjection|microphone) records an MP4 into the phone's Movies › orOS
+with a notification that has Stop. The bridge state's `rec` says the app
+can record (and whether it does). The orOS app only; single apps remove
+both.
+
 ## Passwords autofill (PW-AF2)
 
 The orOS app is also an Android autofill service (`OrosAutofillService`,

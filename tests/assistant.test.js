@@ -72,6 +72,7 @@ test("permissions: mail/passwords never offered, sensitive apps start at never",
   assert.equal(A.permFor(d, { id: "passwords" }), "off");
   assert.equal(A.permFor(d, { id: "notes" }), "ask");
   assert.equal(A.permFor(d, { id: "health", sensitive: true }), "never");
+  assert.equal(A.permFor(d, { id: "fitness" }), "never", "GATE-NEVER2: Fitness starts at Never like the gate's personal apps");
   d.perm.health = { m: 1, v: "always" };
   assert.equal(A.permFor(d, { id: "health", sensitive: true }), "always");
 });

@@ -119,10 +119,10 @@ test("GL-2: Layout's proofs and PDFs are readable with Layout allowed", () => {
 test("GL-5: gate_tools lists every tool now, gate_call is not in its own list", async () => {
   const R = await import("../relay/gate.js");
   const all = JSON.parse(R.gateToolsText(R.TOOLS));
-  assert.ok(all.tools.some((t) => t.name === "local_folders_request"));
+  assert.ok(all.tools.some((t) => t.name === "claude_folders_request"));
   assert.ok(!all.tools.some((t) => R.META_TOOLS.indexOf(t.name) >= 0));
-  const one = JSON.parse(R.gateToolsText(R.TOOLS, "local_folders_request"));
-  assert.equal(one.name, "local_folders_request");
+  const one = JSON.parse(R.gateToolsText(R.TOOLS, "claude_folders_request"));
+  assert.equal(one.name, "claude_folders_request");
   assert.ok(one.inputSchema && one.inputSchema.properties);
   assert.equal(R.gateToolsText(R.TOOLS, "nope"), "");
   const rel = fs.readFileSync(path.join(__dirname, "..", "relay/gate.js"), "utf8");

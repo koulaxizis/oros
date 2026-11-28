@@ -82,3 +82,6 @@ An app you switched off under `Which apps may notify` stays quiet on the phone t
 
 ## System notifications
 If your browser allows it, orOS also shows notifications through your system, so you see them while orOS is in the background. orOS asks for this permission only when you save a Calendar event with a reminder. You can also allow or block it any time in your browser's site settings. Clicking one brings orOS to the front and opens what it points to, such as the event. Without it, notifications still appear inside orOS.
+
+## Game mode
+Settings › Notifications › Game mode (off by default, this device only). While a game from the Games category runs full screen, or its window fills the screen, notifications stay silent and the top bar and the Dock step aside. Move the pointer to the top edge to see the bar for three seconds. Leave full screen and everything comes back.

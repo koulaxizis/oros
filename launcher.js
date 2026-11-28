@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — launcher.js (favourites: desktop shortcuts + Dock, menu apps, v1.9.0)
+// orOS — launcher.js (favourites: desktop shortcuts + Dock, menu apps, v1.10.0)
 // ------------------------------------------------------------
 // A shell component, like pet.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -18,6 +18,10 @@
 //   • The Dock: a mac-style bar at the bottom, OFF until the user
 //     turns it on in Settings (size, style, hover effect, auto-hide,
 //     over open apps: off until chosen). Same small menu; mouse users can also drag.
+//     Groups (1.10.0, DOCK-GRP): drop an app on the middle of another
+//     icon, or "Put in a group with…" in its menu, and both go into a
+//     named group tile; tapping it opens a panel (rename, open, take
+//     out, Ungroup). Synced with the Dock order (section 1a).
 //     While it is shown, --tb-h lifts the pet and the desktop grid.
 //   • Menu apps (1.3.0): which apps the menu lists (Settings › Menu).
 //     A hidden app still opens from search, deep links, the desktop
@@ -52,6 +56,11 @@
 //   item, so two devices reordering different apps never fight.
 //   Removing both places keeps the item with a new mtime: it is its
 //   own tombstone (at most one item per app id, so it stays small).
+//   DOCK-GRP (1.10.0): an item in the Dock may carry `grp` (a group id
+//   "g…"), written only while set; `groups:[{ id, name, dock, mtime }]`
+//   appears once there is a group (dock null = ungrouped, a tombstone).
+//   An older device drops both: its next change to that app takes it
+//   out of the group, and nothing else is lost (the merge is a union).
 // Merge: union by id; per id the higher mtime wins, a tie goes to the
 //   greater canonical JSON. Items sorted by id, fixed field order
 //   (R26). A fresh device stores nothing until the first real change.
@@ -61,12 +70,14 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.9.0";
+  var VER = "1.10.0";
   var DATA_KEY = "oros-launcher-data";
   var MENU_KEY = "oros-menu-apps";
   var MAX_ITEMS = 500;
   var ID_RE = /^[a-z0-9][a-z0-9_-]{0,47}$/;
   var PLACES = ["desk", "dock"];
+  var GID_RE = /^g[a-z0-9]{1,23}$/;          // DOCK-GRP group ids
+  var GNAME_MAX = 40, MAX_GROUPS = 60;
 
   // ---------- 1. Model (pure) ----------
   function num(v) {
@@ -76,12 +87,29 @@
   function cleanItem(it) {
     if (!it || typeof it !== "object" || typeof it.id !== "string" || !ID_RE.test(it.id)) return null;
     var m = (typeof it.mtime === "number" && isFinite(it.mtime) && it.mtime >= 0) ? Math.floor(it.mtime) : 0;
-    return { id: it.id, desk: num(it.desk), dock: num(it.dock), mtime: m };
+    var out = { id: it.id, desk: num(it.desk), dock: num(it.dock) };
+    if (out.dock !== null && typeof it.grp === "string" && GID_RE.test(it.grp)) out.grp = it.grp;   // DOCK-GRP
+    out.mtime = m;
+    return out;
+  }
+
+  // DOCK-GRP: a group in the Dock { id, name, dock, mtime }; dock null =
+  // ungrouped (its own tombstone, like an item).
+  function cleanGroup(g) {
+    if (!g || typeof g !== "object" || typeof g.id !== "string" || !GID_RE.test(g.id)) return null;
+    var m = (typeof g.mtime === "number" && isFinite(g.mtime) && g.mtime >= 0) ? Math.floor(g.mtime) : 0;
+    return { id: g.id, name: groupName(g.name), dock: num(g.dock), mtime: m };
+  }
+  function groupName(v) {
+    return String(typeof v === "string" ? v : "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, GNAME_MAX);
   }
 
   // The winner between two versions of the same app's item.
   function newer(a, b) {
     if (a.mtime !== b.mtime) return a.mtime > b.mtime ? a : b;
+    // DOCK-GRP: a tie between the same item with and without `grp` is
+    // an older device's copy that dropped it: keep the group.
+    if (!a.grp !== !b.grp) return a.grp ? a : b;
     return JSON.stringify(a) >= JSON.stringify(b) ? a : b;
   }
 
@@ -96,12 +124,24 @@
     }
     var ids = Object.keys(byId).sort();
     if (ids.length > MAX_ITEMS) ids = ids.slice(0, MAX_ITEMS);
-    return { ver: 1, items: ids.map(function (id) { return byId[id]; }) };
+    var out = { ver: 1, items: ids.map(function (id) { return byId[id]; }) };
+    // DOCK-GRP: "groups" only once there is one (older data stays as it was).
+    var gById = {};
+    var gl = (data && typeof data === "object" && Array.isArray(data.groups)) ? data.groups : [];
+    for (var j = 0; j < gl.length; j++) {
+      var g = cleanGroup(gl[j]);
+      if (!g) continue;
+      gById[g.id] = gById[g.id] ? newer(gById[g.id], g) : g;
+    }
+    var gids = Object.keys(gById).sort();
+    if (gids.length > MAX_GROUPS) gids = gids.slice(0, MAX_GROUPS);
+    if (gids.length) out.groups = gids.map(function (id) { return gById[id]; });
+    return out;
   }
 
   function merge(a, b) {
     var na = normalize(a), nb = normalize(b);
-    return normalize({ items: na.items.concat(nb.items) });
+    return normalize({ items: na.items.concat(nb.items), groups: (na.groups || []).concat(nb.groups || []) });
   }
 
   function find(data, id) {
@@ -128,10 +168,11 @@
     var d = normalize(data);
     var it = find(d, id);
     var next = { id: id, desk: it ? it.desk : null, dock: it ? it.dock : null, mtime: Math.max(now, it ? it.mtime + 1 : 0) };
+    if (it && it.grp) next.grp = it.grp;
     Object.keys(fields).forEach(function (k) { next[k] = fields[k]; });
     var items = d.items.filter(function (x) { return x.id !== id; });
     items.push(next);
-    return normalize({ items: items });
+    return normalize({ items: items, groups: d.groups });
   }
 
   // Pin goes to the END of the place; unpin clears it. No-op when the
@@ -194,6 +235,157 @@
       i += dir;
     }
     return d;
+  }
+
+  // ---------- 1a. Dock groups (DOCK-GRP, pure) ----------
+  // Drop an app on an app in the Dock: both go into a named group (a
+  // folder tile that opens a small panel). Synced with the Dock order
+  // ("launcher" slice): a member item carries `grp`, the group has its
+  // own order key among the Dock's entries. A group shows while two or
+  // more of its members are in the Dock; one left goes back to being
+  // a plain icon at the group's place.
+  function idCmp(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
+  function findGroup(d, gid) {
+    var gs = d.groups || [];
+    for (var i = 0; i < gs.length; i++) if (gs[i].id === gid) return gs[i];
+    return null;
+  }
+  function withGroup(data, gid, fields, now) {
+    var d = normalize(data);
+    var g = findGroup(d, gid);
+    var next = { id: gid, name: g ? g.name : "", dock: g ? g.dock : null, mtime: Math.max(now, g ? g.mtime + 1 : 0) };
+    Object.keys(fields).forEach(function (k) { next[k] = fields[k]; });
+    var gs = (d.groups || []).filter(function (x) { return x.id !== gid; });
+    gs.push(next);
+    return normalize({ items: d.items, groups: gs });
+  }
+  function setGrp(d, id, gid, dockKey, now) {
+    var f = { grp: gid || undefined };
+    if (dockKey !== undefined) f.dock = dockKey;
+    var out = withItem(d, id, f, now);
+    if (!gid) { var it = find(out, id); if (it) delete it.grp; }
+    return normalize(out);
+  }
+  function membersOf(d, gid) {
+    return list(d, "dock").filter(function (id) { return find(d, id).grp === gid; });
+  }
+  // The Dock as shown, in order: { app, key } or { group, name, ids, key }.
+  // okIds (optional): the ids that may show (an alias once).
+  function dockEntries(data, okIds) {
+    var d = normalize(data);
+    var ids = list(d, "dock");
+    if (okIds) ids = ids.filter(function (id) { return okIds.indexOf(id) >= 0; });
+    var live = {};
+    (d.groups || []).forEach(function (g) { if (g.dock !== null) live[g.id] = { group: g.id, name: g.name, ids: [], key: g.dock }; });
+    ids.forEach(function (id) { var it = find(d, id); if (it.grp && live[it.grp]) live[it.grp].ids.push(id); });
+    var out = [];
+    ids.forEach(function (id) {
+      var it = find(d, id), g = it.grp && live[it.grp];
+      if (!g || g.ids.length < 2) out.push({ app: id, key: it.dock });
+    });
+    Object.keys(live).forEach(function (gid) { if (live[gid].ids.length >= 2) out.push(live[gid]); });
+    out.sort(function (a, b) { return (a.key - b.key) || idCmp(a.app || a.group, b.app || b.group); });
+    return out;
+  }
+  function entryIs(e, ref) { return ref.group ? e.group === ref.group : e.app === ref.app; }
+  function setEntryKey(d, e, key, now) {
+    if (e.group) return withGroup(d, e.group, { dock: key }, now);
+    var f = { dock: key };
+    return withItem(d, e.app, f, now);
+  }
+  // The key between the entry before `index` and the one at it.
+  function keyAt(entries, index) {
+    var prev = index > 0 ? entries[index - 1].key : null, next = index < entries.length ? entries[index].key : null;
+    if (prev === null && next === null) return 1;
+    if (prev === null) return next - 1;
+    if (next === null) return Math.floor(prev) + 1;
+    var mid = (prev + next) / 2;
+    return (mid > prev && mid < next && next - prev >= 1e-6) ? mid : null;
+  }
+  // Drop the entry `ref` ({ app } or { group }) at position `index` of
+  // the shown Dock. One entry changes, or (keys too close) all renumber.
+  function dockMoveTo(data, ref, index, okIds, now) {
+    var d = normalize(data);
+    var es = dockEntries(d, okIds);
+    var i = -1;
+    for (var k = 0; k < es.length; k++) if (entryIs(es[k], ref)) i = k;
+    if (i === -1) return d;
+    index = Math.max(0, Math.min(es.length - 1, Math.floor(index)));
+    if (index === i) return d;
+    var e = es.splice(i, 1)[0];
+    var key = keyAt(es, index);
+    if (key !== null) return setEntryKey(d, e, key, now);
+    es.splice(index, 0, e);
+    es.forEach(function (x, n) { d = setEntryKey(d, x, n + 1, now); });
+    return d;
+  }
+  // A group with fewer than two members left goes: the last one takes
+  // the group's place.
+  function dissolveSmall(d, gid, now) {
+    var g = findGroup(d, gid);
+    if (!g || g.dock === null) return d;
+    var ms = membersOf(d, gid);
+    if (ms.length >= 2) return d;
+    if (ms.length === 1) d = setGrp(d, ms[0], null, g.dock, now);
+    return withGroup(d, gid, { dock: null }, now);
+  }
+  // Put app `id` into a group with `target` ({ app } or { group }).
+  // `gid` and `name` are used when a new group is made.
+  function groupAdd(data, id, target, gid, name, now) {
+    var d = normalize(data);
+    if (!ID_RE.test(String(id)) || !target) return d;
+    var old = find(d, id) && find(d, id).grp;
+    var into = null, key;
+    if (target.group) {
+      var g = findGroup(d, target.group);
+      if (!g || g.dock === null) return d;
+      into = g.id;
+    } else {
+      var t = find(d, target.app);
+      if (!t || t.dock === null || target.app === id) return d;
+      var tg = t.grp && findGroup(d, t.grp);
+      if (tg && tg.dock !== null && membersOf(d, tg.id).length >= 2) into = tg.id;
+      else {
+        if (!GID_RE.test(String(gid))) return d;
+        key = t.dock;
+        d = withGroup(d, gid, { name: groupName(name), dock: key }, now);
+        d = setGrp(d, target.app, gid, undefined, now);
+        into = gid;
+      }
+    }
+    if (old === into) return d;
+    var it = find(d, id);
+    d = setGrp(d, id, into, it && it.dock !== null ? undefined : findGroup(d, into).dock, now);
+    if (old && old !== into) d = dissolveSmall(d, old, now);
+    return d;
+  }
+  // Take app `id` out of its group: it lands right after the group.
+  function groupLeave(data, id, okIds, now) {
+    var d = normalize(data);
+    var it = find(d, id);
+    if (!it || !it.grp) return d;
+    var gid = it.grp, es = dockEntries(d, okIds), at = -1;
+    for (var k = 0; k < es.length; k++) if (es[k].group === gid) at = k;
+    var key = at === -1 ? it.dock : keyAt(es, at + 1);
+    if (key === null) key = it.dock;
+    d = setGrp(d, id, null, key, now);
+    return dissolveSmall(d, gid, now);
+  }
+  function groupRename(data, gid, name, now) {
+    var d = normalize(data), g = findGroup(d, gid), n = groupName(name);
+    if (!g || !n || n === g.name) return d;
+    return withGroup(d, gid, { name: n }, now);
+  }
+  // Every member back to a plain icon, in the group's place and order.
+  function groupUngroup(data, gid, okIds, now) {
+    var d = normalize(data), g = findGroup(d, gid);
+    if (!g || g.dock === null) return d;
+    var es = dockEntries(d, okIds), at = -1;
+    for (var k = 0; k < es.length; k++) if (es[k].group === gid) at = k;
+    var lo = g.dock, hi = at >= 0 && at + 1 < es.length ? es[at + 1].key : lo + 1;
+    var ms = membersOf(d, gid);
+    ms.forEach(function (id, n) { d = setGrp(d, id, null, lo + (hi - lo) * n / ms.length, now); });
+    return withGroup(d, gid, { dock: null }, now);
   }
 
   // ---------- 1b. Apps shown in the menu (pure) ----------
@@ -331,7 +523,9 @@
                 menuSetHidden: menuSetHidden, menuPreset: menuPreset, MENU_KEY: MENU_KEY,
                 dockSide: dockSide, POSITIONS: POSITIONS.slice(),
                 badgeCounts: badgeCounts, badgeText: badgeText, lateTasks: lateTasks, BADGE_NEVER: BADGE_NEVER.slice(),
-                cardsHere: cardsHere, CARDS_W: CARDS_W };
+                cardsHere: cardsHere, CARDS_W: CARDS_W,
+                dockEntries: dockEntries, dockMoveTo: dockMoveTo, groupAdd: groupAdd, groupLeave: groupLeave,
+                groupRename: groupRename, groupUngroup: groupUngroup, groupName: groupName, GID_RE: GID_RE };
 
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (!root || !root.document) return;
@@ -577,6 +771,24 @@
     ".ld-menu button:hover,.ld-menu button:focus-visible{background:var(--accent-soft)}",
     ".ld-menu button:disabled{opacity:.45;cursor:default;background:transparent}",
     ".ld-menu .ld-danger{color:var(--danger)}",
+    // DOCK-GRP: a group's tile (up to four small icons) and its panel
+    ".ld-gtile{display:grid!important;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;padding:calc(var(--ld-t,52px) * .12);box-sizing:border-box}",
+    ".ld-gmini{display:flex;align-items:center;justify-content:center;min-width:0;min-height:0}",
+    ".ld-dk .ld-gtile .ld-gmini svg{width:calc(var(--ld-t) * .3);height:calc(var(--ld-t) * .3)}",
+    ".ld-dk.ld-drop .ld-tile{outline:2px dashed var(--accent);outline-offset:3px;transform:scale(1.08)}",
+    ".ld-gpop{width:min(320px,calc(100vw - 16px));min-width:0;box-sizing:border-box;padding:10px}",
+    ".ld-gpop .ld-gname{display:block;width:100%;box-sizing:border-box;min-height:40px;padding:6px 10px;margin:0 0 8px;font:inherit;font-weight:600;",
+    "color:var(--text);background:transparent;border:1px solid transparent;border-radius:8px;text-align:center}",
+    ".ld-gpop .ld-gname:hover,.ld-gpop .ld-gname:focus{border-color:var(--border);background:var(--accent-soft);outline:none}",
+    ".ld-ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin-bottom:6px}",
+    ".ld-gcell{position:relative}",
+    ".ld-gpop .ld-gapp{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;text-align:center;min-height:0}",
+    ".ld-gpop .ld-gapp .ld-tile{width:44px;height:44px;border-radius:12px;box-shadow:none}",
+    ".ld-gpop .ld-gapp .ld-tile svg{width:24px;height:24px}",
+    ".ld-gl{font-size:12px;line-height:1.25;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    ".ld-gpop .ld-gx{position:absolute;top:0;right:0;width:28px;min-height:28px;height:28px;padding:0;border-radius:50%;",
+    "display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;color:var(--text-dim);background:var(--panel-bg);border:1px solid var(--border)}",
+    ".ld-gpop .ld-gx:hover,.ld-gpop .ld-gx:focus-visible{color:var(--danger);background:var(--panel-bg)}",
     // the Dock (z 950: over a running app at 900, under the menu at 999)
     "#ld-dock{position:fixed;left:50%;bottom:calc(6px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);",
     "z-index:950;max-width:calc(100vw - 16px);transition:transform .22s ease,opacity .22s ease;--ld-dx:0;--ld-dy:-1}",
@@ -941,9 +1153,10 @@
 
   function closeCtx(refocus) {
     if (!ctx) return;
-    var back = ctx.back;
+    var back = ctx.back, after = ctx.onClose;
     ctx.el.remove();
     ctx = null;
+    if (after) { try { after(); } catch (e) {} }
     doc.removeEventListener("pointerdown", ctxOutside, true);
     if (refocus && back && back.isConnected) back.focus();
   }
@@ -951,16 +1164,25 @@
     if (ctx && !ctx.el.contains(e.target)) closeCtx(false);
   }
 
-  function openCtx(id, place, anchor, x, y) {
+  function openCtx(id, place, anchor, x, y, gid) {
     closeCtx(false);
-    var app = appById(id);
-    if (!app) return;
+    var app = gid ? null : appById(id);
+    if (!app && !gid) return;
     var ids = list(load(), place);
     var i = ids.indexOf(id);
+    // DOCK-GRP: in the Dock, earlier and later walk what is shown (a
+    // group counts as one).
+    var ref = gid ? { group: gid } : { app: id }, es = null;
+    if (place === "dock") {
+      es = dockEntries(load(), shown("dock"));
+      i = -1;
+      for (var q = 0; q < es.length; q++) if (gid ? es[q].group === gid : es[q].app === id) i = q;
+      ids = es;
+    }
     var m = doc.createElement("div");
     m.className = "ld-menu";
     m.setAttribute("role", "menu");
-    m.setAttribute("aria-label", labelOf(app));
+    m.setAttribute("aria-label", gid ? anchor.getAttribute("data-ld-name") : labelOf(app));
     function item(key, fn, disabled, cls) {
       var b = doc.createElement("button");
       b.type = "button";
@@ -971,10 +1193,21 @@
       b.addEventListener("click", function () { closeCtx(false); fn(); });
       m.appendChild(b);
     }
-    item("open", function () { launch(id); });
-    item("earlier", function () { change(move(load(), id, place, -1, Date.now())); focusIcon(id, place); }, i <= 0);
-    item("later", function () { change(move(load(), id, place, 1, Date.now())); focusIcon(id, place); }, i === -1 || i >= ids.length - 1);
-    item(place === "desk" ? "remove" : "removeDock", function () { change(pin(load(), id, place, false, Date.now())); }, false, "ld-danger");
+    var step = function (dir) {
+      if (es) change(dockMoveTo(load(), ref, i + dir, shown("dock"), Date.now()));
+      else change(move(load(), id, place, dir, Date.now()));
+      focusIcon(gid || id, place);
+    };
+    item("open", function () { if (gid) openGroup(gid, anchor); else launch(id); });
+    item("earlier", function () { step(-1); }, i <= 0);
+    item("later", function () { step(1); }, i === -1 || i >= ids.length - 1);
+    if (es && !gid && es.length > 1) item("grpWith", function () { openGroupPick(id, anchor); });
+    if (gid) item("grpUngroup", function () {
+      var en = entryOf(gid), first = en && en.ids[0];
+      change(groupUngroup(load(), gid, shown("dock"), Date.now()));
+      if (first) focusIcon(first, "dock");
+    }, false, "ld-danger");
+    else item(place === "desk" ? "remove" : "removeDock", function () { change(unpinDock(load(), id, place)); }, false, "ld-danger");
     m.addEventListener("keydown", function (e) {
       var bs = Array.prototype.slice.call(m.querySelectorAll("button:not(:disabled)"));
       var k = bs.indexOf(doc.activeElement);
@@ -983,27 +1216,85 @@
       else if (e.key === "ArrowUp") { e.preventDefault(); bs[(k - 1 + bs.length) % bs.length].focus(); }
       else if (e.key === "Tab") { closeCtx(false); }
     });
-    doc.body.appendChild(m);
-    var r = m.getBoundingClientRect();
-    var vw = root.innerWidth, vh = root.innerHeight;
-    if (place === "dock") {                         // open away from the Dock's edge
-      var side = dockEdge();
-      var ar = anchor.getBoundingClientRect();
-      if (side === "left") { x = ar.right + 8; y = ar.top; }
-      else if (side === "right") { x = ar.left - r.width - 8; y = ar.top; }
-      else if (side === "top") y = ar.bottom + 8;
-      else y = y - r.height - 8;                     // upwards from a bottom Dock
-    }
-    m.style.left = Math.max(8, Math.min(x, vw - r.width - 8)) + "px";
-    m.style.top = Math.max(8, Math.min(y, vh - r.height - 8)) + "px";
+    placePop(m, anchor, x, y, place === "dock");
     ctx = { el: m, back: anchor };
     doc.addEventListener("pointerdown", ctxOutside, true);
     var first = m.querySelector("button:not(:disabled)");
     if (first) first.focus();
   }
 
+  function placePop(m, anchor, x, y, inDock) {
+    doc.body.appendChild(m);
+    var r = m.getBoundingClientRect();
+    var vw = root.innerWidth, vh = root.innerHeight;
+    if (inDock) {                                   // open away from the Dock's edge
+      var side = dockEdge();
+      var ar = anchor.getBoundingClientRect();
+      if (!x && !y) { x = ar.left + ar.width / 2 - r.width / 2; y = ar.top; }
+      if (side === "left") { x = ar.right + 8; y = ar.top; }
+      else if (side === "right") { x = ar.left - r.width - 8; y = ar.top; }
+      else if (side === "top") y = ar.bottom + 8;
+      else y = Math.min(y, ar.top) - r.height - 8;   // upwards from a bottom Dock
+    }
+    m.style.left = Math.max(8, Math.min(x, vw - r.width - 8)) + "px";
+    m.style.top = Math.max(8, Math.min(y, vh - r.height - 8)) + "px";
+  }
+
+  // DOCK-GRP: unpinning a group's member from the Dock may leave one.
+  function unpinDock(d, id, place) {
+    var it = find(d, id), gid = place === "dock" && it && it.grp;
+    var out = pin(d, id, place, false, Date.now());
+    return gid ? dissolveSmall(out, gid, Date.now()) : out;
+  }
+
+  // "Put in a group with…": the other things in the Dock, by name.
+  function openGroupPick(id, anchor) {
+    closeCtx(false);
+    var m = doc.createElement("div");
+    m.className = "ld-menu";
+    m.setAttribute("role", "menu");
+    m.setAttribute("aria-label", tr("grpWith"));
+    dockEntries(load(), shown("dock")).forEach(function (en) {
+      if (en.app === id) return;
+      var b = doc.createElement("button");
+      b.type = "button";
+      b.setAttribute("role", "menuitem");
+      b.textContent = en.group ? groupLabel(en) + " (" + en.ids.length + ")" : labelOf(appById(en.app));
+      b.addEventListener("click", function () { closeCtx(false); groupDrop(id, en); });
+      m.appendChild(b);
+    });
+    m.addEventListener("keydown", function (e) {
+      var bs = Array.prototype.slice.call(m.querySelectorAll("button"));
+      var k = bs.indexOf(doc.activeElement);
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeCtx(true); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); bs[(k + 1) % bs.length].focus(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); bs[(k - 1 + bs.length) % bs.length].focus(); }
+      else if (e.key === "Tab") { closeCtx(false); }
+    });
+    placePop(m, anchor, 0, 0, true);
+    ctx = { el: m, back: anchor };
+    doc.addEventListener("pointerdown", ctxOutside, true);
+    var first = m.querySelector("button");
+    if (first) first.focus();
+  }
+  // `id` dropped on the entry `en`: join its group, or make a new one.
+  function groupDrop(id, en) {
+    var d = load(), now = Date.now();
+    var n = (d.groups || []).filter(function (g) { return g.dock !== null; }).length + 1;
+    var gid = "g" + now.toString(36) + Math.floor(Math.random() * 1296).toString(36);
+    var name = "";
+    if (en.app) {
+      var a = appById(id), b = appById(en.app);
+      var cat = a && b && a.category && a.category === b.category && host.category ? host.category(a.category) : "";
+      name = cat || tr("grpNew").replace("{n}", String(n));
+    }
+    change(groupAdd(d, id, en.group ? { group: en.group } : { app: en.app }, gid, name, now));
+    focusIcon(en.group || (find(load(), en.app) || {}).grp || id, "dock");
+  }
+
   function focusIcon(id, place) {
-    var el = doc.querySelector((place === "dock" ? "#ld-dock" : "#ld-desk") + ' [data-app="' + id + '"]');
+    var el = doc.querySelector((place === "dock" ? "#ld-dock" : "#ld-desk") + ' [data-app="' + id + '"]') ||
+      (place === "dock" ? doc.querySelector('#ld-dock [data-group="' + id + '"]') : null);
     if (el) el.focus();
   }
 
@@ -1184,7 +1475,7 @@
     var side = sideNow(p);
     if (!ids.length) { removeDock(); setVars(p, false, side); return; }
     var act = doc.activeElement;
-    var focusId = act && dock && dock.contains(act) ? act.getAttribute("data-app") : null;
+    var focusId = act && dock && dock.contains(act) ? (act.getAttribute("data-app") || act.getAttribute("data-group")) : null;
     if (!dock) {
       dock = doc.createElement("div");
       dock.id = "ld-dock";
@@ -1226,7 +1517,11 @@
     bar2.textContent = "";
     bar2.style.removeProperty("--ld-mag");
     var run = runningId();
-    ids.forEach(function (id, pos) {
+    var pos = -1;
+    dockEntries(load(), ids).forEach(function (en) {
+      pos++;
+      if (en.group) { bar2.appendChild(groupTile(en, pos, run)); return; }
+      var id = en.app;
       var app = appById(id);
       var b = doc.createElement("button");
       b.type = "button";
@@ -1257,6 +1552,139 @@
     fitColumn();
     paintBadges();
     if (focusId) focusIcon(focusId, "dock");
+  }
+
+  // ---------- 11a. Dock groups (DOCK-GRP) ----------
+  function groupLabel(en) { return en.name || tr("grpNew").replace("{n}", ""); }
+  function groupTile(en, pos, run) {
+    var b = doc.createElement("button");
+    b.type = "button";
+    var on = en.ids.indexOf(run) >= 0, open = !on && host.isOpen && en.ids.some(function (x) { return host.isOpen(x); });
+    b.className = "ld-dk ld-grp" + (on ? " run" : open ? " open" : "");
+    b.setAttribute("data-group", en.group);
+    b.setAttribute("data-ids", en.ids.join(" "));
+    var name = tr("grpAria").replace("{name}", groupLabel(en)).replace("{n}", String(en.ids.length));
+    b.setAttribute("aria-label", name);
+    b.setAttribute("data-ld-name", name);
+    b.setAttribute("aria-haspopup", "dialog");
+    b.setAttribute("aria-expanded", "false");
+    var tile = doc.createElement("span");
+    tile.className = "ld-tile ld-gtile";
+    tile.setAttribute("data-hue", hueOf(null, pos));
+    en.ids.slice(0, 4).forEach(function (id) {
+      var app = appById(id);
+      if (!app) return;
+      var mini = doc.createElement("span");
+      mini.className = "ld-gmini";
+      mini.innerHTML = iconOf(app);          // static shell icon, not data
+      tile.appendChild(mini);
+    });
+    b.appendChild(tile);
+    var dot = doc.createElement("span");
+    dot.className = "ld-dot";
+    b.appendChild(dot);
+    var tip = doc.createElement("span");
+    tip.className = "ld-tip";
+    tip.setAttribute("aria-hidden", "true");
+    tip.textContent = groupLabel(en);
+    b.appendChild(tip);
+    b.addEventListener("click", function (e) {
+      if (b.__ldDragged) { e.preventDefault(); b.__ldDragged = false; return; }
+      if (ctx && ctx.back === b) { closeCtx(true); return; }
+      openGroup(en.group, b);
+    });
+    b.addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+      var r = b.getBoundingClientRect(), kb = !e.clientX && !e.clientY;
+      openCtx(null, "dock", b, kb ? r.left : e.clientX, kb ? r.top : e.clientY, en.group);
+    });
+    return b;
+  }
+  function entryOf(gid) {
+    var es = dockEntries(load(), shown("dock"));
+    for (var i = 0; i < es.length; i++) if (es[i].group === gid) return es[i];
+    return null;
+  }
+  // The group's panel: its name (edit to rename), its apps (tap to open,
+  // × to take one out) and Ungroup.
+  function openGroup(gid, anchor) {
+    closeCtx(false);
+    var en = entryOf(gid);
+    if (!en) return;
+    var m = doc.createElement("div");
+    m.className = "ld-menu ld-gpop";
+    m.setAttribute("role", "dialog");
+    m.setAttribute("aria-label", groupLabel(en));
+    var nm = doc.createElement("input");
+    nm.type = "text";
+    nm.className = "ld-gname";
+    nm.maxLength = 40;
+    nm.value = en.name;
+    nm.placeholder = tr("grpNew").replace("{n}", "").trim();
+    nm.setAttribute("aria-label", tr("grpName"));
+    nm.setAttribute("data-k", "ld-gname");
+    var saveName = function () {
+      if (nm.value.trim() && nm.value.trim() !== en.name) change(groupRename(load(), gid, nm.value, Date.now()));
+    };
+    nm.addEventListener("change", saveName);
+    nm.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); saveName(); closeCtx(true); } });
+    m.appendChild(nm);
+    var grid = doc.createElement("div");
+    grid.className = "ld-ggrid";
+    en.ids.forEach(function (id, n) {
+      var app = appById(id);
+      if (!app) return;
+      var cell = doc.createElement("div");
+      cell.className = "ld-gcell";
+      var b = doc.createElement("button");
+      b.type = "button";
+      b.className = "ld-gapp";
+      b.setAttribute("data-app", id);
+      b.appendChild(tileFor(app, n));
+      var lab = doc.createElement("span");
+      lab.className = "ld-gl";
+      lab.textContent = labelOf(app);
+      b.appendChild(lab);
+      b.addEventListener("click", function () { closeCtx(false); launch(id); });
+      cell.appendChild(b);
+      var x = doc.createElement("button");
+      x.type = "button";
+      x.className = "ld-gx";
+      x.textContent = "\u00d7";
+      x.setAttribute("aria-label", tr("grpOut") + ": " + labelOf(app));
+      x.title = tr("grpOut");
+      x.setAttribute("data-k", "ld-gout:" + id);
+      x.addEventListener("click", function () {
+        closeCtx(false);
+        change(groupLeave(load(), id, shown("dock"), Date.now()));
+        if (entryOf(gid)) { var t = doc.querySelector('#ld-dock [data-group="' + gid + '"]'); if (t) openGroup(gid, t); }
+        else focusIcon(id, "dock");
+      });
+      cell.appendChild(x);
+      grid.appendChild(cell);
+    });
+    m.appendChild(grid);
+    var ug = doc.createElement("button");
+    ug.type = "button";
+    ug.className = "ld-danger";
+    ug.textContent = tr("grpUngroup");
+    ug.setAttribute("data-k", "ld-gungroup");
+    ug.addEventListener("click", function () {
+      closeCtx(false);
+      var first = en.ids[0];
+      change(groupUngroup(load(), gid, shown("dock"), Date.now()));
+      focusIcon(first, "dock");
+    });
+    m.appendChild(ug);
+    m.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); saveName(); closeCtx(true); }
+    });
+    placePop(m, anchor, 0, 0, true);
+    anchor.setAttribute("aria-expanded", "true");
+    ctx = { el: m, back: anchor, onClose: function () { saveName(); anchor.setAttribute("aria-expanded", "false"); } };
+    doc.addEventListener("pointerdown", ctxOutside, true);
+    var f = grid.querySelector(".ld-gapp");
+    if (f) f.focus();
   }
 
   // ---------- 11b. Count badges (BADGE-1) ----------
@@ -1306,6 +1734,10 @@
     var c = countsNow();
     var bs = doc.querySelectorAll("#ld-desk .ld-ic[data-app], #ld-dock .ld-dk[data-app]");
     for (var i = 0; i < bs.length; i++) badgeOn(bs[i], c[bs[i].getAttribute("data-app")] || 0);
+    var gs = doc.querySelectorAll("#ld-dock .ld-grp[data-ids]");      // DOCK-GRP: a group shows the sum
+    for (var g = 0; g < gs.length; g++) {
+      badgeOn(gs[g], gs[g].getAttribute("data-ids").split(" ").reduce(function (n, id) { return n + (c[id] || 0); }, 0));
+    }
     refreshOverdue(false);
   }
   function badgesSoon() {
@@ -1413,8 +1845,16 @@
     bar.addEventListener("pointerdown", function (e) {
       if (e.pointerType !== "mouse" || e.button !== 0) return;
       var b = e.target.closest(".ld-dk");
-      if (!b || !b.hasAttribute("data-app")) return;      // the Pocket button stays last
+      if (!b || !(b.hasAttribute("data-app") || b.hasAttribute("data-group"))) return;   // the Pocket button stays last
       dragging = null;
+      var target = null;
+      var isEntry = function (x) { return x.hasAttribute("data-app") || x.hasAttribute("data-group"); };
+      var setTarget = function (t) {
+        if (target === t) return;
+        if (target) target.classList.remove("ld-drop");
+        target = t;
+        if (target) target.classList.add("ld-drop");
+      };
       sx = e.clientX; sy = e.clientY;
       var v = vertical();
       var onMove = function (ev) {
@@ -1425,7 +1865,19 @@
           b.classList.add("drag");
           unmagnify();
         }
-        var bs = Array.prototype.filter.call(bar.children, function (x) { return x !== dragging && x.hasAttribute("data-app"); });
+        var bs = Array.prototype.filter.call(bar.children, function (x) { return x !== dragging && isEntry(x); });
+        // DOCK-GRP: an app held over the middle of another icon groups.
+        var over = null;
+        if (dragging.hasAttribute("data-app")) {
+          for (var o = 0; o < bs.length; o++) {
+            var ro = bs[o].getBoundingClientRect();
+            var lo = v ? ro.top : ro.left, len = v ? ro.height : ro.width, at = v ? ev.clientY : ev.clientX;
+            var across = v ? ev.clientX >= ro.left - 8 && ev.clientX <= ro.right + 8 : ev.clientY >= ro.top - 12 && ev.clientY <= ro.bottom + 8;
+            if (across && at > lo + len * 0.28 && at < lo + len * 0.72) { over = bs[o]; break; }
+          }
+        }
+        setTarget(over);
+        if (over) return;
         var before = null;
         for (var i = 0; i < bs.length; i++) {
           var r = bs[i].getBoundingClientRect();
@@ -1438,14 +1890,23 @@
         doc.removeEventListener("pointermove", onMove, true);
         doc.removeEventListener("pointerup", onUp, true);
         if (!dragging) return;
-        var d = dragging;
+        var d = dragging, t = target;
         dragging = null;
+        setTarget(null);
         d.classList.remove("drag");
         d.__ldDragged = true;
         setTimeout(function () { d.__ldDragged = false; }, 0);
-        var idx = Array.prototype.indexOf.call(bar.children, d);
-        if (idx !== startIdx) change(moveTo(load(), d.getAttribute("data-app"), "dock", idx, Date.now()));
-        focusIcon(d.getAttribute("data-app"), "dock");
+        var aid = d.getAttribute("data-app"), gid = d.getAttribute("data-group");
+        if (t && aid) {
+          var tg = t.getAttribute("data-group");
+          groupDrop(aid, tg ? { group: tg } : { app: t.getAttribute("data-app") });
+          return;
+        }
+        var idx = Array.prototype.filter.call(bar.children, isEntry).indexOf(d);
+        if (Array.prototype.indexOf.call(bar.children, d) !== startIdx) {
+          change(dockMoveTo(load(), gid ? { group: gid } : { app: aid }, idx, shown("dock"), Date.now()));
+        }
+        focusIcon(aid || gid, "dock");
       };
       doc.addEventListener("pointermove", onMove, true);
       doc.addEventListener("pointerup", onUp, true);
@@ -1461,6 +1922,7 @@
 
   // ---------- 12. Public API ----------
   // host = { apps(), open(app), running(), label(app), icons, lang(), desktop,
+  //          category(c) optional: a category's label (DOCK-GRP names),
   //          menuChanged(), isOpen(id) optional: alive behind (multitasking),
   //          aliasHost(id) / openAlias(id) optional: APP-ALIAS (1.5.0),
   //          dockExtra() optional: one more button after the apps, or null

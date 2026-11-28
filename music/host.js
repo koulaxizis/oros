@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Music — host.js (player + data owner, v1.5.0)
+// orOS Music — host.js (player + data owner, v1.6.0)
 // Runs in the SHELL window (loaded by index.html after core.js and
 // store.js, or injected by the app on first open), so the music,
 // the queue and sync keep going while the Music window is closed.
@@ -191,8 +191,12 @@
     el.setAttribute("data-oros-music", "1");
     el.preload = "auto";
     el.style.display = "none";
-    el._blob = ""; el._same = false; el._rg = 1; el._fade = 1; el._node = null; el._gain = null;
+    el._blob = ""; el._same = false; el._rg = 1; el._fade = 1; el._node = null; el._gain = null; el._cap = null;
     try { doc.body.appendChild(el); } catch (e) {}
+    // MU-VIZ-BEAT: a stream loaded readable (crossOrigin) that does not
+    // load that way plays plain again at once, before anything else
+    // hears of the error, and its host is remembered as not readable.
+    el.addEventListener("error", function (e) { if (vizPlainAgain(el)) { try { e.stopImmediatePropagation(); } catch (x) {} } });
     evs.forEach(function (x) { el.addEventListener(x[0], x[1]); });
     // The next song, loaded early, that cannot load: it is never moved
     // on to (that stopped the music), and not loaded again; the queue
@@ -234,6 +238,7 @@
     if (el._blob && el._blob !== u) revoke(el._blob);
     el._blob = /^blob:/.test(u) ? u : "";
     el._same = sameOrigin(u);
+    vizCors(el, u);
     el.src = u;
   }
   function clearDeck(el) {
@@ -403,7 +408,7 @@
     try {
       viz.an = ctx.createAnalyser();
       viz.an.fftSize = 1024;
-      viz.an.smoothingTimeConstant = 0.72;
+      viz.an.smoothingTimeConstant = 0.55;   // MU-VIZ-BEAT: was 0.72, which blurred the beats
       master.connect(viz.an);
       viz.f = new Uint8Array(viz.an.frequencyBinCount);
       viz.w = new Uint8Array(viz.an.fftSize);
@@ -422,11 +427,85 @@
     if (viz.on && vizNode()) decks.forEach(function (el) { if (el.getAttribute("src")) vizRoute(el); });
     return viz.on;
   }
+  // Streams (MU-VIZ-BEAT, 1.6.0, Chris 2026-11-27: the light wallpaper
+  // "moves without coherence" on songs that stream, because it had no
+  // sound and breathed on its own). While a light listens, a stream
+  // whose host allows CORS (probed once per host for the page, a GET
+  // aborted at the headers, at most 1.5 s before its first song starts)
+  // loads with crossOrigin="anonymous", and the light reads a copy of
+  // its sound (el.captureStream(), Chrome/Edge/Android; never Firefox's
+  // mozCaptureStream, which takes the sound away) through a
+  // MediaStreamSource into the same analyser, which goes nowhere. The
+  // stream itself keeps playing plain from the element, so a suspended
+  // context can never silence it. A stream is never restarted for the
+  // light: a host is asked before a song loads, and a host that says
+  // no (or a load that fails with crossOrigin, which then plays plain
+  // at once) stays plain for the page.
+  var vcOk = {};
+  function vizOrigin(u) { try { return new w.URL(u, w.location.href).origin; } catch (e) { return ""; } }
+  function vizStream(u) { return !!u && /^https:\/\//i.test(u) && !sameOrigin(u); }
+  function vizProbe(u) {
+    var o = vizOrigin(u);
+    if (!o) return Promise.resolve(false);
+    if (o in vcOk) return Promise.resolve(vcOk[o]);
+    if (typeof w.fetch !== "function" || typeof w.AbortController !== "function") return Promise.resolve(vcOk[o] = false);
+    var ac = new w.AbortController(), tm = w.setTimeout(function () { ac.abort(); }, 8000);
+    return w.fetch(u, { method: "GET", mode: "cors", credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer", signal: ac.signal }).then(function (r) {
+      w.clearTimeout(tm); try { ac.abort(); } catch (e) {}
+      return (vcOk[o] = !!(r.ok || r.status === 206));
+    }, function () { w.clearTimeout(tm); return (vcOk[o] = false); });
+  }
+  // sourceFor(item).then(vizPrep): a stream of a host not asked yet
+  // waits for the answer (at most 1.5 s) while a light listens.
+  function vizPrep(u) {
+    var M = w.HTMLMediaElement;
+    if (!viz.on || !vizStream(u) || !M || typeof M.prototype.captureStream !== "function" || vizOrigin(u) in vcOk) return u;
+    return new Promise(function (ok) {
+      var done = false, fin = function () { if (!done) { done = true; ok(u); } };
+      w.setTimeout(fin, 1500);
+      vizProbe(u).then(fin, fin);
+    });
+  }
+  // Before a source is set: crossOrigin only for a readable stream host
+  // while a light listens.
+  function vizCors(el, u) {
+    if (viz.on && vizStream(u) && vcOk[vizOrigin(u)] === true) el.crossOrigin = "anonymous";
+    else if (el.hasAttribute("crossorigin")) el.removeAttribute("crossorigin");
+  }
+  function vizPlainAgain(el) {
+    var u = el.getAttribute("src") || "";
+    if (!el.hasAttribute("crossorigin") || !vizStream(u)) return false;
+    vcOk[vizOrigin(u)] = false;
+    el.removeAttribute("crossorigin");
+    var go = el === audio && wantPlay;
+    el.src = u;
+    if (go) { try { var p = el.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
+    return true;
+  }
+  // The copy of a readable stream's sound into the analyser (again
+  // after a new source: captureStream gives a new track).
+  function vizCapture(el) {
+    if (!viz.on || el._node || !el.hasAttribute("crossorigin") || typeof el.captureStream !== "function" || !vizNode()) return;
+    try {
+      if (ctx.state === "suspended") { try { ctx.resume().catch(function () {}); } catch (e) {} }
+      var tr = el.captureStream().getAudioTracks()[0] || null;
+      if (!tr || (el._cap && el._cap.tr === tr)) return;
+      if (el._cap) { try { el._cap.n.disconnect(); } catch (e) {} }
+      var n = ctx.createMediaStreamSource(new w.MediaStream([tr]));
+      n.connect(viz.an);
+      el._cap = { tr: tr, n: n };
+    } catch (e) { el._cap = null; }
+  }
+  function capLive(el) {
+    return !!(el._cap && el.hasAttribute("crossorigin") && el._cap.tr.readyState === "live");
+  }
   // → { live, f, w, rate } (arrays of this window, read only) or null.
-  // live: the song playing now is routed, so f / w are its sound.
+  // live: the song playing now is routed (or, a stream, copied), so
+  // f / w are its sound.
   function vizFrame() {
     if (!viz.on || !viz.an) return null;
-    var live = !!audio._node && !audio.paused && ctx && ctx.state === "running";
+    if (!audio._node && !audio.paused && audio.hasAttribute("crossorigin") && !capLive(audio)) vizCapture(audio);
+    var live = !!(audio._node || capLive(audio)) && !audio.paused && ctx && ctx.state === "running";
     if (live) { try { viz.an.getByteFrequencyData(viz.f); viz.an.getByteTimeDomainData(viz.w); } catch (e) { live = false; } }
     return { live: live, f: viz.f, w: viz.w, rate: ctx ? ctx.sampleRate : 48000 };
   }
@@ -494,7 +573,7 @@
     dropNext();
     var my = ++nxSeq;
     nx = { el: null, item: item, seq: my, ready: false };
-    Promise.all([sourceFor(item), rgFor(item)]).then(function (r) {
+    Promise.all([sourceFor(item).then(vizPrep), rgFor(item)]).then(function (r) {
       if (!nx || nx.seq !== my) { revoke(r[0]); return; }
       var el = deckFor(r[0], null);
       if (el === audio || el === fade.el) { revoke(r[0]); nx = null; return; }
@@ -596,7 +675,7 @@
     try { audio.pause(); } catch (e) {}
     media();
     host.notify("load");
-    return Promise.all([sourceFor(item), rgFor(item)]).then(function (r) {
+    return Promise.all([sourceFor(item).then(vizPrep), rgFor(item)]).then(function (r) {
       var src = r[0];
       if (my !== loadSeq) { revoke(src); return false; }
       var el = deckFor(src, audio);
@@ -818,7 +897,7 @@
     posState();
   });
   on("pause", function () { stallClear(); saveLocal(true); chip(); host.notify("pause"); });
-  on("playing", function () { live = true; stallClear(); flags.buffering = false; flags.error = ""; fails = 0; offWait = ""; chip(); host.notify("play"); });
+  on("playing", function () { live = true; vizCapture(audio); stallClear(); flags.buffering = false; flags.error = ""; fails = 0; offWait = ""; chip(); host.notify("play"); });
   on("play", function () { hookOthers(); });
   on("waiting", function () { flags.buffering = true; stallArm(); host.notify("buffer"); });
   on("canplay", function () { flags.buffering = false; host.notify("buffer"); });

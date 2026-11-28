@@ -76,4 +76,10 @@
     <string name="bio_title_lock">orOS entsperren</string>
     <string name="bio_title_on_lock">Entsperren von orOS per Fingerabdruck einschalten</string>
     <string name="bio_use_lock">PIN oder Kennwort</string>
+    <string name="channel_screenrec">Bildschirmaufnahme</string>
+    <string name="rec_running">orOS nimmt den Bildschirm auf</string>
+    <string name="rec_running_text">Tippe auf Beenden, um sie zu stoppen und das Video zu speichern.</string>
+    <string name="rec_stop">Beenden</string>
+    <string name="rec_saved">Bildschirmaufnahme gespeichert</string>
+    <string name="rec_saved_text">In Filme › orOS. Tippe, um sie anzusehen.</string>
 </resources>

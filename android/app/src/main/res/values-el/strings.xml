@@ -76,4 +76,10 @@
     <string name="bio_title_lock">Ξεκλείδωμα orOS</string>
     <string name="bio_title_on_lock">Ενεργοποίηση ξεκλειδώματος orOS με δακτυλικό</string>
     <string name="bio_use_lock">PIN ή φράση</string>
+    <string name="channel_screenrec">Εγγραφή οθόνης</string>
+    <string name="rec_running">Το orOS γράφει την οθόνη</string>
+    <string name="rec_running_text">Πάτα Τέλος για να σταματήσει και να αποθηκευτεί το βίντεο.</string>
+    <string name="rec_stop">Τέλος</string>
+    <string name="rec_saved">Η εγγραφή οθόνης αποθηκεύτηκε</string>
+    <string name="rec_saved_text">Στις Ταινίες › orOS. Πάτα για να τη δεις.</string>
 </resources>
