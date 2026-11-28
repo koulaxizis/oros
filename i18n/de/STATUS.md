@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 52869 of 52910 (99%)
+- Strings: 53082 of 53131 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -16,10 +16,10 @@ en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 2467 / 2468 |
+| assistant | 99% | 2618 / 2619 |
 | atelier | 100% | 1534 / 1534 |
 | aura | 100% | 84 / 84 |
-| automations | 100% | 332 / 332 |
+| automations | 100% | 337 / 337 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
@@ -30,7 +30,7 @@ en and el); translators change them there, not in a pack.
 | bubble | 100% | 54 / 54 |
 | budget | 100% | 1184 / 1184 |
 | calculator | 100% | 170 / 170 |
-| calendar | 100% | 638 / 638 (49 in the code) |
+| calendar | 100% | 650 / 650 (49 in the code) |
 | capture | 100% | 67 / 67 |
 | caravan | 100% | 170 / 170 |
 | cardkit | 100% | 9 / 9 |
@@ -61,7 +61,7 @@ en and el); translators change them there, not in a pack.
 | feeds | 100% | 329 / 329 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 100% | 964 / 964 (25 in the code) |
+| files | 99% | 964 / 972 (25 in the code) |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -104,7 +104,7 @@ en and el); translators change them there, not in a pack.
 | montage | 100% | 384 / 384 |
 | mood | 100% | 256 / 256 |
 | museum | 100% | 46 / 46 |
-| music | 100% | 689 / 689 |
+| music | 100% | 705 / 705 |
 | names | 100% | 40 / 40 |
 | netizen | 100% | 175 / 175 |
 | newsletter | 100% | 1061 / 1061 |
@@ -139,10 +139,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 2140 / 2140 |
+| settings | 100% | 2130 / 2130 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1662 / 1662 |
+| shell | 100% | 1701 / 1701 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |

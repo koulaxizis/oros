@@ -45,6 +45,7 @@ const rnd = (n) => { seed = (seed * 1103515245 + 12345) % 2147483648; return see
 // The code these rules replaced (verbatim logic, kept only as the
 // reference the shared copies must keep matching)
 // ---------------------------------------------------------------
+const addCal = (ts, n) => { const d = new Date(ts); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n).getTime(); };
 function legacyAppPrediction(periods) {            // cycle.js avgCycleLen / avgPeriodLen / nextPrediction
   const sorted = periods.slice().sort((a, b) => b.start - a.start);
   const ps = sorted.slice().reverse();
@@ -57,8 +58,8 @@ function legacyAppPrediction(periods) {            // cycle.js avgCycleLen / avg
   let len = null;
   if (ended.length) { let s = 0; ended.forEach((p) => { s += Math.round((p.end - p.start) / DAY) + 1; }); len = Math.round(s / ended.length); }
   if (len === null) len = 5;
-  const start = sorted[0].start + avg * DAY;
-  return { start, end: start + (len - 1) * DAY, avg };
+  const start = addCal(sorted[0].start, avg);              // fixed: calendar days (was + avg * DAY,
+  return { start, end: addCal(start, len - 1), avg };      // a day early across the October clock change)
 }
 function legacyShellDue(raw, today) {               // shell.js cycleShellCheck (decision part)
   const snap = (ts) => { if (typeof ts !== "number" || !isFinite(ts)) return null; const d = new Date(ts); if (isNaN(d.getTime())) return null; return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
@@ -70,8 +71,8 @@ function legacyShellDue(raw, today) {               // shell.js cycleShellCheck 
   for (let i = 1; i < starts.length; i++) gaps.push(Math.round((starts[i] - starts[i - 1]) / DAY));
   let sum = 0; gaps.forEach((g) => { sum += g; });
   const avg = Math.round(sum / gaps.length);
-  const predStart = starts[starts.length - 1] + avg * DAY;
-  const daysLeft = Math.ceil((predStart - today) / DAY);
+  const predStart = addCal(starts[starts.length - 1], avg);   // fixed as above
+  const daysLeft = Math.round((predStart - today) / DAY);       // today = a midnight; a 23/25 h day rounds away
   if (daysLeft > 2) return null;
   return { ymd: ymdOf(new Date(predStart)), daysLeft };
 }

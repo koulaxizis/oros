@@ -107,9 +107,9 @@
       export: "download every page: fmt png|jpg (scale 1|2|3) or pdf (dpi 150|300)"
     } },
     layout: { what: "Layout (print documents: magazines, books, brochures). A run works on the open document or on every document.", ops: {
-      text: "find and replace in every story: find, repl, cs (match case), word (whole words)",
+      text: "find and replace in every story: find, repl (\"\" removes; a paragraph left with nothing in it goes too, so no empty line stays), cs (match case), word (whole words)",
       pstyle: "paragraphs in style `from` (\"\" = any) get style `to`; styles by name, e.g. Body, Heading 1",
-      style: "change the paragraph style `name` itself (by name, e.g. Body text): size and lead in pt (0 = unchanged), font serif|sans|mono, align l|c|r|j (\"\" = unchanged), track in 1/1000 em (0 = unchanged), bold, ital, caps (bold, italic, capitals) on|off (\"\" = unchanged), sb, sa (space before, after) and fi (first-line indent) in pt (-1 = unchanged), brk where it starts any|col|page|odd|even (\"\" = unchanged), hyph Greek hyphenation on|off",
+      style: "change the paragraph style `name` itself (by name, e.g. Body text): size and lead in pt (0 = unchanged), font serif|sans|mono, align l|c|r|j (\"\" = unchanged), track in 1/1000 em (0 = unchanged), bold, ital, caps (bold, italic, capitals) on|off (\"\" = unchanged), sb, sa (space before, after) and fi (first-line indent) in pt (-1 = unchanged), brk where it starts any|col|page|odd|even (\"\" = unchanged), hyph Greek hyphenation on|off (justified text, align j, needs hyph on: without hyphenation it leaves wide gaps between words; hyphenation breaks words only at their syllables, so whole words on the next line means align l, not j with hyph off; say this to the user before turning it off)",
       master: "pages `on` all|odd|even get master `ms` (by name, \"\" = none)",
       margins: "page margins in mm: t (top), b (bottom), i (inside), o (outside), each 0-500, all four needed",
       pages: "add n pages (1-500) at the end, or before / after page `page` (its position, 1 = the first page); flow true = text that does not fit runs on into them",

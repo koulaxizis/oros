@@ -25,10 +25,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15   # job takes about 2 min
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # The Node version lives in .node-version, so local runs and the audit
       # use the same one (Node 22.22 read ISO-8859-1 differently from 22.23).
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .node-version
+      - run: node --test tests/*.test.js
+
+  # The same suite on a clock in Greece (UTC+2/+3 with summer time): dates
+  # that are only right in UTC (a day shifted by the offset, 24 h steps
+  # across the clock change) fail here and not in the job above.
+  athens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TZ: Europe/Athens
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: .node-version
       - run: node --test tests/*.test.js

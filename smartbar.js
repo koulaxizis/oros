@@ -29,31 +29,41 @@
 //   or right (default) on windows of ZONE_W and more, never in the Dock
 //   (there: left, centre, right in a row); the look "islands" floats the
 //   left side, the centre and the right side as separate rounded groups.
+//   Island (ISLAND-1, v1.12.0, video ideas 2026-11-23 #20): off by
+//   default; on windows of ISLAND_W and more (never in the Dock) the live
+//   pills and what plays sit together in one pill at the top centre
+//   (#sb-island); smartbar-island.js, loaded only then, paints the
+//   media part: a thin line with the current synced lyric or the title,
+//   growing on hover or tap into cover, progress and controls.
 //   fitBar() folds the last chips
 //   into #sb-more ("+N") before the date goes; on a phone (<= 600 px)
 //   all fold. Full list: help/topics/appearance.en.txt "Smart top bar".
 //
 // Device-local (oros-smartbar, never synced: screens differ):
 //   { v:1, list:["event",…] (order), look?, live:false? (no pills),
-//     zones?: { <kind>: "l" | "c" } (SBZ-1; right when absent) }
+//     zones?: { <kind>: "l" | "c" } (SBZ-1; right when absent),
+//     island?: true (ISLAND-1) }
 // Reads only (the live pills' pause button excepted). Pure logic is
 // unit-tested in node (tests/smartbar.test.js).
 // ============================================================
 (function (root) {
   "use strict";
 
-  var VER = "1.10.0";
+  var VER = "1.12.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
-               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing"];
-  var MONEY = { budget: 1, sales: 1, invoices: 1 };
+               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing", "screen", "storage", "rates", "mail"];
+  var MONEY = { budget: 1, sales: 1, invoices: 1, rates: 1 };
   // SB5: the cards of other apps live in smartbar-apps.js, loaded the
   // first time one of them is ticked (start-up stays as it was).
-  var APPS = { habits: 1, plants: 1, chores: 1, timer: 1, invoices: 1, trip: 1, kanban: 1, meal: 1, reading: 1 };
+  var APPS = { habits: 1, plants: 1, chores: 1, timer: 1, invoices: 1, trip: 1, kanban: 1, meal: 1, reading: 1, screen: 1, storage: 1, rates: 1, mail: 1 };
+  // Peek panels painted by smartbar-apps.js (STC-1 Screen time, MAILCARD-1 Mail).
+  var APP_PEEK = { screen: 1, mail: 1 };
   var LIVE = ["rec", "tmr", "sw"];          // SB-LIVE pills, in this order, before the chips
   var LOOKS = ["", "glass", "midnight", "solid", "islands"];   // SB3: "" = the classic bar; SBZ-1 "islands"
   var ZONES = ["l", "c", "r"];              // SBZ-1: left (after the menu button), centre, right (default)
   var ZONE_W = 1000;                        // zones only on windows at least this wide, never in the Dock
+  var ISLAND_W = 760;                       // ISLAND-1: the island only on windows at least this wide
   var FOLD_W = 600;                         // ≤ this width: every chip folds into the button
   var SOON_MIN = 60;                       // countdown from this many minutes before
   var TODAY_MS = 120000;                   // the summary is rebuilt at most every 2 min
@@ -74,6 +84,7 @@
       out.forEach(function (k) { if (v.zones[k] === "l" || v.zones[k] === "c") z[k] = v.zones[k]; });
       if (Object.keys(z).length) o.zones = z;
     }
+    if (v.island === true) o.island = true;      // ISLAND-1
     return o;
   }
   function zoneOf(stored, kind) { return stored && stored.zones && stored.zones[kind] || "r"; }
@@ -85,6 +96,17 @@
     return out;
   }
   function liveOf(stored) { return !(stored && stored.live === false); }
+  // ISLAND-1: the island shows when it is on, the window is wide enough
+  // and the row is in the top bar (not in the Dock).
+  function islandOf(stored) { return !!(stored && stored.island === true); }
+  function islandShown(stored, width, inDockNow) { return islandOf(stored) && !inDockNow && (width || 0) >= ISLAND_W; }
+  // With the island: the live pills go into it and the "playing" card
+  // leaves the row (the island shows what plays). → { row: [], isl: [] }
+  function islandSplit(rowList, on) {
+    if (!on) return { row: rowList.slice(), isl: [] };
+    return { row: rowList.filter(function (k) { return LIVE.indexOf(k) === -1 && k !== "playing"; }),
+             isl: rowList.filter(function (k) { return LIVE.indexOf(k) !== -1; }) };
+  }
   function lookOf(stored) { return stored && stored.look || ""; }
   function parse(raw) {
     try { return norm(JSON.parse(raw)); } catch (e) { return null; }
@@ -265,7 +287,8 @@
                 nextEvent: nextEvent, taskCount: taskCount, focusOf: focusOf, clock: clock,
                 monthSpent: monthSpent, money: money, ymdOf: ymdOf, LOOKS: LOOKS, lookOf: lookOf, APPS: APPS,
                 LIVE: LIVE, liveOf: liveOf, rowOf: rowOf, liveWanted: liveWanted,
-                ZONES: ZONES, ZONE_W: ZONE_W, zoneOf: zoneOf, zonesOf: zonesOf };
+                ZONES: ZONES, ZONE_W: ZONE_W, zoneOf: zoneOf, zonesOf: zonesOf,
+                ISLAND_W: ISLAND_W, islandOf: islandOf, islandShown: islandShown, islandSplit: islandSplit };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -285,13 +308,14 @@
   function stored() { try { return parse(localStorage.getItem(KEY)); } catch (e) { return null; } }
   function list() { return listOf(stored()); }
   function row() { return rowOf(stored()); }
-  function save(l, look, live, zones) {
+  function save(l, look, live, zones, island) {
     var o = { v: 1, list: l }, cur = stored();
     var lk = look === undefined ? lookOf(cur) : look;
     if (lk) o.look = lk;
     if ((live === undefined ? liveOf(cur) : live) === false) o.live = false;
     var zs = zones === undefined ? (cur && cur.zones) : zones;
     if (zs) { var nz = norm({ list: l, zones: zs }); if (nz && nz.zones) o.zones = nz.zones; }
+    if (island === undefined ? islandOf(cur) : island) o.island = true;   // ISLAND-1
     try { localStorage.setItem(KEY, JSON.stringify(o)); }
     catch (e) { call(function () { host.toast(t("sb.savefail")); }); }
     applyLook();
@@ -391,6 +415,19 @@
     ".pk-row .pk-w { min-width: 0; overflow-wrap: anywhere; }",
     ".pk-row .pk-a { margin-left: auto; flex: none; color: var(--text-dim); font-size: 12px; }",
     ".pk-empty { padding: 6px; color: var(--text-dim); font-size: 13px; }",
+    // STC-1: a Screen time row, its time on the right and a bar under it
+    ".pk-row.pk-st { flex-wrap: wrap; row-gap: 4px; }",
+    ".pk-row.pk-st .pk-t { margin-left: auto; width: auto; color: var(--text-dim); }",
+    ".pk-bar { flex: 0 0 100%; height: 4px; border-radius: 2px; background: var(--accent-soft); overflow: hidden; }",
+    ".pk-bar > span { display: block; height: 100%; border-radius: 2px; background: var(--accent); }",
+    // MAILCARD-1: Unread / Starred, one message per row
+    ".pk-tabs { display: flex; gap: 4px; margin: 0 0 6px; }",
+    ".pk-tab { flex: 1 1 0; min-height: 40px; border: 1px solid var(--border); border-radius: 9px; background: transparent; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }",
+    ".pk-tab.on { background: var(--accent-soft); border-color: var(--accent); font-weight: 700; }",
+    ".pk-row.pk-msg { flex-direction: column; align-items: stretch; gap: 2px; }",
+    ".pk-msg .pk-who { font-size: 12px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }",
+    ".pk-msg .pk-w { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }",
+    ".pk-msg.pk-unread .pk-who, .pk-msg.pk-unread .pk-w { font-weight: 700; color: var(--text); }",
     ".pk-open { display: block; width: 100%; min-height: 44px; margin-top: 8px; border: 1px solid var(--border); border-radius: 12px;",
     "  background: transparent; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; }",
     ".pk-mt { font-size: 16px !important; overflow-wrap: anywhere; }",
@@ -424,7 +461,53 @@
     "  box-shadow: 0 4px 16px var(--shadow); padding: 0 6px; height: 34px; margin-top: 2px; box-sizing: border-box;",
     "  backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4); }",
     "html[data-oros-bar=\"islands\"]:not([data-oros-contrast=\"high\"]) #oros-bar #sb-zone-c { top: calc(env(safe-area-inset-top, 0px) + 1px); bottom: auto; }",
-    "html[data-oros-transparency][data-oros-bar=\"islands\"]:not([data-oros-contrast=\"high\"]) #oros-bar :is(.bar-left, .bar-right, #sb-zone-c) { background: var(--panel-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }"
+    "html[data-oros-transparency][data-oros-bar=\"islands\"]:not([data-oros-contrast=\"high\"]) #oros-bar :is(.bar-left, .bar-right, #sb-zone-c) { background: var(--panel-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }",
+    // ISLAND-1: one dark pill at the top centre that grows when opened;
+    // it keeps its own dark colours (like the Midnight bar) in every
+    // theme; high contrast gives it the theme's colours and a border.
+    "#sb-island { position: absolute; z-index: 5; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 4px); transform: translateX(-50%);",
+    "  display: flex; flex-direction: row; align-items: center; gap: 4px; min-width: 120px; max-width: min(34vw, 420px); box-sizing: border-box;",
+    "  padding: 0 6px; border-radius: 16px; background: var(--sbi-bg, rgba(8, 10, 16, 0.96)); color: var(--text); box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);",
+    "  --text: #eef1f7; --text-dim: #aab3c2; --accent-soft: rgba(255, 255, 255, 0.10); --border: rgba(255, 255, 255, 0.14);",
+    "  transition: max-width var(--oros-pop-ms, 200ms) var(--oros-pop-ease, ease), border-radius var(--oros-pop-ms, 200ms) ease; }",
+    "#sb-island[hidden] { display: none !important; }",
+    "#sb-island.open { flex-direction: column; align-items: stretch; max-width: min(92vw, 380px); width: 380px; border-radius: 22px; padding: 0 10px 10px; }",
+    "#sb-island .sbi-media { min-width: 0; flex: 1 1 auto; }",
+    "#sb-island .sbi-live { display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 32px; }",
+    "#sb-island .sbi-live[hidden] { display: none; }",
+    "#sb-island :is(.sb-chip, .sb-stop) { min-height: 32px; }",
+    "#sb-island .sb-live::before { top: 3px; bottom: 3px; }",
+    "#sb-island .sbi-media[hidden] { display: none; }",
+    "#sb-island .sbi-line { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 32px; padding: 0 6px;",
+    "  border: none; border-radius: 14px; background: transparent; color: inherit; font: inherit; font-size: 12.5px; cursor: pointer; }",
+    "#sb-island .sbi-line:focus-visible { outline: 2px solid #eef1f7; outline-offset: -2px; }",
+    "#sb-island .sbi-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }",
+    "#sb-island.open .sbi-txt { white-space: normal; text-align: center; }",
+    "#sb-island .sbi-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: #aab3c2; }",
+    "#sb-island .sbi-dot.on { background: var(--sbi-tint, #4ade80); }",
+    "#sb-island .sbi-panel[hidden] { display: none; }",
+    "#sb-island .sbi-panel { padding-top: 4px; font-size: 13px; }",
+    "#sb-island .sbi-top { display: flex; align-items: center; gap: 12px; }",
+    "#sb-island .sbi-cover { flex: none; width: 56px; height: 56px; border-radius: 12px; object-fit: cover; background: rgba(255, 255, 255, 0.08); }",
+    "#sb-island .sbi-tx { min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }",
+    "#sb-island .sbi-t { font-size: 15px; overflow-wrap: anywhere; }",
+    "#sb-island .sbi-a { color: var(--text-dim); font-size: 12px; overflow-wrap: anywhere; }",
+    "#sb-island .sbi-prog { height: 4px; margin: 12px 2px 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.16); overflow: hidden; }",
+    "#sb-island .sbi-prog > span { display: block; height: 100%; border-radius: 2px; background: var(--sbi-tint, #eef1f7); }",
+    "#sb-island .sbi-time { display: flex; justify-content: space-between; padding: 0 2px; color: var(--text-dim); font-size: 11.5px; font-variant-numeric: tabular-nums; }",
+    "#sb-island .sbi-ctl { display: flex; justify-content: center; gap: 14px; padding: 6px 0 2px; }",
+    "#sb-island .sbi-b { width: 44px; height: 44px; border: none; border-radius: 50%; background: transparent; color: inherit; cursor: pointer;",
+    "  display: inline-flex; align-items: center; justify-content: center; padding: 0; }",
+    "#sb-island .sbi-b svg { width: 22px; height: 22px; }",
+    "#sb-island .sbi-b.sbi-play { background: var(--sbi-tint, #eef1f7); color: var(--sbi-tint-ink, #0b0e14); }",
+    "#sb-island .sbi-open { display: block; width: 100%; min-height: 40px; margin-top: 8px; border: 1px solid var(--border); border-radius: 12px;",
+    "  background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }",
+    "@media (hover: hover) { #sb-island :is(.sbi-b, .sbi-open):hover { background: var(--accent-soft); } #sb-island .sbi-b.sbi-play:hover { background: var(--sbi-tint, #fff); filter: brightness(1.08); } }",
+    "#sb-island :is(.sbi-b, .sbi-open):focus-visible { outline: 2px solid #eef1f7; outline-offset: 2px; }",
+    "html[data-oros-contrast=\"high\"] #sb-island { background: var(--bg); color: var(--text); border: 2px solid var(--text); box-shadow: none; --text: inherit; --text-dim: inherit; }",
+    "@media (prefers-reduced-motion: reduce) { #sb-island { transition: none; } }",
+    "html[data-oros-motion] #sb-island { transition: none; }",
+    "body.solo-mode #sb-island, body.till-mode #sb-island { display: none !important; }"
   ].join("\n");
 
   function applyLook() {
@@ -698,6 +781,11 @@
     if (!m) return false;
     mediaShown = m.id;
     var parts = String(m.title || "").split(" · "), st = strict();
+    // COVERTINT-1: the player takes the cover's colours (contrast checked in the shell)
+    var tn = st ? null : call(function () { return host.tint ? host.tint(m.title) : null; });
+    [["--panel-bg", "bg"], ["--text", "ink"], ["--text-dim", "dim"], ["--accent", "tint"], ["--accent-ink", "tintInk"], ["--accent-soft", "soft"], ["--border", "border"]].forEach(function (v) {
+      if (tn && typeof tn.bg === "string") p.style.setProperty(v[0], tn[v[1]]); else p.style.removeProperty(v[0]);
+    });
     var h = el("div", "pk-h");
     var tx = el("div");
     tx.appendChild(el("b", "pk-mt", st ? m.name : (parts[0] || m.name)));
@@ -723,14 +811,20 @@
       var w = call(function () { return host.weather(); });
       if (!w || !Array.isArray(w.days) || !w.days.length) { closePeek(); return; }
       fillWeather(peekEl, w);
+    } else if (APP_PEEK[peekKind]) {
+      if (!apps || !call(function () { return apps.fill(peekKind, peekEl, peekKit); })) { closePeek(); return; }
     } else fillEvent(peekEl);
     var f = (focusSel && peekEl.querySelector(focusSel)) || peekEl.querySelector("button");
     if (f) f.focus();
   }
   // → true when a panel opened (or the same one closed); false when there
   // is nothing to show, so the caller opens the app as before.
+  // What smartbar-apps.js may use to paint its peeks.
+  var peekKit = { el: el, pbtn: function (cls, text, fn, label) { return pbtn(cls, text, fn, label); },
+                  close: function () { closePeek(); }, open: function (id) { openApp(id); } };
   function peek(kind, from) {
-    if (!host || (kind !== "weather" && kind !== "event" && kind !== "media") || locked()) return false;
+    if (!host || (kind !== "weather" && kind !== "event" && kind !== "media" && !APP_PEEK[kind]) || locked()) return false;
+    if (APP_PEEK[kind] && !(apps && call(function () { return apps.canPeek(kind); }))) return false;
     if (peekEl && peekKind === kind) { closePeek(true); return true; }
     closePeek();
     closePop();
@@ -746,7 +840,8 @@
     peekEl = el("div");
     peekEl.id = "sb-peek";
     peekEl.setAttribute("role", "dialog");
-    peekEl.setAttribute("aria-label", kind === "weather" ? (appName("weather") || "Weather") : kind === "media" ? t("sb.k.playing") : (appName("calendar") || "Calendar"));
+    peekEl.setAttribute("aria-label", kind === "weather" ? (appName("weather") || "Weather") : kind === "media" ? t("sb.k.playing") :
+      APP_PEEK[kind] ? t("sb.k." + kind) : (appName("calendar") || "Calendar"));
     doc.body.appendChild(peekEl);
     placeUp(peekEl, peekFrom);
     if (peekFrom) peekFrom.setAttribute("aria-expanded", "true");
@@ -776,11 +871,15 @@
     var bar = doc.querySelector("#oros-bar .bar-right");
     if (!bar) return;
     var slot = dockSlot();
-    var l = row();
-    if (!l.length) {
+    // ISLAND-1: the live pills (and what plays) move into the island.
+    var islOn = islandShown(stored(), root.innerWidth, !!slot || barWin());
+    var sp = islandSplit(row(), islOn), l = sp.row, isl = sp.isl;
+    islandHolder(islOn);
+    if (!l.length && !isl.length) {
       closePop();
       if (box) { box.remove(); box = null; chips = {}; more = null; }
       call(function () { host.fit(); });
+      paintIsland();
       return;
     }
     if (!box) {
@@ -790,11 +889,18 @@
     }
     if (slot && box.parentNode !== slot) { closePop(); closePeek(); slot.appendChild(box); }
     else if (!slot && box.parentNode !== bar) { closePop(); closePeek(); bar.insertBefore(box, bar.firstChild); }
-    Object.keys(chips).forEach(function (k) { if (l.indexOf(k) === -1) { chips[k].el.remove(); delete chips[k]; } });
+    Object.keys(chips).forEach(function (k) { if (l.indexOf(k) === -1 && isl.indexOf(k) === -1) { chips[k].el.remove(); delete chips[k]; } });
+    isl.forEach(function (k) {
+      if (!chips[k]) chips[k] = makeChip(k);
+      islLive.appendChild(chips[k].el);
+      chips[k].key = "";
+    });
     // SBZ-1: left / centre zones on wide windows, never in the Dock (there
     // the cards keep the order left, centre, right) or on a phone.
     zonesWide = zonesOn(slot);
-    var zs = zonesOf(stored(), l, zonesWide), boxes = { l: zoneBox("l", zs.l.length), c: zoneBox("c", zs.c.length), r: box };
+    var zs = zonesOf(stored(), l, zonesWide);
+    if (islOn) { zs.r = zs.c.concat(zs.r); zs.c = []; }   // ISLAND-1: the island holds the centre
+    var boxes = { l: zoneBox("l", zs.l.length), c: zoneBox("c", zs.c.length), r: box };
     var dz = slot ? zonesOf(stored(), l, true) : null;
     (dz ? [["r", dz.l.concat(dz.c, dz.r)]] : [["l", zs.l], ["c", zs.c], ["r", zs.r]]).forEach(function (z) {
       z[1].forEach(function (k) {
@@ -806,6 +912,53 @@
     });
     box.appendChild(more.el);                          // always last
     paint(true);
+  }
+  // ---------- ISLAND-1: one pill at the top centre ----------
+  // #sb-island holds the live pills (.sbi-live, the same chips as in the
+  // row) and the media part that smartbar-island.js paints. It lives in
+  // #oros-bar; on a phone, a narrow window or with the Dock's cards it
+  // goes and the bar is as before.
+  var islEl = null, islLive = null, islMod = null, islLoad = 0;
+  function islandHolder(on) {
+    if (!on) {
+      if (islEl) { call(function () { if (islMod) islMod.close(); }); islEl.remove(); islEl = null; islLive = null; }
+      return;
+    }
+    if (!islEl) {
+      islEl = doc.createElement("div");
+      islEl.id = "sb-island";
+      islLive = doc.createElement("div");
+      islLive.className = "sbi-live";
+      islEl.appendChild(islLive);
+      var barEl = doc.getElementById("oros-bar");
+      if (barEl) barEl.appendChild(islEl);
+    }
+    if (!islMod) loadIsland();
+    else call(function () { islMod.mount(islEl); });
+  }
+  function loadIsland() {
+    if (islLoad || islMod) return;
+    islLoad = 1;
+    script("smartbar-island.js", function () {
+      islMod = call(function () {
+        return root.orosSmartBarIsland.make({ t: t, call: call, host: hostFn, strict: strict, appName: appName, el: el,
+          icons: { prev: IC_PREV, next: IC_NEXT, play: IC_PLAY, pause: IC_PAUSE } });
+      }) || null;
+      if (!islMod) { islLoad = 0; return; }
+      if (islEl) call(function () { islMod.mount(islEl); });
+      paintIsland();
+    }, function () { islLoad = 0; });
+  }
+  // The island shows while a live pill or the media part has something.
+  function paintIsland() {
+    if (!islEl) return;
+    var lk = locked();
+    var media = !lk && islMod ? !!call(function () { return islMod.paint(Date.now()); }) : false;
+    if (lk && islMod) call(function () { islMod.close(); });
+    var liveShown = !lk && Array.prototype.some.call(islLive.children, function (c) { return !c.hidden; });
+    islLive.hidden = !liveShown;
+    var show = media || liveShown;
+    if (islEl.hidden === show) islEl.hidden = !show;
   }
   // SBZ-1 zones: on when the bar is not in the Dock, not folded, wide.
   var zonesWide = false;
@@ -983,6 +1136,8 @@
     doc.head.appendChild(s);
   }
   function hostFn() { return host; }
+  // The desktop bar window (orOS USB) is only as tall as the bar: no island there.
+  function barWin() { return !!call(function () { return host.barwin(); }); }
   function repaint(kinds) { kinds.forEach(function (k) { if (chips[k]) chips[k].key = ""; }); paint(true); }
   function loadApps() {
     if (appsLoad || apps) return;
@@ -991,7 +1146,8 @@
       apps = call(function () {
         return root.orosSmartBarApps.make({
           t: t, call: call, strict: strict, appName: appName, clock: clock, ymdOf: ymdOf, ttl: TODAY_MS,
-          host: hostFn, kinds: function () { return Object.keys(chips); }, repaint: repaint
+          host: hostFn, kinds: function () { return Object.keys(chips); }, repaint: repaint,
+          peek: function (k) { return peek(k, chips[k] && chips[k].btn); }
         });
       }) || null;
       if (!apps) { appsLoad = 0; return; }
@@ -1045,6 +1201,7 @@
   // bar's ResizeObserver runs that fit whenever a chip changes width.
   function locked() { return !!call(function () { return root.orosLock.isLocked(); }); }
   function paint(force) {
+    paintIsland();
     if (!host || !box) return;
     // Behind the screen lock the chips go (the desktop bar window has no
     // lock screen over it).
@@ -1070,7 +1227,10 @@
       if (c.el.hidden && !c.el.hasAttribute("data-sb-drop")) { c.el.hidden = false; changed = true; }
     });
     paintMore();
+    // A card's own peek goes with its card (Sensitive work, an app lock).
+    if (peekEl && APP_PEEK[peekKind] && chips[peekKind] && chips[peekKind].key === "") closePeek();
     if (changed) call(function () { host.fit(); });
+    paintIsland();
   }
 
   function attach(h) {
@@ -1085,7 +1245,10 @@
     var rz = 0;
     root.addEventListener("resize", function () {
       clearTimeout(rz);
-      rz = setTimeout(function () { if (zonesOn(dockSlot()) !== zonesWide) { render(); call(function () { host.fit(); }); } }, 150);
+      rz = setTimeout(function () {
+        var isl = islandShown(stored(), root.innerWidth, !!dockSlot() || barWin());
+        if (zonesOn(dockSlot()) !== zonesWide || isl !== !!islEl) { render(); call(function () { host.fit(); }); }
+      }, 150);
     });
   }
 
@@ -1108,11 +1271,20 @@
       });
       var st = stored(), zones = {};
       l.forEach(function (k) { zones[k] = zoneOf(st, k); });
-      return { list: names, look: lookOf(st), looks: LOOKS.slice(), live: liveOf(st), zones: zones, zoneW: ZONE_W };
+      return { list: names, look: lookOf(st), looks: LOOKS.slice(), live: liveOf(st), zones: zones, zoneW: ZONE_W,
+               island: islandOf(st), islandW: ISLAND_W };
     },
     setLive: function (on) {
       if (!host) return;
       save(list(), undefined, !!on);
+    },
+    // QS-REC-1: the running recording's handle for Quick settings, or null
+    recNow: function () { return recLive; },
+    // ISLAND-1: the island on / off (this device)
+    setIsland: function (on) {
+      if (!host) return;
+      save(list(), undefined, undefined, undefined, !!on);
+      call(function () { host.fit(); });
     },
     // Screen Capture's recording { state() → { ms, paused }, stop() } | null, in memory
     live: function (kind, h) {

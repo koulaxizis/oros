@@ -643,6 +643,22 @@
              limits: p.limits, used: used, limitNames: limitNames, choices: LIMITS.slice(), noLimit: NO_LIMIT.slice(), bed: bedSnapshot() };
   }
 
+  // The Screen time bar card (STC-1, smartbar-apps.js): today's total
+  // and its apps, longest first, with the time not written yet. Reads
+  // only; names come from the shell ("" for the desktop and Sensitive work).
+  function todayUse() {
+    var p = read(), t = today();
+    if (!p.on) return { on: false, total: 0, apps: [] };
+    var src = p.days[t] || {}, d = {};
+    Object.keys(src).forEach(function (id) { d[id] = src[id]; });
+    if (pend[t]) Object.keys(pend[t]).forEach(function (id) { d[id] = (d[id] || 0) + pend[t][id] / 1000; });
+    var one = {}; one[t] = d;
+    var v = dayView({ days: one }, t);
+    return { on: true, total: Math.floor(v.total), apps: v.apps.map(function (a) {
+      return { id: a.id, name: a.id === DESK || a.id === SENS ? "" : nameOf(a.id), secs: Math.floor(a.secs) };
+    }) };
+  }
+
   function setOn(v) {
     var p = read();
     v = !!v;
@@ -683,6 +699,7 @@
     attach: attach,
     note: note,
     snapshot: snapshot,
+    todayUse: todayUse,
     setOn: setOn,
     clear: clear,
     setLimit: setLimit,

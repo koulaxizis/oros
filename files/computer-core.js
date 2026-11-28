@@ -275,12 +275,45 @@
         });
       },
       disks: function () { return call("GET", "disks"); },
+      // DRIVE-OPEN: { folders: [{ path, remote, paused }] }; an older
+      // launcher answers 404, which reads as none.
+      drive: function () {
+        return call("GET", "drive").then(function (j) { return driveMirrors(j && j.folders); }, function () { return []; });
+      },
       // { state: "on" | "off" | "ask", fixed } (fixed: orOS USB, always on).
       consent: function () { return call("GET", "consent"); },
       setConsent: function (on) {
         return call("POST", "consent", "", JSON.stringify({ on: !!on }), { "Content-Type": "application/json" });
       }
     };
+  }
+
+  // DRIVE-OPEN (Chris 2026-11-27): folders orOS Drive mirrors on this
+  // computer (launcher GET /__oros/fs/drive). mirrors: [{ path, remote,
+  // paused }] with path a Files path (/computer/…). Returns the orOS
+  // disk path of p ("/internal/Drive/<device>/<name>/<rest>") and its
+  // mirror, or null. Windows compares names without case, as it does.
+  function driveMirrors(list) {
+    var out = [];
+    (list || []).forEach(function (m) {
+      if (!m || typeof m.remote !== "string" || !/^\/internal\/Drive\/[^\/]+\/[^\/]/.test(m.remote)) return;
+      if (/(^|\/)\.\.?(\/|$)/.test(m.remote)) return;
+      var p = fromApi(m.path);
+      if (!p || toApi(p) === null || placeOf(p) === null) return;
+      out.push({ path: p, remote: m.remote.replace(/\/+$/, ""), paused: !!m.paused });
+    });
+    // the deepest folder first, so a mirror inside another wins
+    return out.sort(function (a, b) { return b.path.length - a.path.length; });
+  }
+  function mirrorOf(mirrors, p, win) {
+    if (typeof p !== "string") return null;
+    var key = win ? p.toLowerCase() : p;
+    for (var i = 0; i < (mirrors || []).length; i++) {
+      var m = mirrors[i], mp = win ? m.path.toLowerCase() : m.path;
+      if (key === mp) return { mirror: m, path: m.remote };
+      if (key.indexOf(mp + "/") === 0) return { mirror: m, path: m.remote + p.slice(m.path.length) };
+    }
+    return null;
   }
 
   // Is this a Windows computer (roots.os)? Its Trash is the Recycle Bin.
@@ -312,6 +345,8 @@
     client: client,
     probe: probe,
     isWindows: isWindows,
+    driveMirrors: driveMirrors,
+    mirrorOf: mirrorOf,
     CallError: CallError
   };
 });

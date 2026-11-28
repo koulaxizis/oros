@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, mini Assistant, selected text, from outside, v1.4.0)
+// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, mini Assistant, selected text, from outside, v1.5.0)
 // ------------------------------------------------------------
 // A shell component, like launcher.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -59,6 +59,12 @@
 //     attribute around it, below the page) and secret (inside
 //     data-oros-noclip: never read); win (READ-1 W2) lets Read aloud
 //     take the selection again with its place, to light up the sentence.
+//   • 1.5.0 (AS-KEEP, Chris 2026-11-28): the mini window minimises
+//     into a round button in its corner (the Assistant stays live in
+//     it, an answer goes on) and comes back as it was with a tap or
+//     Ctrl+Alt+Shift+Q. "Beside" (multitasking on, 1024 px and wider,
+//     an app in front) hands the conversation to the full Assistant
+//     beside that app (host.beside), side by side.
 //
 // Data (synced, slice "quickmenu", key oros-quick-menu):
 //   { ver:1, items:[{ id, k, n, p, app, send, o, d, m }] }
@@ -80,7 +86,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.4.0";
+  var VER = "1.5.0";
   var DATA_KEY = "oros-quick-menu";
   var MAX_ITEMS = 200;          // stored, tombstones included
   var MAX_SHOWN = 24;           // in the menu
@@ -441,6 +447,14 @@
     "#qa-mini .qa-btn:hover,#qa-mini .qa-btn:focus-visible{background:var(--accent-soft)}",
     "#qa-mini .qa-btn svg{width:18px;height:18px}",
     "#qa-mini iframe{flex:1 1 auto;width:100%;min-height:0;border:0;background:transparent}",
+    // minimised (AS-KEEP): a round button in the same corner, the frame kept live
+    "#qa-mini .qa-bubble{display:none}",
+    "#qa-mini.qa-min{width:56px;height:56px;border-radius:50%;left:auto}",
+    "#qa-mini.qa-min .qa-head,#qa-mini.qa-min iframe{display:none}",
+    "#qa-mini.qa-min .qa-bubble{display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;border:none;",
+    "border-radius:50%;background:var(--accent);color:var(--accent-ink, #fff);cursor:pointer}",
+    "#qa-mini.qa-min .qa-bubble svg{width:24px;height:24px}",
+    "#qa-mini .qa-btn[hidden]{display:none}",
     // the button under selected text (over apps and the mini window, under the menu)
     ".qm-chip{position:fixed;z-index:970;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:6px 14px;",
     "border:1px solid var(--border);border-radius:20px;background:var(--panel-bg);color:var(--text);font-size:13px;",
@@ -805,6 +819,9 @@
   var IC_EXPAND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>';
   var IC_NEW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>';
   var IC_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>';
+  var IC_MIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 18h14"/></svg>';
+  var IC_BESIDE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M14 4v16"/></svg>';
+  var IC_BUBBLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M13 7.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>';
 
   function assistantOpen() {
     var r = host && host.running && host.running();
@@ -837,6 +854,7 @@
       return;
     }
     if (panel) {
+      miniRestore();
       var api = miniApi(), w = miniWin();
       if (api && w && typeof w.__orosOpenAt === "function") {
         if (target && !w.__orosOpenAt(target) && api.busy()) toast(tr("miniBusy"));
@@ -860,8 +878,23 @@
       closeMini();
       openAt("assistant", id ? { chat: id } : null);
     }));
+    var bes = headBtn(IC_BESIDE, tr("miniBeside"), function () {
+      var a = miniApi();
+      if (a && a.busy()) { toast(tr("miniBusy")); return; }
+      var id = "";
+      try { id = a ? String(a.chatId() || "") : ""; } catch (e) {}
+      if (!canBeside()) { besidePaint(); return; }
+      closeMini();
+      if (!host.beside("assistant", id ? { chat: id } : null)) openAt("assistant", id ? { chat: id } : null);
+    });
+    bes.className += " qa-beside";
+    head.appendChild(bes);
+    head.appendChild(headBtn(IC_MIN, tr("miniMin"), function () { miniMinimise(); }));
     head.appendChild(headBtn(IC_X, tr("close"), function () { closeMini(); }));
     panel.appendChild(head);
+    var bub = headBtn(IC_BUBBLE, tr("miniRestore"), function () { miniRestore(); });
+    bub.className = "qa-bubble";
+    panel.appendChild(bub);
     var f = el("iframe");
     f.title = tr("miniTitle");
     f.src = "assistant/index.html?mini=1";
@@ -870,7 +903,31 @@
       if (e.key === "Escape" && e.target && e.target.closest && e.target.closest(".qa-head")) { e.preventDefault(); closeMini(); }
     });
     doc.body.appendChild(panel);
+    besidePaint();
     f.addEventListener("load", function () { try { f.focus(); } catch (e) {} });
+  }
+  // AS-KEEP: "Beside" only where side by side can happen now.
+  function canBeside() {
+    return !!(host && typeof host.canBeside === "function" && typeof host.beside === "function" && host.canBeside());
+  }
+  function besidePaint() {
+    var b = panel && panel.querySelector(".qa-beside");
+    if (b) b.hidden = !canBeside();
+  }
+  // Minimised: the frame stays (display:none keeps its document live),
+  // the panel becomes a round button in the same corner.
+  function miniMinimise() {
+    if (!panel) return;
+    panel.classList.add("qa-min");
+    panel.setAttribute("aria-label", tr("miniRestore"));
+    try { panel.querySelector(".qa-bubble").focus(); } catch (e) {}
+  }
+  function miniRestore() {
+    if (!panel || !panel.classList.contains("qa-min")) return;
+    panel.classList.remove("qa-min");
+    panel.setAttribute("aria-label", tr("miniTitle"));
+    besidePaint();
+    try { panel.querySelector("iframe").focus(); } catch (e) {}
   }
   function closeMini() {
     if (!panel) return;
@@ -883,7 +940,7 @@
   function watchRunning() {
     var run = doc.getElementById("oros-running");
     if (!run || !root.MutationObserver) return;
-    new root.MutationObserver(function () { hideChip(); if (panel && assistantOpen()) closeMini(); })
+    new root.MutationObserver(function () { hideChip(); if (panel && assistantOpen()) closeMini(); else besidePaint(); })
       .observe(run, { attributes: true, attributeFilter: ["class"], subtree: true });
   }
 

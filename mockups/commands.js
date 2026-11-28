@@ -59,7 +59,7 @@
     "show: what the mockup shows, show_as book (the closed book) | open (the open book, inside pages left and right) | ebook (the e-book on a device: device " + M.DEVICES.join("|") + ", dcolor " + M.DCOLS.join("|") + ", screen = the picture on its screen, e.g. the cover)",
     "scene: angle " + ANGLE_IDS.join("|") + " (a ready camera), or th (turn around, °), ph (from above, °), turn (the book's own turn, °), zoom (0.5-3); place " + M.PLACES.join("|") + "; bg none (transparent) | solid (c1) | grad (c1 to c2); surf " + M.SURFS.join("|") + "; shadow (0-1)",
     "rename: the mockup's name becomes title",
-    "export: the picture: fmt " + M.FMTS.join("|") + ", ratio " + M.RATIOS.join("|") + ", size (long side, " + M.SIZES.join("|") + " px); it is saved into Pictures, and out (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk with Files at «may change») also gets it, never over a file; the answer lists the paths"
+    "export: the picture: fmt " + M.FMTS.join("|") + ", ratio " + M.RATIOS.join("|") + ", size (long side, " + M.SIZES.join("|") + " px); it is saved into Pictures, and out (a folder of Claude's on the orOS disk with Files at «may change») also gets it, never over a file; the answer lists the paths"
   ].join("\n");
 
   // ---------- 1. Checking ----------

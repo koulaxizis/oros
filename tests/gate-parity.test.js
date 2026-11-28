@@ -16,7 +16,7 @@ test.before(async () => { R = await import("../relay/gate.js"); });
 function assistantTools() {
   return C.toolsFor({ data: 1, summary: 1, entries: 1, openFile: 1, rebuild: 1, house: 1, epub: 1, changes: 1, creates: ["todo"], links: 1,
                       partnerLinks: 1, actions: ["timer"], history: 1, edits: { writer: 1 }, recipes: ["layout"], newsletter: 1,
-                      cover: 1, rules: 1, web: 1, lines: ["budget", "invoices", "stock", "publish"], kbCols: 1, files: "write", fonts: 1, mockup: 1, shop: "write" });
+                      cover: 1, rules: 1, web: 1, lines: ["budget", "invoices", "stock", "publish"], kbCols: 1, files: "write", fonts: 1, mockup: 1, shop: "write", github: 1, calc: 1, check: 1 });
 }
 
 // A tool on one side only: { twin: [tools on the other side that do the
@@ -36,7 +36,6 @@ const GATE_ONLY = {
   oros_update: { why: "GL-7: asks the owner's other open devices to fetch and apply the newest orOS, for Claude working from outside while the owner is away; inside orOS the owner presses Update in Settings or the app updates itself." },
   gate_call: { why: "GL-5: runs another gate tool by name for a conversation whose tool list is older; the Assistant always calls its tools directly." },
   claude_folders_request: { why: "CF-ASK: asking the owner, on any device on screen, to add a folder of the orOS disk to Claude's folders from outside; inside orOS the owner adds it in Settings › Connected services › orOS Gate › Claude's folders." },
-  local_folders_request: { why: "Asking the owner, on any device on screen, to open a folder of their computer for Claude from outside; inside orOS the owner opens it in Settings › Connected services › orOS Gate." },
   kanban_add_cards: { twin: ["create_items"] },    // create_items app kanban
   kanban_move_cards: { twin: ["change_item"] },    // change_item action move
   kanban_change_card: { twin: ["change_item"] },
@@ -57,6 +56,11 @@ const ASSISTANT_ONLY = {
   // per-app level for the Shop app (read: shop_find, write: shop_change)
   shop_find: { why: "Wave 2 (GATE-SHOP) offers it through the gate once the owner sets the Shop app; the Assistant reads the shop with this device's own shop key." },
   shop_change: { why: "Wave 2 (GATE-SHOP) offers it through the gate once the owner sets the Shop app to write; until then only the owner's Apply on the device changes the shop." },
+  // AS-GH / AS-CALC (Assistant waves 5-6, Chris 2026-11-28)
+  github_read: { why: "Claude reads GitHub with its own GitHub access; the gate reads and changes orOS, not GitHub." },
+  web_check: { why: "Claude checks sites with its own web tools; the gate reads and changes orOS, not the web." },
+  calc: { why: "Claude computes with its own tools; the gate reads and changes orOS." },
+  file_hash: { why: "Gate twin is planned with wave 5b (it needs the gate's tool list in the relay, a Mail-thread change); until then Claude reads the file's text with files_read." },
   open_file: { why: "It opens a file attached to the Assistant's conversation; a gate call has no attachments (a file on the orOS disk opens with do_action open)." }
 };
 
@@ -148,4 +152,13 @@ test("list_fonts: the Assistant's and the gate's, read only, the same filters", 
   const src = require("fs").readFileSync(require("path").join(__dirname, "../assistant/assistant.js"), "utf8");
   assert.match(src, /summary: summaryIds\(ga\.read\)\.length > 0, fonts: ga\.read\.length > 0,/);
   assert.match(src, /if \(call\.name === "list_fonts"\) return listFonts\(call\.args\);/);
+});
+
+// GATE-NEVER2 (Chris 2026-11-27, card «Ναι, στην αυστηρότερη»): the
+// never list and the personal apps are the same on both sides.
+test("never and personal apps: the same on the gate and in the Assistant", () => {
+  const G = require("../gate/gate.js");
+  assert.deepEqual(G.NEVER.slice().sort(), Object.keys(C.NEVER_APPS).sort(), "the same never list");
+  G.SENSITIVE.forEach((id) => assert.equal(C.permFor(C.emptyData(), { id: id }), "never", id + " starts at Never in the Assistant"));
+  return R.NEVER_APPS.forEach((id) => assert.ok(G.NEVER.indexOf(id) >= 0, "relay " + id));
 });

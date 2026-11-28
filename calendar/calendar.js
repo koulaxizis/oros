@@ -628,6 +628,19 @@
       "dav.err.other": "The server answered with an error ({e}). orOS tries again later.",
       "ev.dav.ro": "This event comes from your server calendar and orOS cannot show all of it, so it is read-only here. Change it on the server.",
       "mm.free": "Share free times…",
+      // CZ-1: time zones side by side (Day view hours, Week view line)
+      "mm.zones": "Time zones…",
+      "zn.title": "Time zones next to your hours",
+      "zn.text": "Pick up to 3 places from the World clock of the Time app. The Day view shows their hours next to yours, the Week view how far ahead or behind they are. Every device of yours shows the same.",
+      "zn.open": "Open World clock",
+      "zn.empty": "Your World clock is empty. Add places in Time › World clock, then pick them here.",
+      "zn.max": "3 places is the most. Untick one to pick another.",
+      "zn.gone": "no longer in the World clock",
+      "zn.here": "Here",
+      "zn.h": "{d} h",
+      "zn.next": "next day",
+      "zn.prev": "previous day",
+      "zn.lbl": "Time zones:",
       "mm.print": "Print…",
       "mm.names": "Event names in Month",
       "mm.names.short": "Names",
@@ -730,6 +743,18 @@
       "dav.err.other": "Ο server απάντησε με σφάλμα ({e}). Το orOS θα ξαναδοκιμάσει αργότερα.",
       "ev.dav.ro": "Αυτό το συμβάν έρχεται από το ημερολόγιο του server σου και το orOS δεν μπορεί να δείξει όλα του τα στοιχεία, οπότε εδώ είναι μόνο για ανάγνωση. Άλλαξέ το στον server.",
       "mm.free": "Κοινοποίηση ελεύθερων ωρών…",
+      "mm.zones": "Ζώνες ώρας…",
+      "zn.title": "Ζώνες ώρας δίπλα στις ώρες σου",
+      "zn.text": "Διάλεξε έως 3 τόπους από την Παγκόσμια ώρα της εφαρμογής Ώρα. Η προβολή Ημέρα δείχνει τις ώρες τους δίπλα στις δικές σου, η προβολή Εβδομάδα πόσο μπροστά ή πίσω είναι. Όλες οι συσκευές σου δείχνουν τα ίδια.",
+      "zn.open": "Άνοιγμα Παγκόσμιας ώρας",
+      "zn.empty": "Η Παγκόσμια ώρα σου είναι άδεια. Πρόσθεσε τόπους στην Ώρα › Παγκόσμια ώρα και διάλεξέ τους εδώ.",
+      "zn.max": "Έως 3 τόπους. Ξετίκαρε έναν για να διαλέξεις άλλον.",
+      "zn.gone": "δεν είναι πια στην Παγκόσμια ώρα",
+      "zn.here": "Εδώ",
+      "zn.h": "{d} ώρ.",
+      "zn.next": "επόμενη μέρα",
+      "zn.prev": "προηγούμενη μέρα",
+      "zn.lbl": "Ζώνες ώρας:",
       "mm.print": "Εκτύπωση…",
       "mm.names": "Ονόματα συμβάντων στον Μήνα",
       "mm.names.short": "Ονόματα",
@@ -4038,6 +4063,8 @@ function transientNote(title, body) {
             tm.appendChild(tzm);
           }
           ev.appendChild(tm);
+          var wzn = znEventNote(dayYmd, e.start);
+          if (wzn) ev.title = e.start + " " + (e.title || "") + "\n" + wzn;
         }
         ev.appendChild(document.createTextNode(
           (sp && sp.idx > 1 ? "…" : "") +
@@ -4159,6 +4186,13 @@ function transientNote(title, body) {
     strip.appendChild(chips);
     box.appendChild(strip);
 
+    // CZ-1: World clock places in columns left of this device's hours.
+    var zn = znList(), znCells = zn.map(function (z) {
+      try { return ZN.hourCells(day, z.tz); } catch (e) { return null; }
+    });
+    box.style.setProperty("--dv-gut", (52 + zn.length * ZN_W) + "px");
+    if (zn.length) box.appendChild(znDayHead(zn.length));
+
     var scroll = document.createElement("div");
     scroll.className = "dv-scroll";
     var grid = document.createElement("div");
@@ -4171,6 +4205,10 @@ function transientNote(title, body) {
       var lab = document.createElement("span");
       lab.className = "dv-hlab";
       lab.textContent = pad(h) + ":00";
+      if (zn.length) {
+        lab.style.left = (6 + zn.length * ZN_W) + "px";
+        znHourLabels(line, day, h, znCells);
+      }
       line.appendChild(lab);
       grid.appendChild(line);
     }
@@ -4207,7 +4245,8 @@ function transientNote(title, body) {
         lo.textContent = e.location;
         b.appendChild(lo);
       }
-      b.title = (e.title || "") + " " + tm.textContent;
+      var znNote = znEventNote(day, fmtMin(x.s));
+      b.title = (e.title || "") + " " + tm.textContent + (znNote ? "\n" + znNote : "");
       b.addEventListener("click", function (evt) { evt.stopPropagation(); openRow(e, day); });
       lane.appendChild(b);
     });
@@ -4242,6 +4281,221 @@ function transientNote(title, body) {
     el.style.top = ((n.getHours() * 60 + n.getMinutes()) * DV_HOUR / 60) + "px";
   }
   setInterval(function () { if (curView === "day") placeNowLine(); }, 60000);
+
+  /* ---------- 4b2z. Time zones side by side (CZ-1) ----------
+     Up to 3 World clock places of the Time app (calendar/zones.js):
+     their hours in columns left of this device's hours in the Day
+     view, how far ahead or behind they are on a line over the Week
+     view, their time in each timed event's tooltip. Own synced slice
+     "calzones" (registered next to the calendar slice). Greek city
+     names come from the Time app's own list, loaded only when a
+     place is chosen (time/cities.js + time/clock-core.js). */
+  var ZN = window.OrosCalZones || null;
+  var ZN_W = 40;                    // px per zone column in the Day view
+  var znData = { zones: [], mtime: 0 };
+  if (ZN) {
+    try { znData = ZN.sanitize(JSON.parse(localStorage.getItem(ZN.KEY) || "null")); } catch (e) { znData = ZN.sanitize(null); }
+  }
+  function znList() { return ZN ? znData.zones : []; }
+  function znWrite() {
+    try { localStorage.setItem(ZN.KEY, JSON.stringify(ZN.merge(znData, null))); } catch (e) {}
+  }
+  function znName(z) {
+    var CC = window.OrosClockCore;
+    if (CC && typeof CC.zoneLabel === "function") {
+      try { return CC.zoneLabel(z.tz, z.city || "", LB); } catch (e) {}
+    }
+    return z.city || (z.tz === "UTC" || z.tz === "Etc/UTC" ? "UTC" : tzCity(z.tz));
+  }
+  // The Time app's city list, once, for names in Greek.
+  var znCityState = 0;              // 0 not asked · 1 loading · 2 done
+  function znCities(done) {
+    if (window.OrosClockCore || znCityState === 2) { if (done) done(); return; }
+    if (znCityState === 1) return;
+    znCityState = 1;
+    var v = "";
+    try {
+      var me = document.querySelector('script[src*="zones.js"]');
+      var m = me && /\?v=([^&#]+)/.exec(me.getAttribute("src"));
+      if (m) v = "?v=" + m[1];
+    } catch (e) {}
+    var files = ["../time/cities.js", "../time/clock-core.js"], i = 0;
+    function next() {
+      if (i >= files.length) { znCityState = 2; if (done) done(); return; }
+      var sc = document.createElement("script");
+      sc.src = files[i++] + v;
+      sc.onload = next;
+      sc.onerror = function () { znCityState = 2; if (done) done(); };
+      document.head.appendChild(sc);
+    }
+    next();
+  }
+  if (znList().length) znCities(function () { renderAll(); });
+  function znHours(d) { return t("zn.h").replace("{d}", ZN.diffLabel(d)); }
+  function znDayMark(dd) { return dd > 0 ? "+" + dd : dd < 0 ? "\u2212" + (-dd) : ""; }
+  // "London 07:00 · Tokyo 15:00 (next day)" for a timed event.
+  function znEventNote(day, hm) {
+    var zs = znList();
+    if (!zs.length || !hm) return "";
+    var bits = [];
+    zs.forEach(function (z) {
+      try {
+        var a = ZN.atLocal(day, hm, z.tz);
+        bits.push(znName(z) + " " + a.hm + (a.dd ? " (" + t(a.dd > 0 ? "zn.next" : "zn.prev") + ")" : ""));
+      } catch (e) {}
+    });
+    return bits.join(" · ");
+  }
+  // Day view: the head row and the hour labels of the zone columns.
+  function znDayHead(n) {
+    var head = document.createElement("div");
+    head.className = "dv-zhead";
+    head.style.height = "18px";
+    znList().forEach(function (z, i) {
+      var c = document.createElement("span");
+      c.className = "dv-zname";
+      c.style.left = (4 + i * ZN_W) + "px";
+      c.style.width = (ZN_W - 4) + "px";
+      c.textContent = ZN.shortName(znName(z));
+      c.title = znName(z);
+      head.appendChild(c);
+    });
+    var me = document.createElement("span");
+    me.className = "dv-zname here";
+    me.style.left = (4 + n * ZN_W) + "px";
+    me.style.width = "44px";
+    me.textContent = t("zn.here");
+    me.title = OCC.deviceZone ? (OCC.deviceZone() || "") : "";
+    head.appendChild(me);
+    return head;
+  }
+  function znHourLabels(line, day, h, cells) {
+    znList().forEach(function (z, i) {
+      var c = cells[i] && cells[i][h];
+      if (!c) return;
+      var lab = document.createElement("span");
+      lab.className = "dv-hlab dv-zlab";
+      lab.style.left = (4 + i * ZN_W) + "px";
+      lab.textContent = c.hm;
+      if (c.dd) {
+        var dm = document.createElement("sup");
+        dm.textContent = znDayMark(c.dd);
+        lab.appendChild(dm);
+      }
+      lab.title = znName(z) + " " + c.hm + (c.dd ? " (" + t(c.dd > 0 ? "zn.next" : "zn.prev") + ")" : "");
+      line.appendChild(lab);
+    });
+  }
+  // Week view: one line, "Time zones: London −2 h · Tokyo +7 h".
+  function renderWeekZones() {
+    var box = $("wk-zones");
+    if (!box) return;
+    var zs = znList(), show = curView === "week" && !searchQ.trim() && zs.length > 0;
+    box.hidden = !show;
+    box.textContent = "";
+    if (!show) return;
+    var now = Date.now();
+    var lb = document.createElement("span");
+    lb.className = "wk-zones-lbl";
+    lb.textContent = t("zn.lbl");
+    box.appendChild(lb);
+    zs.forEach(function (z) {
+      var c = document.createElement("span");
+      c.className = "wk-zone";
+      var nm = document.createElement("b");
+      nm.textContent = znName(z);
+      c.appendChild(nm);
+      var off = 0;
+      try { off = ZN.offsetMin(z.tz, now); } catch (e) {}
+      c.appendChild(document.createTextNode(" " + znHours(off)));
+      try { c.title = znName(z) + " " + ZN.wall(z.tz, now).hm; } catch (e) {}
+      box.appendChild(c);
+    });
+  }
+
+  // The picker: the World clock places (Time app, read only) plus any
+  // chosen place that has left it since, up to ZN.MAX ticked.
+  function znWorldClock() {
+    try { return ZN.worldClock(JSON.parse(localStorage.getItem("oros-time-data") || "null")); }
+    catch (e) { return []; }
+  }
+  function znChoose(list) {
+    znData = ZN.setZones(list, Date.now());
+    znWrite();
+    try { if (window.__orosSyncApi) window.__orosSyncApi.dirty(); } catch (e) {}
+    if (list.length) znCities(function () { renderAll(); renderZonesDlg(); });
+    renderAll();
+  }
+  function renderZonesDlg() {
+    var ul = $("zn-list");
+    if (!ul || !ZN) return;
+    ul.textContent = "";
+    var chosen = znList(), wc = znWorldClock(), inWc = {}, now = Date.now();
+    wc.forEach(function (z) { inWc[z.tz] = 1; });
+    var rows = wc.slice();
+    chosen.forEach(function (z) { if (!inWc[z.tz]) rows.push(z); });
+    var picked = {};
+    chosen.forEach(function (z) { picked[z.tz] = 1; });
+    var full = chosen.length >= ZN.MAX;
+    rows.forEach(function (z) {
+      var li = document.createElement("li");
+      var lab = document.createElement("label");
+      lab.className = "zn-row";
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = !!picked[z.tz];
+      cb.disabled = !cb.checked && full;
+      var main = document.createElement("span");
+      main.className = "zn-main";
+      var nm = document.createElement("span");
+      nm.className = "zn-name";
+      nm.textContent = znName(z);
+      var sub = document.createElement("span");
+      sub.className = "zn-sub";
+      var off = 0;
+      try { off = ZN.offsetMin(z.tz, now); } catch (e) {}
+      var bits = [];
+      try { bits.push(ZN.wall(z.tz, now).hm); } catch (e) {}
+      bits.push(znHours(off));
+      if (!inWc[z.tz]) bits.push(t("zn.gone"));
+      sub.textContent = bits.join(" · ");
+      main.appendChild(nm);
+      main.appendChild(sub);
+      lab.appendChild(cb);
+      lab.appendChild(main);
+      li.appendChild(lab);
+      cb.addEventListener("change", function () {
+        var next = [];
+        // World clock order first, then the chosen ones that left it.
+        rows.forEach(function (r) {
+          var on = r.tz === z.tz ? cb.checked : !!picked[r.tz];
+          if (on) next.push(r);
+        });
+        znChoose(next.slice(0, ZN.MAX));
+        renderZonesDlg();
+      });
+      ul.appendChild(li);
+    });
+    var msg = $("zn-msg");
+    msg.textContent = !rows.length ? t("zn.empty") : full ? t("zn.max") : "";
+    msg.hidden = !msg.textContent;
+    $("zn-time").hidden = !shellOpenAt();
+  }
+  function openZonesDlg() {
+    if (!ZN) return;
+    renderZonesDlg();
+    $("zn-dlg").showModal();
+    znCities(renderZonesDlg);
+  }
+  if (ZN && $("zn-dlg")) {
+    $("zn-done").addEventListener("click", function () { $("zn-dlg").close(); });
+    $("zn-time").addEventListener("click", function () {
+      var p = shellOpenAt();
+      if (!p) return;
+      $("zn-dlg").close();
+      p.__orosOpenAt("time", null);
+    });
+  }
 
   function newEventAt(day, hm) {
     selDate = day;
@@ -4484,6 +4738,7 @@ function transientNote(title, body) {
     $("cal-grid").hidden = !month;
     if ($("vw-names")) $("vw-names").hidden = !month;
     $("week-grid").hidden = !week;
+    renderWeekZones();
     if ($("day-view")) $("day-view").hidden = !(curView === "day" && !searching);
     if ($("year-grid")) $("year-grid").hidden = !(curView === "year" && !searching);
     $("agenda-list").hidden = !agenda;
@@ -8114,6 +8369,10 @@ function transientNote(title, body) {
     $("mm-subs").addEventListener("click", function () { setMore(false); openSubsDlg(); });
     if ($("mm-dav")) $("mm-dav").addEventListener("click", function () { setMore(false); openDavDlg(); });
     $("mm-free").addEventListener("click", function () { setMore(false); openFree(); });
+    if ($("mm-zones")) {
+      $("mm-zones").hidden = !ZN;
+      $("mm-zones").addEventListener("click", function () { setMore(false); openZonesDlg(); });
+    }
     $("mm-send").hidden = !shareApi();
     $("mm-send").addEventListener("click", function () { setMore(false); openScal(); });
     $("mm-print").addEventListener("click", function () { setMore(false); doPrint(); });
@@ -9041,6 +9300,27 @@ function transientNote(title, body) {
     // visible in the console instead of a silently dead sync.
     console.warn("[Calendar] sync registration failed:", e);
   }
+
+  // Time zones side by side (CZ-1): own slice "calzones", one
+  // newer-wins setting (calendar/zones.js).
+  try {
+    if (ZN && syncApi && typeof syncApi.registerSlice === "function") {
+      syncApi.registerSlice(ZN.SLICE,
+        function () {
+          try { return ZN.merge(JSON.parse(localStorage.getItem(ZN.KEY) || "null"), null); }
+          catch (e) { return ZN.merge(znData, null); }
+        },
+        function (d) {          // pull-fed: never marks dirty
+          if (!d || typeof d !== "object") return;
+          znData = ZN.merge(d, null);
+          znWrite();
+          if (znList().length) znCities(function () { renderAll(); });
+          renderAll();
+          if ($("zn-dlg") && $("zn-dlg").open) renderZonesDlg();
+        },
+        ZN.KEY, ZN.merge);
+    }
+  } catch (e) { console.warn("[Calendar] time zones sync failed:", e); }
 
   // Events with guests (wave E1): own slice "calguests".
   try {

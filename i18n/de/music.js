@@ -687,5 +687,21 @@ orosPack("de", "music", {
  "ss.last": "Letzter Besuch {d}",
  "ss.new": "Neu seit deinem letzten Besuch ({n})",
  "sv.h.dogmazic": "Dogmazic: französische Bibliothek freier Musik, jeder Song unter freier Lizenz. Melde dich mit deinem kostenlosen Dogmazic-Konto an; als Passwort das Subsonic-Passwort oder den API-Schlüssel aus deinen Dogmazic-Kontoeinstellungen.",
- "sv.h.openaudio": "open.audio: der öffentliche Pod des Funkwhale-Projekts. Seine öffentlichen Bibliotheken gehen ohne Anmeldung; für deine eigene Bibliothek dort ein Token unter Einstellungen › Anwendungen (Lesezugriff) hinzufügen."
+ "sv.h.openaudio": "open.audio: der öffentliche Pod des Funkwhale-Projekts. Seine öffentlichen Bibliotheken gehen ohne Anmeldung; für deine eigene Bibliothek dort ein Token unter Einstellungen › Anwendungen (Lesezugriff) hinzufügen.",
+ "em.sc": "SoundCloud",
+ "em.bc": "Bandcamp",
+ "em.badge": "Spielt im eigenen Player des Dienstes, in Musik. Nicht in der Warteschlange, nicht offline.",
+ "em.play": "Im {s}-Player abspielen",
+ "em.player": "{s}-Player",
+ "em.add": "Bandcamp- oder SoundCloud-Link",
+ "em.addLabel": "Füge die Adresse eines Bandcamp-Albums oder -Songs oder eines SoundCloud-Songs oder einer -Playlist ein",
+ "em.go": "Abspielen",
+ "em.bad": "Das ist weder ein Bandcamp-Album oder -Song noch ein SoundCloud-Song oder eine -Playlist.",
+ "em.busy": "Player wird geöffnet…",
+ "em.fail": "Der Player ließ sich nicht öffnen. Prüfe die Adresse und die Verbindung.",
+ "em.turnOn": "Einschalten und abspielen",
+ "em.more": "Songs zeigen",
+ "em.less": "Songs ausblenden",
+ "s.emb": "Bandcamp- und SoundCloud-Player",
+ "s.embHint": "Füge einen Bandcamp- oder SoundCloud-Link ein (oder tippe ihn in die Suche) und er spielt hier, im eigenen Player des Dienstes. Like ihn oder füge ihn wie jeden Song einer Playlist hinzu. Der Dienst sieht, was du hörst, wie auf seiner eigenen Website; eine Bandcamp-Seite wird einmal über das orOS-Relay gelesen, um ihren Player zu finden. Nicht in der Warteschlange, kein Equalizer, nicht offline, und er stoppt, wenn Musik geschlossen wird."
 });

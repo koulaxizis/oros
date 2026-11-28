@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.98.03";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "9.19.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -982,9 +982,23 @@
     if (!C) return;
     var covered = wpVizCovered();
     var p = covered ? null : wpVizPlaying();
-    wpVizListen(p);
+    // MU-VIZ-BEAT: with nothing playing the wallpaper already listens to
+    // Music (nothing is read until a song plays), so the first song
+    // that streams is asked about before it starts and can move the
+    // light from its first beat.
+    var mu = hostApi(window.__orosMusicHost);
+    var pre = !p && !covered && mu && typeof mu.viz === "function" && typeof mu.vizFrame === "function" ? { id: "music", h: mu } : null;
+    wpVizListen(p || pre);
     var was = C.playing;
     C.playing = !!p;
+    // MU-VIZ-BEAT: playing with no sound to read (a stream whose server
+    // does not allow it): Settings says why the light moves on its own.
+    // Kept while covered (Settings itself covers the desktop).
+    if (!covered) {
+      var fr = null;
+      if (p) { try { fr = p.h.vizFrame(); } catch (e) { fr = null; } }
+      C.calm = !!p && !(fr && fr.live);
+    }
     if (C.v && !covered && (C.playing || was !== C.playing || C.wasCovered)) C.v.wake();
     C.wasCovered = covered;
   }
@@ -994,7 +1008,7 @@
       if (wpVizCtl.v) { wpVizCtl.v.setStyle(wpVizNow().style); wpVizCtl.v.redraw(); }
       return;
     }
-    var C = wpVizCtl = { cv: null, v: null, src: null, iv: 0, playing: false, wasCovered: false };
+    var C = wpVizCtl = { cv: null, v: null, src: null, iv: 0, playing: false, wasCovered: false, calm: false };
     wpVizKit().then(function (V) {
       if (wpVizCtl !== C) return;
       var cv = document.getElementById("wp-viz");
@@ -1182,7 +1196,31 @@
         soft: "rgba(" + rgb.join(", ") + ", " + (dark ? "0.16" : "0.12") + ")"
       };
     }
-    return { swatches: swatches, stops: stops, palette: palette, contrast: contrast, parse: parse };
+    // COVERTINT-1 (video ideas 2026-11-23 #21): the colours a player
+    // takes from its cover's main swatch: a dark panel (bg) where the
+    // fixed light text (ink) reaches 7:1 and the dim text 4.5:1, and a
+    // light tint (progress, play button, dot) at 4.5:1 on that panel,
+    // with its own ink. null when no lightness gets there.
+    var CT_INK = [243, 245, 249], CT_DIM = [196, 203, 214];
+    function coverTint(sw) {
+      if (!sw || typeof sw.h !== "number") return null;
+      var c = Math.max(0.04, Math.min(0.10, (sw.c || 0) * 1.4)), bg = null, L, x;
+      for (L = 0.36; L > 0.08; L -= 0.02) {
+        x = rgbAt(L, c, sw.h);
+        if (contrast(x, CT_INK) >= 7 && contrast(x, CT_DIM) >= 4.5) { bg = x; break; }
+      }
+      if (!bg) return null;
+      var tc = Math.max(0.09, Math.min(0.19, (sw.c || 0) * 2.2)), tint = null;
+      for (L = 0.80; L < 0.99; L += 0.02) {
+        x = rgbAt(L, tc, sw.h);
+        if (contrast(x, bg) >= 4.5) { tint = x; break; }
+      }
+      if (!tint) tint = CT_INK.slice();
+      var tink = contrast(tint, [255, 255, 255]) >= contrast(tint, [20, 20, 20]) ? "#ffffff" : "#141414";
+      return { bg: hex(bg), ink: hex(CT_INK), dim: hex(CT_DIM), tint: hex(tint), tintInk: tink,
+               soft: "rgba(" + tint.join(", ") + ", 0.16)", border: "rgba(255, 255, 255, 0.16)" };
+    }
+    return { swatches: swatches, stops: stops, palette: palette, contrast: contrast, parse: parse, coverTint: coverTint };
   })();
 
   // ---------- 5b'''. Accent from wallpaper (WPACC-1) ----------
@@ -1439,6 +1477,97 @@
                viz: !pic && state.wallpaper === "viz" ? wpVizNow() : null };
     }
   };
+
+  // ---------- 5b-game. GAMEMODE-1: Game mode ----------
+  // Off by default, this device only ("oros-gamemode" "1"). While a
+  // Games app is in front AND orOS fills the screen (the Fullscreen API,
+  // or a window as large as the screen: F11, the USB kiosk, Portable in
+  // full screen), notifications stay in the bell without a pop-up or a
+  // sound (notifications.js asks __orosGameQuiet) and the top bar and the
+  // Dock step aside (<html data-oros-game="1">). The pointer at the very
+  // top edge brings the bar back for a moment.
+  var GAME_KEY = "oros-gamemode";
+  function gameModeOn() { try { return localStorage.getItem(GAME_KEY) === "1"; } catch (e) { return false; } }
+  // Pure: { on, game, fs, sw, sh, w, h } → active?
+  function gameActive(x) {
+    if (!x || !x.on || !x.game) return false;
+    if (x.fs) return true;
+    return x.sw > 0 && x.sh > 0 && x.w >= x.sw - 2 && x.h >= x.sh - 2;
+  }
+  var gameNow = false, gamePeek = 0;
+  function gameCheck() {
+    var app = state.running;
+    var fs = false;
+    try { fs = !!(document.fullscreenElement || document.webkitFullscreenElement); } catch (e) {}
+    var sc = window.screen || {};
+    var on = !SOLO && gameActive({ on: gameModeOn(), game: !!(app && app.category === "Games"), fs: fs,
+      sw: sc.width || 0, sh: sc.height || 0, w: window.innerWidth || 0, h: window.innerHeight || 0 });
+    if (on === gameNow) return;
+    gameNow = on;
+    if (on) document.documentElement.setAttribute("data-oros-game", "1");
+    else document.documentElement.removeAttribute("data-oros-game");
+  }
+  window.__orosGameQuiet = function () { return gameNow; };
+  function gameModeSet(on) {
+    try { if (on) localStorage.setItem(GAME_KEY, "1"); else localStorage.removeItem(GAME_KEY); } catch (e) {}
+    gameCheck();
+  }
+  (function () {
+    ["fullscreenchange", "webkitfullscreenchange", "resize"].forEach(function (ev) {
+      (ev === "resize" ? window : document).addEventListener(ev, function () { setTimeout(gameCheck, 50); });
+    });
+    setInterval(gameCheck, 2000);          // an app opened or closed
+    // The pointer at the top edge: the bar for 3 s (and while over it).
+    document.addEventListener("pointermove", function (e) {
+      if (!gameNow || e.pointerType !== "mouse") return;
+      var root = document.documentElement;
+      if (e.clientY <= 2) {
+        root.setAttribute("data-oros-game-peek", "1");
+        clearTimeout(gamePeek);
+        gamePeek = setTimeout(function () { root.removeAttribute("data-oros-game-peek"); }, 3000);
+      } else if (root.hasAttribute("data-oros-game-peek") && e.clientY < 48) {
+        clearTimeout(gamePeek);
+        gamePeek = setTimeout(function () { root.removeAttribute("data-oros-game-peek"); }, 3000);
+      }
+    }, { passive: true });
+  })();
+
+  // ---------- 5b-icon. MENUICON-1: the menu button's icon ----------
+  // Device-local "oros-menuicon": one of MENU_ICONS (default "grid",
+  // the four squares in index.html) or "none" (the label alone). Static
+  // SVGs from this file only.
+  var MENU_ICON_KEY = "oros-menuicon";
+  var MI_SV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+  var MENU_ICONS = {
+    grid: MI_SV + '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+    dots: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>',
+    ring: MI_SV + '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>',
+    spark: MI_SV + '<path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2z"/></svg>',
+    leaf: MI_SV + '<path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19l7-7"/></svg>',
+    lines: MI_SV + '<path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+    none: ""
+  };
+  var MENU_ICON_IDS = ["grid", "dots", "ring", "spark", "leaf", "lines", "none"];
+  function menuIconOf(v) { return MENU_ICON_IDS.indexOf(v) !== -1 ? v : "grid"; }
+  function menuIconNow() { try { return menuIconOf(localStorage.getItem(MENU_ICON_KEY)); } catch (e) { return "grid"; } }
+  function menuIconApply() {
+    var mb = document.getElementById("btn-menu");
+    if (!mb) return;
+    var old = mb.querySelector("svg");
+    if (old) old.parentNode.removeChild(old);
+    var id = menuIconNow();
+    if (!MENU_ICONS[id]) return;
+    var tmp = document.createElement("span");
+    tmp.innerHTML = MENU_ICONS[id];            // static icon from this file
+    mb.insertBefore(tmp.firstChild, mb.firstChild);
+  }
+  function menuIconSet(v) {
+    var id = menuIconOf(v);
+    try { if (id === "grid") localStorage.removeItem(MENU_ICON_KEY); else localStorage.setItem(MENU_ICON_KEY, id); } catch (e) {}
+    menuIconApply();
+    if (typeof fitBar === "function") { try { fitBar(); } catch (e) {} }
+  }
+  try { if (menuIconNow() !== "grid") menuIconApply(); } catch (e) {}
 
   // ---------- 5b-dir. WPDIR-1: Random, and a picture from a folder ----------
   // Random: one of the drawn wallpapers (never Mine, Living land, Light
@@ -5110,6 +5239,84 @@
       try { v.play().catch(function () {}); } catch (e) {}
     }, function () {});
   }
+  // QS-REC-1: a screen recording from Quick settings. As above, the
+  // browser's picker opens on the tap (the gesture is the shell's); then
+  // screenrec.js (a shell component, loaded on demand with Screen
+  // Capture's pure helpers capture/core.js) records it HERE, so the
+  // recording goes on while apps open and close, and saves the clip in
+  // Files › Videos. Screen Capture's options apply (quality, frame rate;
+  // the screen's sound as ticked in the picker; the microphone only
+  // when on there). One recording at a time (Screen Capture's own too).
+  function recOk() {
+    var md = navigator.mediaDevices;
+    return !!(md && typeof md.getDisplayMedia === "function" && window.MediaRecorder && hasApp("capture")) || recPhone();
+  }
+  // QS-REC-1 Android: Chrome on a phone cannot share the screen with a
+  // page; the orOS app records it (phone.js rec(): its own consent screen,
+  // a notification with Stop, the video in the phone's Movies › orOS).
+  function recPhone() {
+    var md = navigator.mediaDevices;
+    if (md && typeof md.getDisplayMedia === "function") return false;
+    try { return !!(window.orosPhone && typeof window.orosPhone.canRec === "function" && window.orosPhone.canRec()); }
+    catch (e) { return false; }
+  }
+  function recLive() {
+    try { return window.orosSmartBar && typeof window.orosSmartBar.recNow === "function" ? window.orosSmartBar.recNow() : null; }
+    catch (e) { return null; }
+  }
+  function recPrefs() {
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem("oros-capture-prefs") || "null"); } catch (e) { p = null; }
+    return p && typeof p === "object" ? p : {};
+  }
+  var recLoading = null;
+  function recScript(src) {
+    return new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.src = src + "?v=" + encodeURIComponent(APP_VERSION);
+      sc.onload = res;
+      sc.onerror = function () { sc.remove(); rej(new Error(src)); };
+      document.head.appendChild(sc);
+    });
+  }
+  function recLoad() {
+    if (window.orosScreenRec && window.CaptureCore) return Promise.resolve(window.orosScreenRec);
+    if (!recLoading) recLoading = Promise.all([
+      window.CaptureCore ? null : recScript("capture/core.js"),
+      window.orosScreenRec ? null : recScript("screenrec.js")
+    ]).then(function () {
+      var api = window.orosScreenRec;
+      if (!api || !window.CaptureCore) throw new Error("screenrec");
+      api.attach({
+        t: function (k) { return window.t(k); },
+        toast: function (kind, text, onClick) { scToast(kind, text, onClick); },
+        fs: function () { return window.orosFS || null; },
+        bar: function (h) { if (window.orosSmartBar && typeof window.orosSmartBar.live === "function") window.orosSmartBar.live("rec", h); },
+        calm: function () { window.__orosCalmScreen(); },
+        openFile: function (path) { window.__orosOpenAt("files", /\/$/.test(path) ? { path: path.slice(0, -1), dir: true } : { path: path }); },
+        busy: function () { return !!recLive(); }
+      });
+      return api;
+    }, function (e) { recLoading = null; throw e; });
+    return recLoading;
+  }
+  function recTake() {
+    if (recPhone()) { window.orosPhone.rec(recPrefs().mic === true); return; }   // the app starts or stops it
+    if (!recOk() || recLive() || (window.orosScreenRec && window.orosScreenRec.running())) return;
+    var raw = recPrefs(), sys = raw.sys !== false, fps = raw.fps === 60 ? 60 : 30;
+    var v = { cursor: raw.cursor === false ? "never" : "always", frameRate: { ideal: fps, max: fps } };
+    if (raw.res === "1080" || raw.res === "720" || raw.res === "480") v.height = { max: Number(raw.res) };
+    var o = { video: v, audio: sys, selfBrowserSurface: "include", surfaceSwitching: "include" };
+    if (sys) o.systemAudio = "include";
+    var p;
+    try { p = navigator.mediaDevices.getDisplayMedia(o); } catch (e) { p = Promise.reject(e); }
+    p.then(function (st) {
+      recLoad().then(function (api) { api.start(st, raw); }, function () {
+        st.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} });
+        scToast("err", window.t("qs.rec.fail"));
+      });
+    }, function () {});
+  }
   window.__orosTakeShot = function () {
     var s = shotHeld;
     shotHeld = null;
@@ -6094,6 +6301,64 @@
       return JSON.parse(JSON.stringify(groups || []));
     });
   };
+  // AS-RB2 (Chris 2026-11-27, «Οι κάρτες εφαρμόστηκαν, δεν ξέρω γιατί
+  // δεν έφυγαν»): an app's report for an Assistant card (rb[key]) is also
+  // kept on this device (localStorage "oros-assist-rb", never synced, 7
+  // days, at most 200), so a report written while the Assistant was not
+  // in this frame, in another orOS window or before a reload still
+  // reaches its card and the model. Another window's report arrives by
+  // the "storage" event and wakes the open Assistant (rb's onRb).
+  function assistReports() {
+    var KEY = "oros-assist-rb", KEEP = 7 * 864e5, MAX = 200, mem = {};
+    function load() {
+      var raw = null;
+      try { raw = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { raw = null; }
+      return raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    }
+    function save(all) {
+      var now = Date.now(), keys = Object.keys(all).filter(function (k) {
+        var x = all[k];
+        return x && typeof x === "object" && typeof x.at === "number" && now - x.at < KEEP;
+      }).sort(function (a, b) { return all[b].at - all[a].at; }).slice(0, MAX), out = {};
+      keys.forEach(function (k) { out[k] = all[k]; });
+      try { localStorage.setItem(KEY, JSON.stringify(out)); } catch (e) {}
+      return out;
+    }
+    function fill(all) {
+      Object.keys(all).forEach(function (k) {
+        var x = all[k];
+        if (x && typeof x === "object" && x.rep && typeof x.rep === "object" && !(k in mem)) mem[k] = x.rep;
+      });
+    }
+    fill(save(load()));
+    if (typeof Proxy !== "function") return mem;
+    var rb = new Proxy(mem, {
+      set: function (o, k, v) {
+        o[k] = v;
+        if (typeof k === "string" && k !== "onRb" && v && typeof v === "object") {
+          var all = load();
+          all[k.slice(0, 80)] = { at: Date.now(), rep: v };
+          save(all);
+        }
+        return true;
+      },
+      deleteProperty: function (o, k) {
+        delete o[k];
+        if (typeof k === "string") { var all = load(); if (k in all) { delete all[k]; save(all); } }
+        return true;
+      }
+    });
+    window.addEventListener("storage", function (e) {
+      if (e.key !== KEY) return;
+      var before = Object.keys(mem).length;
+      fill(load());
+      var st = window.orosAssistAtt;
+      if (Object.keys(mem).length !== before && st && typeof st.onRb === "function") {
+        try { st.onRb(""); } catch (x) {}
+      }
+    });
+    return rb;
+  }
   // The Assistant's attached files (AS-ATT-MEM): base64, text read on
   // the device and PDF page counts, kept here in memory while orOS is
   // open, so an app opened from the Assistant (it takes the Assistant's
@@ -6101,7 +6366,7 @@
   // when the tab closes. assistant.js owns what goes in. blob: files
   // for an app only (AS-DEV), as Files; rb: Layout's rebuild reports
   // for the Assistant's cards (AS-RB, written by layout.js).
-  window.orosAssistAtt = { mem: {}, text: {}, pages: {}, blob: {}, rb: {} };
+  window.orosAssistAtt = { mem: {}, text: {}, pages: {}, blob: {}, rb: assistReports() };
   window.orosAssistOpen = function (appId, target) {
     openSearchHit(String(appId || ""), { target: target === undefined ? null : target });
   };
@@ -7479,6 +7744,11 @@
   // since. The old engine would have dropped it at this very
   // registration ("older than this device's last push") — do the same.
   function shellDropParkedLegacy() {
+    // SY-Z: the mailbox may be packed; the engine reads it.
+    if (window.orosSync && typeof window.orosSync.carryDrop === "function") {
+      try { window.orosSync.carryDrop("shell"); } catch (e) {}
+      return;
+    }
     try {
       var c = JSON.parse(localStorage.getItem("oros-remote-carry"));
       if (c && typeof c === "object" && c.shell !== undefined) {
@@ -9547,9 +9817,11 @@
   // A72: an automatic sync that fails for a reason only the person
   // can fix (storage full, sign-in expired, a newer orOS needed) puts
   // ONE line a day in the bell, with a link to the place to fix it.
+  // SY-Z: a full store links to Settings › Device, where Space per app
+  // shows what takes the room (sync's mailbox counted under its apps).
   // Network trouble stays a red dot only: it heals by itself.
   var SYNC_NOTICE_FOR = {
-    "sync.err.storage":   "settings/backup",
+    "sync.err.storage":   "settings/device",   // SY-Z: Space per app (was Backups)
     "sync.err.auth":      "settings/sync",
     "sync.err.dav-auth":  "settings/sync",
     "sync.err.version":   "",
@@ -10210,6 +10482,12 @@
         { name: "Audius", url: "https://audius.co/",
           by: "The Audius community; each track by its artist", lic: { k: "cr.lic.audius" },
           k: "cr.audius" },
+        { name: "Bandcamp", url: "https://bandcamp.com/",
+          by: "Bandcamp; each release by its artist or label", lic: { k: "cr.lic.bandcamp" },
+          k: "cr.bandcamp" },
+        { name: "SoundCloud", url: "https://soundcloud.com/",
+          by: "SoundCloud Global Limited; each track by its uploader", lic: { k: "cr.lic.soundcloud" },
+          k: "cr.soundcloud" },
         { name: "open.audio (Funkwhale)", url: "https://open.audio/",
           by: "The Funkwhale project's public pod; each song by its uploader", lic: { k: "cr.lic.openaudio" },
           k: "cr.openaudio" },
@@ -10481,7 +10759,10 @@
           k: "cr.appimage" },
         { name: "Android Browser Helper 2.7.4", url: "https://github.com/GoogleChrome/android-browser-helper",
           by: "Google LLC", lic: "Apache-2.0",
-          k: "cr.android-browser-helper" }
+          k: "cr.android-browser-helper" },
+        { name: "Shizuku API 13.1.5", url: "https://github.com/RikkaApps/Shizuku-API",
+          by: "RikkaW & contributors", lic: "Apache-2.0",
+          k: "cr.shizuku" }
       ]
     },
     {
@@ -13877,9 +14158,11 @@
       icons: { pack: iconsPack(state.icons), packs: ICON_PACKS.slice(),   // ICONPACK-1
                own: iconsOwn(state.icons) || iconsOwn(ICON_OWN_DEFAULT), choices: ICON_OWN },   // ICONPACK-3
       wallpaper: pic ? "custom" : state.wallpaper,
+      menuIcon: { now: menuIconNow(), choices: MENU_ICON_IDS.slice() },   // MENUICON-1
+      gamemode: SOLO ? null : { on: gameModeOn(), active: gameNow },     // GAMEMODE-1
       wpdir: wpdirSnapshot(),                 // WPDIR-1
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
-      viz: (!pic && state.wallpaper === "viz") ? { style: wpVizNow().style, styles: WP_VIZ_STYLES.slice(), still: wpVizStill() } : null,   // VIZWALL-1, VIZ-SLOW
+      viz: (!pic && state.wallpaper === "viz") ? { style: wpVizNow().style, styles: WP_VIZ_STYLES.slice(), still: wpVizStill(), calm: !!(wpVizCtl && wpVizCtl.calm) } : null,   // VIZWALL-1, VIZ-SLOW, MU-VIZ-BEAT
       land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style, motion: !!wpLandNow().motion, light: wpLandNow().light !== 0, styles: WP_LAND_STYLES.slice() } : null,
       wallpapers: WALLPAPERS.map(function (w) {
         var css = w.css;
@@ -14031,6 +14314,8 @@
       case "wpdir:mode": wpdirSet("mode", String(value || "")); return;
       case "wpdir:dir":  wpdirSet("dir", value); return;
       case "wpdir:next": wpdirSet("next"); return;
+      case "gamemode":   if (!SOLO) { gameModeSet(!!value); settingsNotify(); } return;   // GAMEMODE-1
+      case "menuicon":   if (!SOLO) { menuIconSet(String(value || "")); settingsNotify(); } return;   // MENUICON-1
       case "pet":
         if (window.orosPet && typeof window.orosPet.toggle === "function" &&
             !!value !== !!window.orosPet.isEnabled()) {
@@ -14129,6 +14414,10 @@
     }
     if (/^smartbar:/.test(name)) {       // smartbar.js: "smartbar:<kind>" on/off
       if (window.orosSmartBar) window.orosSmartBar.set(name.slice(9), !!value);
+      return;
+    }
+    if (name === "smartbar-island") {    // smartbar.js ISLAND-1: the island on/off
+      if (window.orosSmartBar && window.orosSmartBar.setIsland) window.orosSmartBar.setIsland(!!value);
       return;
     }
     if (name === "smartbar-live") {      // smartbar.js SB-LIVE: live pills on/off
@@ -14716,11 +15005,13 @@
   // Close when you leave them, as before, even with multitasking on:
   // another window writes their data while they would be hidden
   // (the M1 writer scan's "check" list: mail, radio, television,
-  // weather, calendar, assistant), they hold the camera or microphone
+  // weather, calendar), they hold the camera or microphone
   // (getUserMedia), they unlock secrets (passwords), or they mirror
-  // shell state (settings).
+  // shell state (settings). The Assistant left this list on AS-KEEP
+  // (Chris 2026-11-28): it stops its microphone on __orosAppPause and
+  // merges its own key when another window writes it (MT_SELF_MERGE).
   var MT_CLOSE_ON_LEAVE = {
-    mail: 1, radio: 1, television: 1, weather: 1, calendar: 1, assistant: 1,
+    mail: 1, radio: 1, television: 1, weather: 1, calendar: 1,
     flashcards: 1, meals: 1, montage: 1, qr: 1, scanpdf: 1, stock: 1, storage: 1, studio: 1,
     passwords: 1, settings: 1
   };
@@ -14732,8 +15023,13 @@
   // pickSide: the next app chosen in the menu opens beside
   var mtOnChange = null;     // set by the switcher (10c): repaint on change
   var mtNoKeep = false;      // the switcher closes the app in front
+  var mtAsSide = false;      // AS-KEEP: the app leaving the front goes beside the one coming
   function mtChanged() {
     if (typeof mtOnChange === "function") { try { mtOnChange(); } catch (e) {} }
+    // AS-KEEP: an app that draws its own side-by-side button hears of it
+    appFrames().forEach(function (f) {
+      try { if (typeof f.contentWindow.__orosMtNote === "function") f.contentWindow.__orosMtNote(); } catch (e) {}
+    });
     if (typeof appsLastNote === "function") appsLastNote(false);   // RS-1: what is open, for the next start (absent in the section-10 test sandbox)
   }
 
@@ -14837,9 +15133,14 @@
   // are screens over their own shell host follow its change events and
   // are left alone.
   var MT_HOSTED = { music: 1, podcasts: 1, today: 1, stickies: 1, newsletter: 1 };
+  // AS-KEEP: apps that read their own key back on every write by
+  // another window and merge it with what they hold (the Assistant:
+  // "oros-assistant-data" through C.mergeAssist), so no stale copy can
+  // undo that write; like the hosted apps they are left alone.
+  var MT_SELF_MERGE = { assistant: 1 };
   var mtKeyOwner = {};       // key → id of the app seen writing it
   function mtOwns(id, key) {
-    if (!key || MT_HOSTED[id]) return false;
+    if (!key || MT_HOSTED[id] || MT_SELF_MERGE[id]) return false;
     return key.indexOf("oros-" + id + "-") === 0 || mtKeyOwner[key] === id;
   }
   // The app of a document URL of this orOS ("…/todo/index.html" → "todo").
@@ -14907,6 +15208,11 @@
     el.style.display = "";
     mtVis(el, false);
   }
+  // An app at work behind (the Assistant writing an answer) says so
+  // through window.__orosAppBusy(); it is never the one closed for room.
+  function mtBusy(el) {
+    try { var f = el.contentWindow.__orosAppBusy; return typeof f === "function" && !!f(); } catch (e) { return false; }
+  }
   // Oldest hidden apps close until front + hidden fit the slots.
   function mtFit(front) {
     var slots = mtSlotsHere();
@@ -14914,8 +15220,11 @@
     if (mt.side) used += mtWeight(mt.side.app.id);
     mt.hidden.forEach(function (r) { used += mtWeight(r.app.id); });
     mt.hidden.sort(function (a, b) { return a.at - b.at; });
-    while (used > slots && mt.hidden.length) {
-      var r = mt.hidden.shift();
+    var i = 0;
+    while (used > slots && i < mt.hidden.length) {
+      var r = mt.hidden[i];
+      if (mtBusy(r.el)) { i++; continue; }   // AS-KEEP: busy apps wait
+      mt.hidden.splice(i, 1);
       used -= mtWeight(r.app.id);
       mtDrop(r.el);
     }
@@ -15015,12 +15324,74 @@
     mtDropAll();
     if (state.running) mtClose(state.running.id);
   }
+  // AS-KEEP (Chris 2026-11-28): an app's own "side by side" button
+  // (the Assistant's). Where it is: "front" | "side" | "".
+  function mtWhere(id) {
+    if (mtSideIs(id)) return "side";
+    return state.running && state.running.id === id ? "front" : "";
+  }
+  function mtBesideState(id) {
+    return { can: mtActive() && mtSplitFits(), where: mtWhere(id), split: !!mt.side };
+  }
+  // The button: in side by side it takes the whole screen again (the
+  // other app waits behind, live); alone in front it goes beside the
+  // app used last, which comes in front; with none behind, the menu
+  // picks the app ("swap": the pick comes in front, this app beside).
+  // → "full" | "split" | "pick" | "no"
+  function mtBesideMe(id) {
+    if (!mtActive() || !mtSplitFits() || !state.running) return "no";
+    var run = document.getElementById("oros-running");
+    if (mtSideIs(id)) {
+      var sd = mt.side;
+      mt.side = null;
+      sd.el.removeAttribute("data-oros-side");
+      run.classList.remove("mt-split");
+      appFrames().concat([sd.el]).forEach(function (f) { if (f.classList) f.classList.remove("mt-focus"); });
+      mt.hidden.push({ app: sd.app, el: sd.el, at: Date.now() });
+      openApp(sd.app);   // the app in front steps back, kept
+      return "full";
+    }
+    if (state.running.id !== id) return "no";
+    if (mt.side) { mtSideEnd(true); mtChanged(); return "full"; }
+    var last = null;
+    mtList().forEach(function (r) { if (!appHiddenNow(r.app.id) && (!last || r.at > last.at)) last = r; });
+    if (last) {
+      mtAsSide = true;
+      try { openApp(last.app); } finally { mtAsSide = false; }
+      return mtSideIs(id) ? "split" : "no";
+    }
+    mt.pickSide = "swap";
+    if (typeof openMenuSearch === "function") openMenuSearch();
+    return "pick";
+  }
+  window.__orosMtState = mtBesideState;
+  window.__orosMtBeside = mtBesideMe;
+  // Quick access mini window → the full app beside the app in front,
+  // at `target` (a live one keeps its window and takes the target).
+  function mtOpenBeside(appId, target) {
+    var app = null;
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === appId) app = state.apps[i];
+    if (!app || app.type !== "internal" || !appLockOk(app.id)) return false;
+    if (!mtActive() || !mtSplitFits() || !state.running || state.running.id === appId || state.running.type !== "internal") return false;
+    var live = appLive(appId), t = null;
+    try { t = JSON.parse(JSON.stringify(target === undefined ? null : target)); } catch (e) { t = null; }
+    if (!live && t) { try { sessionStorage.setItem("oros-open-at", JSON.stringify({ app: appId, target: t })); } catch (e) {} }
+    if (!mtSideOpen(app)) return false;
+    if (live && t) {
+      try { var w = appFrameOf(appId).contentWindow; if (typeof w.__orosOpenAt === "function") w.__orosOpenAt(t); } catch (e) {}
+    }
+    return true;
+  }
   // openApp with multitasking on: `prev` was in front, `app` comes.
   function mtSwitch(prev, app, at) {
     var front = document.getElementById("app-frame");
     if (prev && prev.id === app.id) { frameGo(front, app.url + (at || "")); return; }   // reopen = reload, as before
     var back = mtTake(app.id);
-    if (prev && !mtNoKeep && mtKeepable(prev) && mtHasDoc(front)) { mtHide(front, prev); front = null; }
+    if (prev && mtAsSide && !mt.side && !mtNoKeep && mtKeepable(prev) && mtHasDoc(front) && mtSplitFits()) {
+      front.removeAttribute("id");   // AS-KEEP: the app leaving goes beside, live
+      mtSideShow(prev, front);
+      front = null;
+    } else if (prev && !mtNoKeep && mtKeepable(prev) && mtHasDoc(front)) { mtHide(front, prev); front = null; }
     if (back) {
       if (front) mtDrop(front);
       mtShow(back.el);
@@ -15408,8 +15779,15 @@
     if (typeof scrWins !== "undefined" && scrElsewhere(app)) return;   // SS1: it lives on the other screen
     if (app && app.id === "assistant" && aiHelper() === "claude") { claudeInstead(""); return; }   // HELPER-1 (desktop, Dock, links)
     if (app && app.type === "internal") { davBgStop(app.id); bankBgStop(app.id); }   // 10e/10f: the background frame of this app goes first
-    var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
+    var pickMode = mt.pickSide;
+    var pick = pickMode && document.getElementById("app-menu").classList.contains("open");
     mt.pickSide = false;
+    if (pick && pickMode === "swap" && state.running && state.running.id !== app.id) {
+      // AS-KEEP: the app picked comes in front, the one asking goes beside
+      mtAsSide = true;
+      try { openApp(app, at); } finally { mtAsSide = false; }
+      return;
+    }
     if (mtActive() && app.type === "internal" && (mtSideIs(app.id) || pick) && mtSideOpen(app, at)) {
       closeMenu();
       menuReset();
@@ -18395,6 +18773,8 @@
       },
       desktop: document.getElementById("oros-desktop"),
       menuChanged: function () { renderMenu(); },
+      // DOCK-GRP: a new group of two apps of one category takes its name.
+      category: function (c) { var k = "category." + String(c).toLowerCase(), v = window.t(k); return v === k ? "" : v; },
       // The Pocket's button at the Dock's end (POCKET-1), or null.
       dockExtra: function () { return window.orosPocket ? window.orosPocket.dockButton() : null; }
     });
@@ -18408,6 +18788,9 @@
       open: openApp,
       running: function () { return state.running || null; },
       isOpen: function (id) { return mtActive() && appLive(id); },   // multitasking: alive behind
+      // AS-KEEP: the mini window hands over to the full app beside the app in front
+      canBeside: function () { return mtActive() && mtSplitFits() && !!state.running && state.running.type === "internal" && state.running.id !== "assistant"; },
+      beside: function (id, target) { return mtOpenBeside(id, target); },
       icons: ICONS,
       lang: function () { return langBase(); },
       label: function (app) {
@@ -18511,6 +18894,39 @@
     if (!md || !md.title || String(title || "").indexOf(md.title) !== 0) return "";
     var a = md.artwork && md.artwork[0], src = a && String(a.src || "");
     return /^(blob:|https:\/\/|data:image\/)/i.test(src) ? src : "";
+  }
+  // COVERTINT-1: the cover's colours for the Now playing peek, the media
+  // widget and the island. Read once per cover (32×32, WpAcc.swatches),
+  // the 24 newest kept in memory; null while it is read, for a cover
+  // from another site that does not allow reading (no CORS), one with no
+  // clear colour, under high contrast and while Sensitive work is on
+  // (then no cover shows either). The next paint picks it up.
+  var coverTints = {}, coverKeys = [];
+  function coverTint(src) {
+    src = String(src || "");
+    if (!/^(blob:|https:\/\/|data:image\/)/i.test(src)) return null;
+    if (Object.prototype.hasOwnProperty.call(coverTints, src)) return coverTints[src];
+    coverTints[src] = null;
+    coverKeys.push(src);
+    if (coverKeys.length > 24) delete coverTints[coverKeys.shift()];
+    var img = new Image();
+    if (/^https:/i.test(src)) { img.crossOrigin = "anonymous"; img.referrerPolicy = "no-referrer"; }
+    img.onload = function () {
+      try {
+        var cv = document.createElement("canvas");
+        cv.width = cv.height = 32;
+        var g = cv.getContext("2d");
+        g.drawImage(img, 0, 0, 32, 32);
+        var sw = WpAcc.swatches(g.getImageData(0, 0, 32, 32).data, 1);
+        if (Object.prototype.hasOwnProperty.call(coverTints, src)) coverTints[src] = sw.length ? WpAcc.coverTint(sw[0]) : null;
+      } catch (e) {}                                   // a cover that may not be read: no tint
+    };
+    img.src = src;
+    return null;
+  }
+  function coverTintFor(title) {
+    if (strictLevelNow() || document.documentElement.getAttribute("data-oros-contrast") === "high") return null;
+    return coverTint(wgMediaArt(title));
   }
   // The Media card's little light listens like the wallpaper (passive:
   // it never restarts a stream), as its own listener "widget".
@@ -18693,7 +19109,16 @@
       media: qsMedia,
       // QS-SHOT-1: the menu search and a screenshot (not in a single app).
       search: SOLO ? null : function (text) { ovToMenu(String(text || "").slice(0, 200)); },
-      shot: SOLO ? null : function (kind) { if (hasApp("capture")) shotTake(kind === "region" ? "region" : "screen"); }
+      shot: SOLO ? null : function (kind) { if (hasApp("capture")) shotTake(kind === "region" ? "region" : "screen"); },
+      // QS-REC-1: Screen recording (screenrec.js). state/stop: the smart bar's
+      // recording handle, this one or Screen Capture's own.
+      rec: SOLO ? null : {
+        can: recOk,
+        state: function () { var h = recLive(); return h ? h.state() : null; },
+        start: recTake,
+        stop: function () { var h = recLive(); if (h) h.stop(); },
+        settings: function () { window.__orosOpenAt("capture", { rec: "settings" }); }
+      }
     });
   }
   // Clipboard history (cliphist.js, CLIP-1): what is copied inside orOS
@@ -18937,6 +19362,7 @@
       weather: wgWeather,
       media: qsMedia,
       mediaArt: wgMediaArt,                 // WG-MEDIA-2: the cover of what plays
+      mediaTint: coverTintFor,              // COVERTINT-1: its colours
       mediaLight: { kit: wpVizKit, tap: wgMediaTap, frame: function () { return wgTap ? wgTap.h.vizFrame() : null; } },
       settings: function (section) { if (window.orosSettings) window.orosSettings.open(section); },
       sync: {
@@ -18968,6 +19394,14 @@
       weather: function () { return wxPeekData(); },                 // PEEK-1
       // NOWPLAY-1: the players (never a locked app's), with their controls
       media: function () { return qsMedia().filter(function (m) { return !appLockSet(m.id); }); },
+      // ISLAND-1: the cover of what plays (mediaSession) and Music's synced line now
+      art: function (title) { return wgMediaArt(title); },
+      tint: coverTintFor,                   // COVERTINT-1: the cover's colours
+      lyric: function (id) {
+        if (id !== "music" || appLockSet("music")) return null;
+        var mu = hostApi(window.__orosMusicHost);
+        return mu && typeof mu.lyricNow === "function" ? mu.lyricNow() : null;
+      },
       openDay: function (ymd) { window.__orosOpenCalendar("-", ymd); }   // PEEK-1: a day of the month
     });
   }
