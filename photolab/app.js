@@ -139,6 +139,7 @@
       fill: { tol: 32, contiguous: true, opacity: 100, all: false },
       wand: { tol: 32, contiguous: true, all: false },
       quick: { size: 20, tol: 40, all: false },
+      smart: { part: false },
       gradient: { type: "linear", opacity: 100, toClear: false },
       shape: { id: "rect", noFill: false, stroke: false, sw: 8 },
       rulers: false, guides: true, grid: false, gridSize: 50, snap: true,

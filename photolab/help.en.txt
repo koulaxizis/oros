@@ -12,6 +12,7 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 - `Marquee selection` and `Lasso`: select an area. Press the tool again to switch between `Rectangle` and `Ellipse`, or between a freehand and a point-by-point lasso. Hold Shift to add to the selection, Alt to subtract.
 - `Magic wand`: selects similar colours; set the `Tolerance` and whether only `Contiguous` pixels count.
 - `Quick selection`: paint over what you want and the selection grows out to its edges; Alt+drag takes away. [[Shift+W]] switches between it and the magic wand.
+- `Smart select`: click an object (a person, a cup, a car) and it is selected; Shift+click adds another one, Alt+click takes one away (on a phone, use `Mode`). `Select` › `Whole object` or `Part of it` (a shirt, not the whole person). [[Shift+W]] goes on from the quick selection to it. See "Smart select and Colourize" below.
 - `Brush` and `Eraser`: `Size`, `Hardness`, `Opacity` and `Flow`. A pen paints wider when you press harder.
 - `Clone stamp`: Alt+click (or `Set source`, then a tap) where to copy from, then paint where the copy should go. `Healing brush` does the same but keeps the colour around the spot, for blemishes and dust; its `Red eye` kind turns red pupils dark.
 - `Dodge / burn / sponge`: `Dodge` lightens and `Burn` darkens the `Shadows`, `Midtones` or `Highlights`; `Sponge` takes colour away or adds it. `Smudge` drags colour like a finger in wet paint.
@@ -52,6 +53,11 @@ On a phone all menus are under the menu button.
 - `Layer` › `Remove background…` does the same and hides everything else with a layer mask on the current layer. Nothing is erased: paint the mask to fix an edge, or delete the mask to get the background back.
 - Both look at the whole visible picture. Move the `Edge` slider to keep more or less around the subject, then `Apply`. One `Undo` takes it back.
 - They use the same on-device tool as Atelier's background remover. The first time, it needs a download of about 16 MB; after that it works offline, and the picture never leaves your device. If Atelier downloaded it already, there is nothing to download.
+
+## Smart select and Colourize
+- The `Smart select` tool (also `Select` › `Smart select`) reads the whole visible picture once, which takes a few seconds; after that each click selects an object in a moment. It uses your selection `Mode` and `Feather`.
+- `Filter` › `Colourize…` guesses the colours of a black-and-white or faded photo. Pick `Quality` (`Best`, or `Faster` on slow devices), check the preview, set `Strength`, then `Apply`: the colours go on a new layer on top, laid on the picture's own light and shade at full size. With a selection, only that part is coloured. The colours are a guess: lower the layer's opacity or paint a layer mask where they are wrong. One `Undo` takes it back.
+- Both run on this device and download once, only when you first use them: Smart select about 14 MB, Colourize about 136 MB (plus about 12 MB shared with the background tool). After that they work offline, and the picture never leaves your device.
 
 ## From Google Photos
 - On the projects screen, `From Google Photos`: sign in to Google, press `Open Google Photos`, pick one picture and press `Done`. It opens here as a new project.

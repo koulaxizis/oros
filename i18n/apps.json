@@ -25,6 +25,7 @@
     "atelier/presets.js",
     "atelier/recipes.js",
     "atelier/search.js",
+    "atelier/smartpick.js",
     "atelier/templates-more.js",
     "atelier/templates.js"
    ]

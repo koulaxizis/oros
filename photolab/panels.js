@@ -63,6 +63,7 @@
     close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
     check: svg('<path d="M5 13l4 4L19 7"/>'),
     quick: svg('<path d="M4 20l7-7"/><circle cx="15" cy="9" r="5" stroke-dasharray="2.5 2.5"/>'),
+    smart: svg('<path d="M5 5l5 13 2-5 5-2z"/><path d="M15 3v2M20 8h-2M18.5 4.5L17 6"/>'),
     mask: svg('<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="5" fill="currentColor"/>'),
     adj: svg('<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>'),
     fx: svg('<path d="M10 20l1-8M6 12h7M14 4h-1a3 3 0 0 0-3 3l-1 5"/><path d="M15 13l5 6M20 13l-5 6"/>')
@@ -801,6 +802,7 @@
       { id: "deselect", k: "Ctrl+D", run: function () { ops().deselect(); }, on: hasSel },
       { id: "invertSel", k: "Ctrl+Shift+I", run: function () { ops().invertSel(); }, on: hasSel },
       { id: "selSubject", run: function () { PL.subject.run("select"); }, on: has },
+      { id: "selSmart", run: function () { PL.setTool("smart"); }, on: has },
       { id: "selLayer", run: function () { ops().selectLayerPixels(); }, on: has },
       { id: "colorRange", run: colorRangeDialog, on: has },
       { id: "saveSel", run: saveSelDialog, on: hasSel },
@@ -837,6 +839,7 @@
       { id: "fPixelate", run: function () { adjustDialog("pixelate"); }, on: has },
       { id: "fEmboss", run: function () { adjustDialog("emboss"); }, on: has },
       { id: "fEdges", run: function () { quickFilter("edges"); }, on: has },
+      { id: "fColorize", run: function () { PL.smartLoad().then(function (M) { M.colorDialog(); }, function () { PL.toast(t("msg.failed")); }); }, on: has },
       { id: "fVignette", run: function () { adjustDialog("vignette"); }, on: has }
     ] },
     { id: "view", items: [
@@ -950,7 +953,7 @@
     box.appendChild(cols);
   }
   function swapColors() { var x = st.fg; st.fg = st.bg; st.bg = x; PL.emit("colors"); renderTools(); }
-  var TOOL_KEYS = { move: "v", marquee: "m", lasso: "l", wand: "w", quick: "", crop: "c", brush: "b", eraser: "e", clone: "s", heal: "j", tone: "o", smudge: "r", fill: "g", gradient: "", picker: "i", text: "t", shape: "u", hand: "h", zoom: "z" };
+  var TOOL_KEYS = { move: "v", marquee: "m", lasso: "l", wand: "w", quick: "", smart: "", crop: "c", brush: "b", eraser: "e", clone: "s", heal: "j", tone: "o", smudge: "r", fill: "g", gradient: "", picker: "i", text: "t", shape: "u", hand: "h", zoom: "z" };
 
   PL.setTool = function (id, internal) {
     if (st.tool === id && !internal) {
@@ -1054,6 +1057,12 @@
       box.appendChild(optRange(t("f.tolerance"), P.quick, "tol", 1, 255));
       box.appendChild(optCheck(t("f.allLayers"), P.quick, "all"));
       box.appendChild(el("span", "opt-hint", t("hint.quick")));
+    } else if (id === "smart") {
+      box.appendChild(optSelect(t("f.smartWhat"), [["whole", t("smart.whole")], ["part", t("smart.part")]], P.smart.part ? "part" : "whole",
+        function (v) { P.smart.part = v === "part"; }));
+      box.appendChild(selModeOpt());
+      box.appendChild(optRange(t("f.feather"), P, "feather", 0, 100));
+      box.appendChild(el("span", "opt-hint", t("hint.smart")));
     } else if (id === "fill") {
       box.appendChild(optRange(t("f.tolerance"), P.fill, "tol", 0, 255));
       box.appendChild(optRange(t("f.opacity"), P.fill, "opacity", 1, 100));
@@ -1330,7 +1339,7 @@
         PL.savePrefs(); renderOptions(); PL.view.schedule(); return;
       }
       if (k === "shift+g") { PL.setTool(st.tool === "gradient" ? "fill" : "gradient", true); return; }
-      if (k === "shift+w") { PL.setTool(st.tool === "quick" ? "wand" : "quick", true); return; }
+      if (k === "shift+w") { PL.setTool(st.tool === "wand" ? "quick" : st.tool === "quick" ? "smart" : "wand", true); return; }
       for (var id in TOOL_KEYS) {
         if (TOOL_KEYS[id] && TOOL_KEYS[id] === k) { e.preventDefault(); PL.setTool(id); return; }
       }

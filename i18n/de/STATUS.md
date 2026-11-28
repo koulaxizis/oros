@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 52914 of 52963 (99%)
+- Strings: 53106 of 53155 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -16,10 +16,10 @@ en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 2483 / 2484 |
-| atelier | 100% | 1534 / 1534 |
+| assistant | 99% | 2609 / 2610 |
+| atelier | 100% | 1559 / 1559 |
 | aura | 100% | 84 / 84 |
-| automations | 100% | 332 / 332 |
+| automations | 100% | 337 / 337 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
@@ -117,7 +117,7 @@ en and el); translators change them there, not in a pack.
 | pet | 100% | 106 / 106 |
 | petcare | 100% | 390 / 390 |
 | petworld | 100% | 256 / 256 |
-| photolab | 100% | 879 / 879 |
+| photolab | 100% | 910 / 910 |
 | pixel | 100% | 101 / 101 |
 | plants | 100% | 236 / 236 |
 | podcasts | 100% | 349 / 349 |
@@ -142,7 +142,7 @@ en and el); translators change them there, not in a pack.
 | settings | 100% | 2130 / 2130 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1698 / 1698 |
+| shell | 100% | 1703 / 1703 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |

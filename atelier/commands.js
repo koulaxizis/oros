@@ -78,7 +78,7 @@
   PHOTO.flip = oneOf(["", "h", "v", "none"]);
 
   // kind: "doc" (edits the design here), "async" (Atelier runs it on
-  // the device: background removal)
+  // the device: background removal, colourize)
   var CATALOG = {
     replace: { kind: "doc", args: sel({ find: { t: "str", max: 500, req: 1 }, repl: { t: "str", max: 2000 }, cs: { t: "bool" }, word: { t: "bool" } }) },
     settext: { kind: "doc", args: sel({ text: { t: "str", max: 5000, req: 1 } }) },
@@ -88,6 +88,7 @@
     colors: { kind: "doc", args: sel({ fill: { t: "color" }, grad: { t: "color" }, ang: int(-360, 360), stroke: { t: "color" }, sw: num(0, 200) }) },
     photo: { kind: "doc", args: sel(PHOTO) },
     cutout: { kind: "async", args: sel({}) },
+    colorize: { kind: "async", args: sel({ amt: { t: "int", lo: 0, hi: 150, def: 100 }, fast: { t: "bool" } }) },
     place: { kind: "doc", args: sel({ x: num(-20000, 20000), y: num(-20000, 20000), w: num(0.5, 20000), h: num(0.5, 20000),
       dx: num(-20000, 20000), dy: num(-20000, 20000), pct: num(1, 1000), rot: num(-360, 360), opacity: int(0, 100),
       pos: oneOf([""].concat(POS)), gap: num(0, 5000) }) },
@@ -129,6 +130,7 @@
     "colors: fill (a shape's fill, a text's colour, an icon's or line's colour), grad (second colour: a gradient from fill to grad at angle ang), stroke (outline colour), sw (outline width)",
     "photo: flt filter " + FILTERS.join("|") + " (mono = black and white), sliders " + ADJ.join(", ") + " (integers; fade, sepia, vignette, blur, sharpen 0..100, the rest -100..100), fit fit|fill, shape (the photo's mask " + SHAPES.join("|") + "), round (corners 0-100), flip h|v|none",
     "cutout: remove the background of the picked photos, on the device",
+    "colorize: colours for the picked black-and-white or faded photos (DDColor, on the device, nothing is sent; each photo's picture is replaced): amt (strength 0-150 %, 100 by default), fast (true: four times faster, a little less good)",
     "place: x, y (position of the top-left corner), w, h (size; a photo keeps its proportions when only one is given), dx, dy (move by), pct (scale %), rot (degrees), opacity (0-100), pos tl|t|tr|l|c|r|bl|b|br (against the page, gap from its edges)",
     "align: edge l|c|r|t|m|b and/or dist h|v (spread out evenly), rel sel (against each other) | page",
     "arrange: order front|back|forward|backward, lock on|off, hide on|off",
@@ -696,6 +698,7 @@
     if (st.op === "cutout") {
       return list.filter(function (it) { return it.ax.k === "photo" && !it.ax.vid && it.a && !/-cutout\.png$/i.test(it.nm || ""); }).length;
     }
+    if (st.op === "colorize") return list.filter(function (it) { return it.ax.k === "photo" && !it.ax.vid && it.a; }).length;
     if (st.op === "outlines" || st.op === "topath") {             // vector wave V5: Atelier hands the work in env
       var ol = st.op === "outlines", fn = ol ? env.textOutline : env.toPath, done = 0;
       list.forEach(function (it) {

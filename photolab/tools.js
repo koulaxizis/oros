@@ -295,6 +295,38 @@
     }
   };
 
+  // ---------- Smart select (SC) ----------
+  // Click an object: it becomes the selection (selection mode, Shift
+  // adds, Alt takes away, feather as the other selection tools). The
+  // model runs on this device (photolab/smart.js, loaded when first
+  // used; the picture is read once, then each click is quick).
+  var smartP = null;
+  PL.smartLoad = function () {
+    if (PL.smart) return Promise.resolve(PL.smart);
+    if (!smartP) {
+      smartP = new Promise(function (ok, fail) {
+        var v = (document.querySelector('script[src*="app.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+        var s = document.createElement("script");
+        s.src = "smart.js" + (m ? "?v=" + m[1] : "");
+        s.onload = function () { if (PL.smart) ok(PL.smart); else fail(new Error("smart")); };
+        s.onerror = function () { fail(new Error("smart")); };
+        document.head.appendChild(s);
+      });
+      smartP.catch(function () { smartP = null; });
+    }
+    return smartP;
+  };
+  var smart = {
+    id: "smart", cursor: "crosshair",
+    enter: function () { PL.smartLoad().then(function (M) { M.warm(); }, function () {}); },
+    down: function (p, e) {
+      if (!inDoc(p)) { PL.toast(PL.t("msg.outside")); return null; }
+      var mode = selMode(e);
+      PL.smartLoad().then(function (M) { M.click(p, mode); }, function () { PL.toast(PL.t("msg.failed")); });
+      return null;
+    }
+  };
+
   // ---------- Quick selection ----------
   // Paint over an area: it grows out to the edges of similar colour.
   // Shift adds (default once there is a selection), Alt subtracts.
@@ -1002,7 +1034,7 @@
 
   // ---------- Registry ----------
   var TOOLS = {
-    move: move, marquee: null, lasso: lasso, wand: wand, quick: quick, crop: cropTool,
+    move: move, marquee: null, lasso: lasso, wand: wand, quick: quick, smart: smart, crop: cropTool,
     brush: brushTool("brush", false), eraser: brushTool("eraser", true),
     clone: brushTool("clone", false, true), heal: brushTool("heal", false, true),
     tone: brushTool("tone", false, true), smudge: brushTool("smudge", false, true),
@@ -1014,7 +1046,7 @@
     if (id === "marquee") return pr().marqueeEllipse ? ellSel : rectSel;
     return TOOLS[id] || TOOLS.brush;
   }
-  var ORDER = ["move", "marquee", "lasso", "wand", "quick", "crop", "brush", "eraser", "clone", "heal", "tone", "smudge", "fill", "gradient", "picker", "text", "shape", "hand", "zoom"];
+  var ORDER = ["move", "marquee", "lasso", "wand", "quick", "smart", "crop", "brush", "eraser", "clone", "heal", "tone", "smudge", "fill", "gradient", "picker", "text", "shape", "hand", "zoom"];
 
   var PAINTS = ["brush", "eraser", "clone", "heal", "tone", "smudge"];
 
