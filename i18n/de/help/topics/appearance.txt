@@ -77,6 +77,8 @@ Unter `Aussehen der Leiste` kannst du die Leiste als abgerundeten Streifen schwe
 
 Unter `Wo die Karten sitzen` kann jede Karte, die du nutzt, in breiten Fenstern `Links` (nach der Menütaste), in der `Mitte` oder `Rechts` in der Leiste sitzen. Auf dem Handy und im Dock bleiben die Karten zusammen. Das Aussehen `Inseln` zeigt die linke Seite, die Mitte und die rechte Seite als getrennte schwebende Gruppen.
 
+`Insel in der Mitte` (anfangs aus, auf diesem Gerät) sammelt die Live-Anzeigen und was gerade läuft in einer dunklen Pille oben in der Mitte, in Fenstern ab 760 px Breite. Während etwas läuft, zeigt sie eine schmale Zeile mit der Textzeile, die gerade gesungen wird, wenn [Musik](app:music) synchronisierte Liedtexte zum Lied auf diesem Gerät hat (aus seiner .lrc-Datei, seinen Tags oder von LRCLIB, sobald du es erlaubt hast), sonst Titel und Interpret. Zeige darauf oder tippe sie an, und sie wächst: Cover, gespielte und verbleibende Zeit, Zurück, Wiedergabe / Pause und Weiter und `Öffnen` der App. Sie schrumpft wieder, wenn der Zeiger sie verlässt, mit `Esc` oder einem Tippen woanders. Ein pausiertes Lied bleibt eine halbe Minute, dann lässt die Insel es los. Karten, die du in die `Mitte` gesetzt hast, rücken nach rechts, solange sie an ist. Auf dem Handy, im Dock und in der Desktop-Leiste von orOS USB bleibt die Leiste, wie sie ist. Solange `Sensible Arbeit` an ist, zeigt sie nur den Namen der App: keinen Titel, keine Textzeile, kein Cover.
+
 Unter Windows, mit installiertem orOS, hat das Menü des Symbols im Infobereich „Smarte Leiste auf dem Desktop“: dieselbe Leiste, mit deinen Elementen und deinem Aussehen, bleibt oben am Bildschirm, auch wenn das orOS-Fenster geschlossen ist, und ein Tippen öffnet diese App in orOS.
 
 ## Begrüßung beim Start
