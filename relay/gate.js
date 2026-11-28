@@ -813,9 +813,9 @@ export function withDevTools(dev) {
 }
 // Apps never offered, also refused here for a device tool's app or
 // apps argument (orOS checks again on the device: gate/gate.js NEVER).
-// The personal apps (Mail, Diary, Health…) are the owner's choice since
+// The personal apps (Diary, Health…) are the owner's choice since
 // 5.90.00, behind a warning on the device, and never in the closed copy.
-export const NEVER_APPS = ["assistant", "passwords"];
+export const NEVER_APPS = ["assistant", "mail", "passwords"];   // GATE-NEVER2 (2026-11-27): = gate/gate.js NEVER
 export function neverIn(args) {
   const a = args && typeof args === "object" ? args : {};
   const ids = [].concat(typeof a.app === "string" ? [a.app] : [], Array.isArray(a.apps) ? a.apps : []);
@@ -3326,6 +3326,9 @@ export class GateBox {
       return jsonRes(200, rpcOk(id, toolText(fl.c, !fl.ok)));
     }
     let ans = await this.ask(p.name, args);
+    // GATE-IMG: pictures only from this open device's answer, taken out of it at once
+    const pics = ans && ans.ok === true && !ans.e ? gateImages(p.name, args, ans.img) : { imgs: [], dropped: 0 };
+    if (ans && ans.img !== undefined) delete ans.img;
     // The gate this link points to (5.90.00): its first 6 characters, the
     // id orOS › Settings › orOS Gate shows, so a link to an old gate shows.
     const gid = String(request.headers.get("X-Gid") || "").slice(0, 6);
@@ -3385,7 +3388,7 @@ export class GateBox {
       const kQ = await this.unwrapK(tok), pq = kQ ? await this.pending(kQ, null) : null;
       if (pq) ans.c += folderWaitNote(pq);
     }
-    return jsonRes(200, rpcOk(id, toolText(typeof ans.c === "string" ? ans.c : "", false, ans.who)));
+    return jsonRes(200, rpcOk(id, toolText(typeof ans.c === "string" ? ans.c : "", false, ans.who, pics.imgs.concat(imgNote(pics.dropped)))));
   }
   // After a change: the owner's devices get one generic notification
   // ("Claude changed something in orOS"), at most once per wakeGapMs.
@@ -3409,6 +3412,43 @@ export class GateBox {
     await this.st.put("meta", m);
   }
 }
-export function toolText(text, isErr, who) {   // GL-VER: each answer names the live tool list; GATE-WHO: a closed answer the gate
-  return { content: [{ type: "text", text: text }].concat(typeof who === "string" && who ? [{ type: "text", text: who }] : [], [{ type: "text", text: VER_NOTE }]), isError: !!isErr };
+export function toolText(text, isErr, who, imgs) {   // GL-VER: each answer names the live tool list; GATE-WHO: a closed answer the gate; GATE-IMG: pictures after the text
+  return { content: [{ type: "text", text: text }].concat(Array.isArray(imgs) ? imgs : [], typeof who === "string" && who ? [{ type: "text", text: who }] : [], [{ type: "text", text: VER_NOTE }]), isError: !!isErr };
+}
+// GATE-IMG (Chris 2026-11-27, Mail thread's conditions): a picture files_read
+// returns goes to Claude as an MCP image part, only from an open device's
+// answer, never stored (not in q:, qr: or the copy). Only png, jpeg, webp
+// and gif whose first bytes match; at most IMG_MAX per answer, each at most
+// 512 KB decoded, judged by the base64 length (nothing is decoded in full).
+// Never for the apps that are never offered (NEVER_APPS) or Mail's,
+// Passwords' or the Assistant's folders. Anything else stays text.
+export const IMG_TOOLS = ["files_read"];
+export const IMG_MAX = 3;
+export const IMG_B64 = 699052;                   // ceil(512 KB / 3) * 4
+const IMG_B64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
+const IMG_HEAD = {
+  "image/png": (h) => h.charCodeAt(0) === 0x89 && h.slice(1, 4) === "PNG",
+  "image/jpeg": (h) => h.charCodeAt(0) === 0xFF && h.charCodeAt(1) === 0xD8 && h.charCodeAt(2) === 0xFF,
+  "image/gif": (h) => h.slice(0, 4) === "GIF8",
+  "image/webp": (h) => h.slice(0, 4) === "RIFF" && h.slice(8, 12) === "WEBP"
+};
+const IMG_NEVER_RE = /^(\/?internal\/)?(mail|passwords|assistant)(\/|$)/i;
+export function gateImages(name, args, list) {
+  const out = { imgs: [], dropped: 0 };
+  if (!Array.isArray(list) || !list.length) return out;
+  const a = args && typeof args === "object" ? args : {};
+  if (IMG_TOOLS.indexOf(name) < 0 || neverIn(a) || IMG_NEVER_RE.test(String(a.path || "").trim().replace(/^(\.\/)+/, ""))) { out.dropped = list.length; return out; }
+  for (const x of list) {
+    const d = x && typeof x.data === "string" ? x.data : "", mt = x && typeof x.mimeType === "string" ? x.mimeType : "";
+    let ok = out.imgs.length < IMG_MAX && !!IMG_HEAD[mt] && d.length >= 16 && d.length <= IMG_B64 && d.length % 4 === 0;
+    if (ok) {
+      try { ok = IMG_HEAD[mt](atob(d.slice(0, 16))) && IMG_B64_RE.test(d); } catch (e) { ok = false; }
+    }
+    if (ok) out.imgs.push({ type: "image", data: d, mimeType: mt });
+    else out.dropped++;
+  }
+  return out;
+}
+export function imgNote(dropped) {
+  return dropped ? [{ type: "text", text: dropped === 1 ? "One picture could not be passed through orOS Gate (type, size or more than " + IMG_MAX + "); read it again with ocr: true for its text." : dropped + " pictures could not be passed through orOS Gate (type, size or more than " + IMG_MAX + "); read them again with ocr: true for their text." }] : [];
 }   // GL-VER: each answer names the live tool list

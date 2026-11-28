@@ -34,13 +34,14 @@
   var DIG_KEY = "oros-gate-digest", DIG_HOUR = 20, DIG_TRIES = 3;
   var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js; the gate box lives there
   // Never offered, whatever a setting says (BR-GATE).
-  // Never offered: Passwords (secrets) and the Assistant itself.
-  var NEVER = ["assistant", "passwords"];
+  // Never offered: Passwords (secrets), the Assistant itself and Mail
+  // (GATE-NEVER2, Chris 2026-11-27: the same never list as the Assistant).
+  var NEVER = ["assistant", "mail", "passwords"];
   // Sensitive (5.90.00, Chris 08/11: «ως επιλογή με σαφές warning»):
   // offered only after a clear warning on the device, read only (never
   // changed by Claude), and never in the closed-orOS copy, so they leave
   // the device only while orOS is open and Claude asks.
-  var SENSITIVE = ["baby", "cycle", "diary", "fitness", "health", "mail", "mood"];
+  var SENSITIVE = ["baby", "cycle", "diary", "fitness", "health", "mood"];
   function sensitive(id) { return SENSITIVE.indexOf(id) >= 0; }
   var SUMMARY = { budget: 1, stock: 1, kanban: 1, studio: 1 };   // studio: STUDIO-POD P4, read only
   // AS-SUM8 (2026-11-17): apps outside ACT whose app_summary the frame
@@ -4372,6 +4373,23 @@
     return (D ? D.remove(p.id).catch(function () {}) : Promise.resolve()).then(function () { return { ok: true }; });
   }
 
+  // GATE-IMG (Chris 2026-11-27): the pictures files_read made for Claude
+  // go with the answer as {data, mimeType} (the relay passes them on as MCP
+  // image parts and keeps none): at most 3, each under 512 KB, all within
+  // the answer's room; never for an app that is never offered.
+  var GATE_IMG_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+  function gateImgs(name, list, room) {
+    if (name !== "files_read" || !Array.isArray(list)) return null;
+    var out = [];
+    list.forEach(function (x) {
+      if (out.length >= 3 || !isObj(x) || typeof x.data !== "string" || GATE_IMG_TYPES.indexOf(x.mimeType) < 0) return;
+      if (x.data.length > 699052 || x.data.length + 200 > room) return;
+      room -= x.data.length + 200;
+      out.push({ data: x.data, mimeType: x.mimeType });
+    });
+    return out.length ? out : null;
+  }
+
   function onCall(sock, text) {
     var q;
     try { q = JSON.parse(text); } catch (e) { return; }
@@ -4380,7 +4398,9 @@
     var done = function (res) {
       var c = typeof res.c === "string" ? res.c : "";
       if (c.length > 880000) { res = { ok: false, c: "The answer is too big; ask for a shorter period or fewer apps." }; c = res.c; }
-      try { sock.send(JSON.stringify({ r: q.q, ok: !!res.ok, c: c })); } catch (e) {}
+      var out = { r: q.q, ok: !!res.ok, c: c }, img = res.ok ? gateImgs(q.n, res.img, 880000 - c.length) : null;
+      if (img) out.img = img;
+      try { sock.send(JSON.stringify(out)); } catch (e) {}
       if (res.quiet) return;
       var entry = { t: Date.now(), n: q.n.slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0 };
       if (res.u) entry.u = res.u;

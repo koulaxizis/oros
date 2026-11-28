@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.98.03";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "9.01.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -1439,6 +1439,43 @@
                viz: !pic && state.wallpaper === "viz" ? wpVizNow() : null };
     }
   };
+
+  // ---------- 5b-icon. MENUICON-1: the menu button's icon ----------
+  // Device-local "oros-menuicon": one of MENU_ICONS (default "grid",
+  // the four squares in index.html) or "none" (the label alone). Static
+  // SVGs from this file only.
+  var MENU_ICON_KEY = "oros-menuicon";
+  var MI_SV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+  var MENU_ICONS = {
+    grid: MI_SV + '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+    dots: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>',
+    ring: MI_SV + '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>',
+    spark: MI_SV + '<path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2z"/></svg>',
+    leaf: MI_SV + '<path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19l7-7"/></svg>',
+    lines: MI_SV + '<path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+    none: ""
+  };
+  var MENU_ICON_IDS = ["grid", "dots", "ring", "spark", "leaf", "lines", "none"];
+  function menuIconOf(v) { return MENU_ICON_IDS.indexOf(v) !== -1 ? v : "grid"; }
+  function menuIconNow() { try { return menuIconOf(localStorage.getItem(MENU_ICON_KEY)); } catch (e) { return "grid"; } }
+  function menuIconApply() {
+    var mb = document.getElementById("btn-menu");
+    if (!mb) return;
+    var old = mb.querySelector("svg");
+    if (old) old.parentNode.removeChild(old);
+    var id = menuIconNow();
+    if (!MENU_ICONS[id]) return;
+    var tmp = document.createElement("span");
+    tmp.innerHTML = MENU_ICONS[id];            // static icon from this file
+    mb.insertBefore(tmp.firstChild, mb.firstChild);
+  }
+  function menuIconSet(v) {
+    var id = menuIconOf(v);
+    try { if (id === "grid") localStorage.removeItem(MENU_ICON_KEY); else localStorage.setItem(MENU_ICON_KEY, id); } catch (e) {}
+    menuIconApply();
+    if (typeof fitBar === "function") { try { fitBar(); } catch (e) {} }
+  }
+  try { if (menuIconNow() !== "grid") menuIconApply(); } catch (e) {}
 
   // ---------- 5b-dir. WPDIR-1: Random, and a picture from a folder ----------
   // Random: one of the drawn wallpapers (never Mine, Living land, Light
@@ -6094,6 +6131,64 @@
       return JSON.parse(JSON.stringify(groups || []));
     });
   };
+  // AS-RB2 (Chris 2026-11-27, «Οι κάρτες εφαρμόστηκαν, δεν ξέρω γιατί
+  // δεν έφυγαν»): an app's report for an Assistant card (rb[key]) is also
+  // kept on this device (localStorage "oros-assist-rb", never synced, 7
+  // days, at most 200), so a report written while the Assistant was not
+  // in this frame, in another orOS window or before a reload still
+  // reaches its card and the model. Another window's report arrives by
+  // the "storage" event and wakes the open Assistant (rb's onRb).
+  function assistReports() {
+    var KEY = "oros-assist-rb", KEEP = 7 * 864e5, MAX = 200, mem = {};
+    function load() {
+      var raw = null;
+      try { raw = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { raw = null; }
+      return raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    }
+    function save(all) {
+      var now = Date.now(), keys = Object.keys(all).filter(function (k) {
+        var x = all[k];
+        return x && typeof x === "object" && typeof x.at === "number" && now - x.at < KEEP;
+      }).sort(function (a, b) { return all[b].at - all[a].at; }).slice(0, MAX), out = {};
+      keys.forEach(function (k) { out[k] = all[k]; });
+      try { localStorage.setItem(KEY, JSON.stringify(out)); } catch (e) {}
+      return out;
+    }
+    function fill(all) {
+      Object.keys(all).forEach(function (k) {
+        var x = all[k];
+        if (x && typeof x === "object" && x.rep && typeof x.rep === "object" && !(k in mem)) mem[k] = x.rep;
+      });
+    }
+    fill(save(load()));
+    if (typeof Proxy !== "function") return mem;
+    var rb = new Proxy(mem, {
+      set: function (o, k, v) {
+        o[k] = v;
+        if (typeof k === "string" && k !== "onRb" && v && typeof v === "object") {
+          var all = load();
+          all[k.slice(0, 80)] = { at: Date.now(), rep: v };
+          save(all);
+        }
+        return true;
+      },
+      deleteProperty: function (o, k) {
+        delete o[k];
+        if (typeof k === "string") { var all = load(); if (k in all) { delete all[k]; save(all); } }
+        return true;
+      }
+    });
+    window.addEventListener("storage", function (e) {
+      if (e.key !== KEY) return;
+      var before = Object.keys(mem).length;
+      fill(load());
+      var st = window.orosAssistAtt;
+      if (Object.keys(mem).length !== before && st && typeof st.onRb === "function") {
+        try { st.onRb(""); } catch (x) {}
+      }
+    });
+    return rb;
+  }
   // The Assistant's attached files (AS-ATT-MEM): base64, text read on
   // the device and PDF page counts, kept here in memory while orOS is
   // open, so an app opened from the Assistant (it takes the Assistant's
@@ -6101,7 +6196,7 @@
   // when the tab closes. assistant.js owns what goes in. blob: files
   // for an app only (AS-DEV), as Files; rb: Layout's rebuild reports
   // for the Assistant's cards (AS-RB, written by layout.js).
-  window.orosAssistAtt = { mem: {}, text: {}, pages: {}, blob: {}, rb: {} };
+  window.orosAssistAtt = { mem: {}, text: {}, pages: {}, blob: {}, rb: assistReports() };
   window.orosAssistOpen = function (appId, target) {
     openSearchHit(String(appId || ""), { target: target === undefined ? null : target });
   };
@@ -7479,6 +7574,11 @@
   // since. The old engine would have dropped it at this very
   // registration ("older than this device's last push") — do the same.
   function shellDropParkedLegacy() {
+    // SY-Z: the mailbox may be packed; the engine reads it.
+    if (window.orosSync && typeof window.orosSync.carryDrop === "function") {
+      try { window.orosSync.carryDrop("shell"); } catch (e) {}
+      return;
+    }
     try {
       var c = JSON.parse(localStorage.getItem("oros-remote-carry"));
       if (c && typeof c === "object" && c.shell !== undefined) {
@@ -9547,9 +9647,11 @@
   // A72: an automatic sync that fails for a reason only the person
   // can fix (storage full, sign-in expired, a newer orOS needed) puts
   // ONE line a day in the bell, with a link to the place to fix it.
+  // SY-Z: a full store links to Settings › Device, where Space per app
+  // shows what takes the room (sync's mailbox counted under its apps).
   // Network trouble stays a red dot only: it heals by itself.
   var SYNC_NOTICE_FOR = {
-    "sync.err.storage":   "settings/backup",
+    "sync.err.storage":   "settings/device",   // SY-Z: Space per app (was Backups)
     "sync.err.auth":      "settings/sync",
     "sync.err.dav-auth":  "settings/sync",
     "sync.err.version":   "",
@@ -13877,6 +13979,7 @@
       icons: { pack: iconsPack(state.icons), packs: ICON_PACKS.slice(),   // ICONPACK-1
                own: iconsOwn(state.icons) || iconsOwn(ICON_OWN_DEFAULT), choices: ICON_OWN },   // ICONPACK-3
       wallpaper: pic ? "custom" : state.wallpaper,
+      menuIcon: { now: menuIconNow(), choices: MENU_ICON_IDS.slice() },   // MENUICON-1
       wpdir: wpdirSnapshot(),                 // WPDIR-1
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
       viz: (!pic && state.wallpaper === "viz") ? { style: wpVizNow().style, styles: WP_VIZ_STYLES.slice(), still: wpVizStill() } : null,   // VIZWALL-1, VIZ-SLOW
@@ -14031,6 +14134,7 @@
       case "wpdir:mode": wpdirSet("mode", String(value || "")); return;
       case "wpdir:dir":  wpdirSet("dir", value); return;
       case "wpdir:next": wpdirSet("next"); return;
+      case "menuicon":   if (!SOLO) { menuIconSet(String(value || "")); settingsNotify(); } return;   // MENUICON-1
       case "pet":
         if (window.orosPet && typeof window.orosPet.toggle === "function" &&
             !!value !== !!window.orosPet.isEnabled()) {
