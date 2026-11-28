@@ -73,6 +73,8 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         boolean shown;
         /** Android asked for a yes at least once (for the "Update all" line). */
         boolean asked;
+        /** Started again after the system refused a quiet update (at most once). */
+        boolean retried;
         /** When the phase last changed (elapsedRealtime). */
         long since = SystemClock.elapsedRealtime();
 
@@ -425,7 +427,22 @@ public final class MainActivity extends Activity implements InstallReceiver.List
                     : getString(R.string.update_all_done, t.done(), t.total(), t.asked);
                 Toast.makeText(this, line, Toast.LENGTH_LONG).show();
             }
+            if (t.asked > 0) toldAlwaysAsks();
         }
+    }
+
+    /**
+     * Once per system build: this phone (HyperOS) asks before every update
+     * whatever the manager does; Shizuku is the way without questions.
+     */
+    private void toldAlwaysAsks() {
+        if (!Installer.refused(this) || Silent.ready(this)) return;
+        String key = "told_" + android.os.Build.FINGERPRINT;
+        if (UpdateJob.prefs(this).getBoolean(key, false)) return;
+        UpdateJob.prefs(this).edit().putBoolean(key, true).apply();
+        new AlertDialog.Builder(this).setTitle(R.string.always_asks_title).setMessage(R.string.always_asks)
+            .setPositiveButton(R.string.help, (d, w) -> showHelp())
+            .setNegativeButton(android.R.string.ok, null).show();
     }
 
     /** Shizuku must run and allow us; otherwise the Help says how to set it up. */
@@ -473,6 +490,10 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     }
 
     private void act(AppInfo app, int state) {
+        act(app, state, false);
+    }
+
+    private void act(AppInfo app, int state, boolean retry) {
         if (state == Installed.CURRENT || state == Installed.NEWER) {
             Intent open = getPackageManager().getLaunchIntentForPackage(app.pkg);
             if (open != null) startActivity(open);
@@ -490,6 +511,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
             return;
         }
         Job job = new Job(app);
+        job.retried = retry;
         busy.put(app.pkg, job);
         updateBars();
         changed();
@@ -543,7 +565,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     }
 
     @Override
-    public void onInstallResult(String pkg, int session, boolean ok, String message) {
+    public void onInstallResult(String pkg, int session, boolean ok, String message, boolean quiet, int status) {
         Job job = busy.get(pkg);
         if (job == null) {
             changed();
@@ -551,7 +573,18 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         }
         // An answer for a session given up before belongs to no one now.
         if (session >= 0 && job.session >= 0 && session != job.session) return;
+        if (!job.retried && Quiet.refused(status, quiet, job.asked, message)) {
+            // HyperOS refused the quiet update before asking anything: this
+            // phone asks from now on, and this app is tried again with the
+            // question at once (it used to count as a "no" and "Update all"
+            // ran through the rest without installing them, APPS-M6 fix 1.4.1).
+            Installer.markRefused(this);
+            busy.remove(pkg);
+            act(job.app, Installed.UPDATE, true);
+            return;
+        }
         String toast = null;
+        if (status == Quiet.ABORTED) message = null; // the person said no
         if (!ok && message != null) toast = getString(R.string.install_failed, job.app.name, message);
         done(job, ok, toast);
     }
