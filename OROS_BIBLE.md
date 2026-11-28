@@ -14286,3 +14286,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** shell.js, style.css, settings/settings.js, settings/core.js, i18n/de (settings, help/topics/notifications), help/topics/notifications.en/el.txt, whatsnew EN/EL, OROS_BIBLE.md, tests/gamemode.test.js, tests/settings.test.js.
 - **Tests:** tests/gamemode.test.js; full suite; Playwright Chromium at 360 px and 1280 px: a game full screen, the peek, notifications quiet, no page errors.
 - **Not tested:** a real game controller, Safari, Firefox.
+
+### 2026-11-28 — 9.03.01 — Relay and app guides drop local folders (LOCAL-GONE 2, #1306)
+- **Why:** the follow-up of 9.02.00 LOCAL-GONE (Chris 2026-11-27, one way: orOS Drive).
+- **What:** `relay/gate.js` no longer lists `local_folders_request` (a waiting one is still answered by the device); Mockups refuses `local:` paths naming `/internal/Drive/`; the app guides offer only Claude's folders on the orOS disk. Rules in Part IX LOCAL-GONE.
+- **Files:** relay/gate.js, atelier/mindmap/mockups/montage/photolab/slides/spreadsheet/studio/whiteboard/writer/layout commands.js, whatsnew EN/EL, OROS_BIBLE.md, tests (gate-relay, gate-layout-anywhere, gate-parity, gate-export-apps, gate-act, mockup-render).
+- **Tests:** full suite (failures only those also red on main); relay OK from the Mail thread 2026-11-28; deploy via Workers Builds.
