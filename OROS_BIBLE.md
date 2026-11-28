@@ -3691,6 +3691,9 @@ Same thread, Chris 2026-11-13 («όλα τα κύματα»): changes wait in th
 - **`timeout-minutes` on every job**, about three times the longest job time of the last runs (queue time not counted): `android.yml` build 45 (8–16 min), `bump-version.yml` bump 10 (≈15 s), `chess-puzzles.yml` pack 20 (1–5 min), `fdroid.yml` publish 15 (10 s–2 min), `sync-nullfx.yml` sync 15 (< 3 min), `tests.yml` sync 15 (≈2 min); `quality.yml` already had apps 30, new-apps 10. A job that grows past its limit gets a new limit in the same PR.
 - **`retention-days: 14`** on every `upload-artifact` step (`android.yml` `oros-drive-android`, `oros-android`, `oros-single-apps`; `quality.yml` `qa-report-*`). Nothing downloads these artifacts later: released APKs go through "Publish APKs" and F-Droid, not through artifacts.
 - **`tests.yml` concurrency:** group `tests-<ref>`; `cancel-in-progress` only for `pull_request`, so a newer push to a PR cancels the older run and a push to `main` always finishes.
+- **`tests.yml` job `athens` (CI health 2026-11-24, CIH-TZ):** the same suite with `TZ=Europe/Athens` beside job `sync` (UTC, name unchanged), so a date that is only right in UTC (a day shifted by the offset, a 24 h step across the clock change) fails in CI. Its timeout is 15 like `sync`.
+- **Action versions (CIH-N24):** every `uses:` is pinned by commit SHA with the major in a comment (`# v7`); Node 24 majors: checkout v7, setup-node v7, setup-python v7.1.0, setup-go v6.5.0, setup-java v5, setup-gradle v5, upload-artifact v7, download-artifact v8. The same SHAs in oros-portable, oros-usb, oros-sounds and oros-bridge. A bump takes the new SHA from `git ls-remote --tags https://github.com/<action>`.
+- **Quality gate runner (CIH-PW):** Playwright 1.63.0 in `.github/qa/package.json` (Ubuntu 26.04 needs 1.61+; with 1.65.1 the release visit of `boot.js` never saw the new version, run 46064055341), so `quality.yml` runs on `ubuntu-latest` again (the `ubuntu-24.04` pin is gone).
 - **Decided NOT to do (Chris 2026-10-27):** no `cache: npm` / `npm ci` (no lockfiles); `quality.yml` new-apps keeps `fetch-depth: 0`; no `cancel-in-progress` in `android.yml` (main publishes android-apks, runs must finish in order).
 
 ### `apps.json` [verified 2026-10-26]
@@ -5514,6 +5517,12 @@ Started 2026-10-15 (Chris: "note similar issues in the Bible for future troubles
 **Symptom:** Greek OPFS file names fail with TypeMismatchError → EISDIR in headless Chromium. **Cause:** the harness locale isn't UTF-8. **Fix:** run with `LANG=C.UTF-8`; not an orOS bug. **Ref:** oros-headless-chromium-locale, 2026-10-12.
 
 **Symptom:** The Today calendar-reminder E2E fails under Europe/Athens. **Cause:** the browser was pinned to UTC while Node used local TZ. **Fix:** set `timezoneId` to the process TZ. **Ref:** oros-today-summary memory.
+
+**Symptom:** A spreadsheet import shows "2024-03-01 02:00" for a plain date in Greece (the day before west of Greenwich). **Cause:** SheetJS 0.20 gives cell dates "UTC-faithful" (the file's day and time in the UTC fields); `xlDateStr` read the local fields. `sheet_to_json` (Split, Timesheet) converts to local itself and was not affected. **Fix:** `spreadsheet/sheetimport.js` `xlDateStr` uses the UTC getters. **Ref:** CI health 2026-11-24 (CIH-TZ).
+
+**Symptom:** A date computed as `midnight + n * 86400000` lands a day early (or late) when the span crosses the clock change (seen: the Cycle prediction across 25 Oct, "event.soon" at 02:59 in March). **Cause:** a local day is 23 or 25 h that night. **Fix:** step in calendar days (`new Date(y, m, d + n)`), count whole days with `Math.round` between midnights, and count minutes to a wall-clock time in real time (`automations/host.js` `soonLeft`, which also tries the second pass of October's repeated hour). **Ref:** CIH-TZ, `cycle/core.js`, `tests/smartbar-auto.test.js`.
+
+**Symptom:** A test fails only under a shifted clock (e.g. the newsletter clean-up "at 23:59:30"). **Cause (harness):** a `--import` Date override shifts Node's `Date` but not the `Date` of a `vm` context (the newsletter sandbox), so test and engine run on two clocks. **Fix:** shift the vm contexts too (wrap `vm.createContext` to pass the fake `Date`) or use libfaketime; with one clock `tests/newsletter-clean.test.js` passes around midnight. **Ref:** CI health 2026-11-24 finding 8 (no orOS bug).
 
 **Symptom:** An app page opened top-level in a harness redirects away; a UMD library breaks; an audio tail is cut off. **Cause:** the DL-1 redirect to the shell; an element `id="exports"` shadows UMD `exports`; Chromium drops a DelayNode tail once its source ends. **Fix:** add `?standalone`; rename the element; keep the source alive. **Ref:** #260; QR and Studio memories.
 
@@ -14345,4 +14354,11 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **What:** A new Exchange rate card shows your currency pair from the Calculator's stored ECB rates (nothing new is fetched); tap it to convert. In the currency list you can type a country, such as Greece or Japan, and its currency shows with the country beside it. Rules in Part IX RATES-1.
 - **Files:** smartbar.js, smartbar-apps.js, units/core.js, units/view.js, calculator/help.en/el.txt, translations.js, i18n/de (shell, help/calculator, help/topics/appearance), help/topics/appearance.en/el.txt, whatsnew EN/EL, OROS_BIBLE.md, tests/ratescard.test.js.
 - **Tests:** tests/ratescard.test.js; full suite; Playwright Chromium at 360 px and 1280 px: the card, the tap into Convert, country search, no page errors.
+- **Not tested:** Safari, Firefox.
+
+### 2026-11-28 — 9.09.01 — CI health fixes (CIH-TZ, CIH-N24, CIH-PW)
+- **Why:** CI health report 2026-11-24 (Chris approved every fix except the winget token, which he renews).
+- **What:** Spreadsheet import keeps a file's dates in every time zone (SheetJS UTC-faithful dates, `xlDateStr` UTC getters; was "02:00" in Greece). Cycle's predicted start steps in calendar days (was a day early across the October clock change; `dueIn` and the app round between midnights). Automations "event.soon" counts real minutes (`soonLeft`, clock-change nights). Tests also run with TZ=Europe/Athens (job `athens`); actions SHA-pinned on Node 24 majors; quality gate Playwright 1.63.0 on ubuntu-latest. Rules in Part VIII (Workflow limits) and Part X-B T9.
+- **Files:** spreadsheet/sheetimport.js, cycle/core.js, cycle/cycle.js, automations/host.js, .github/workflows, .github/qa/package.json, whatsnew EN/EL, OROS_BIBLE.md, tests (convert-spreadsheet, shelf-import, today-wave4, smartbar-auto).
+- **Tests:** full suite in UTC and in TZ=Europe/Athens; quality gate on CI.
 - **Not tested:** Safari, Firefox.

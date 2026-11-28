@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.09.01
+- **Dates in spreadsheets and Cycle.** Spreadsheet: dates from Excel and Calc files no longer gain an hour. Cycle: the expected start stays on the right day across the October clock change.
+
 ## Version 9.09.00
 - **Exchange rate in the top bar, and countries in the currency search.** A new Exchange rate card shows your currency pair from the Calculator's stored ECB rates (nothing new is fetched); tap it to convert. In the currency list you can type a country, such as Greece or Japan, and its currency shows with the country beside it.
 
