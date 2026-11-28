@@ -1458,6 +1458,7 @@ var PRECACHE_URLS = [
   "automations/help.en.txt",
   "automations/help.el.txt",
   "calendar/occur.js",
+  "calendar/zones.js",
   "todo/core.js",
   "quote/core.js",
   "kanban/core.js",

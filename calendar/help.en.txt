@@ -94,6 +94,9 @@ Events with no label can go too: in `Manage labels`, the `No label` row has a ho
 
 Reminders stay yours: each person picks their own in the event's `Reminder`, and orOS reminds you even when the Calendar is closed. The events are encrypted on your devices before they leave, and they don't go into your own sync copy or your .oroscal file (an .ics export and `Send calendar to someone` include them). `Stop sharing` takes the calendar out of the household for everyone and leaves you an own copy with its events; `Delete` leaves you none. Either way, the others can bring it back from [Household](app:household) for 30 days.
 
+## Time zones side by side
+`More` › `Time zones…` puts up to 3 places from the World clock of the [Time](app:time) app next to your own hours. Tick the ones you want; the list is the World clock's places, so add a city there first (`Open World clock`). The Day view then shows their hours in columns left of yours, with a small +1 or −1 when it is already the next day or still the day before there; summer time and half-hour zones are worked out for that very day. The Week view shows a line with how many hours each place is ahead or behind, and hovering over an event with a time shows its time in each place. The choice syncs, so every device of yours shows the same places. Untick a place to take it away; taking it out of the World clock leaves it here until you untick it.
+
 ## Share free times
 `More` › `Share free times…` makes a link with the times you're free, so someone can pick one, like a booking page. Choose what it's for, the length (15 minutes to 2 hours), how many days ahead (3 to 30), the hours of the day, and whether Saturday and Sunday count. Your name and email come from your [Mail](app:mail) account when there is one. The window says how many free times it found, and `Make the link…` opens [Send to someone](help:t/share), where you copy, share or email the link.
 
