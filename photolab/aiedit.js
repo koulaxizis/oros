@@ -10,6 +10,8 @@
 //   fill      a box redrawn from words (generative fill) → a new layer
 //   expand    the canvas grows and AI draws beyond the edges
 //             (generative expand) → a new bottom layer
+//   portrait  portrait blur by depth (on this device: portrait.js)
+//             → a new top layer with a mask
 //   upscale   the whole picture larger; with an AI that can (WebUI /
 //             Forge) its sharper copy as a top layer
 //   image     a picture file from Claude's folders → a new photo layer
@@ -239,6 +241,12 @@
     });
     return chain.then(function () { return n; });
   }
+  // PB: portrait blur of the whole visible picture → a new top layer
+  // with its mask (portrait.js, on this device)
+  function portrait(s) {
+    if (!PL.subject || typeof PL.subject.portrait !== "function") return Promise.reject({ note: "aiNoCut" });
+    return PL.subject.portrait().then(function (P) { return P.auto(s); }).then(function (ok) { return ok ? 1 : 0; });
+  }
   // Claude's folders, as the gate keeps them
   function inFolders(path) {
     var l = [];
@@ -276,7 +284,7 @@
     });
   }
 
-  var RUN = { generate: generate, fill: fill, expand: expand, upscale: upscale, nobg: nobg, image: image };
+  var RUN = { generate: generate, fill: fill, expand: expand, upscale: upscale, nobg: nobg, portrait: portrait, image: image };
   function run(s, notes) {
     var f = RUN[s.op];
     if (!f) return Promise.resolve(0);

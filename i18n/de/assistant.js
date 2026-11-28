@@ -687,6 +687,8 @@ orosPack("de", "assistant", {
  "ed.note.noPicture": "Ein Bild ließ sich nicht lesen und wurde ausgelassen.",
  "ed.op.generate": "KI-Bild aus Worten",
  "ed.op.nobg": "Hintergrund entfernen",
+ "ed.op.portrait": "Porträt-Unschärfe",
+ "ed.f.bokeh": "Bokeh-Lichter",
  "ed.op.fill": "Generatives Füllen",
  "ed.op.expand": "Generatives Erweitern",
  "ed.op.upscale": "Vergrößern",
