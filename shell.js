@@ -981,14 +981,20 @@
     var C = wpVizCtl;
     if (!C) return;
     var covered = wpVizCovered();
-    var p = covered ? null : wpVizPlaying();
+    var on = wpVizPlaying();
+    var p = covered ? null : on;
     // MU-VIZ-BEAT: with nothing playing the wallpaper already listens to
     // Music (nothing is read until a song plays), so the first song
     // that streams is asked about before it starts and can move the
     // light from its first beat.
+    // VIZ-HIDDEN (Chris 2026-11-28): it keeps listening while covered
+    // (another window in front, the tab hidden, an app open): a song
+    // that starts meanwhile must load readable, because a stream is
+    // never reloaded for the light afterwards. Listening reads nothing:
+    // no frames are drawn while covered.
     var mu = hostApi(window.__orosMusicHost);
-    var pre = !p && !covered && mu && typeof mu.viz === "function" && typeof mu.vizFrame === "function" ? { id: "music", h: mu } : null;
-    wpVizListen(p || pre);
+    var pre = !on && mu && typeof mu.viz === "function" && typeof mu.vizFrame === "function" ? { id: "music", h: mu } : null;
+    wpVizListen(on || pre);
     var was = C.playing;
     C.playing = !!p;
     // MU-VIZ-BEAT: playing with no sound to read (a stream whose server

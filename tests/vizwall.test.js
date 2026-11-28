@@ -86,7 +86,7 @@ test("shell: Light show is a wallpaper, travels in the slice, pauses under apps"
   assert.match(cut(SHELL, "wpVizCovered"), /!!state\.running \|\| document\.hidden/);
   assert.match(cut(SHELL, "wpVizApply"), /soft: 0\.5,\n        rest: true/);
   assert.match(cut(SHELL, "wpVizApply"), /data-oros-saver"\) === "1"/);
-  assert.match(cut(SHELL, "wpVizTick"), /var p = covered \? null : wpVizPlaying\(\);/);
+  assert.match(cut(SHELL, "wpVizTick"), /var on = wpVizPlaying\(\);\n    var p = covered \? null : on;/);
   assert.match(cut(SHELL, "wpVizStop"), /C\.src\.h\.viz\(false, "wall"\)/);
   assert.match(cut(SHELL, "returnToDesktop"), /wpVizRefresh\(\)/);
   assert.match(cut(SHELL, "settingsSet"), /case "wpviz:style":/);
