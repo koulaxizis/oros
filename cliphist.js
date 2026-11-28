@@ -464,7 +464,7 @@
     ".clip-foot { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; padding: 10px 16px 14px; }",
     ".clip-foot button { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent;",
     "  color: var(--text); font: inherit; cursor: pointer; }",
-    ".clip-foot button.primary { background: var(--accent); border-color: var(--accent); color: var(--clip-on, #fff); }",
+    ".clip-foot button.primary { background: var(--accent); border-color: var(--accent); color: var(--clip-on, var(--accent-ink, #fff)); }",
     ".clip-foot button:hover, .clip-foot button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }"
   ].join("\n");
 

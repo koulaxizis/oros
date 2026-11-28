@@ -8,7 +8,9 @@
 :root {
   --bg:        #131820;
   --panel-bg:  #1b212b;
-  --panel-2:   #222937;
+  /* TUX-CONTRAST: the shell has no --panel-2, so a fixed dark value stayed
+     dark under every light skin while --text turned dark. Derive it. */
+  --panel-2:   color-mix(in srgb, var(--panel-bg) 88%, var(--text));
   --text:      #e6e6e6;
   --text-dim:  #9aa3b2;
   --border:    #2c3542;

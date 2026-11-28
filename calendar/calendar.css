@@ -840,7 +840,7 @@ body {
   cursor: pointer;
 }
 .nd-more:hover { text-decoration: underline; }
-.cal-cell.hol .cal-num { color: #ef6b5b; }
+.cal-cell.hol .cal-num { color: color-mix(in srgb, #ef6b5b 60%, var(--text)); }   /* TUX-CONTRAST */
 .wk-col.hol .wk-dnum { color: #ef6b5b; }
 
 #ev-list { list-style: none; }

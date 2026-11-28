@@ -174,7 +174,7 @@
     "#osh-dlg .osh-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}" +
     "#osh-dlg .osh-acts button,#osh-dlg .osh-foot button{padding:10px 12px;border:1px solid var(--border);border-radius:10px;" +
     "background:transparent;color:var(--text);font:inherit;font-size:13.5px;cursor:pointer;text-align:center}" +
-    "#osh-dlg .osh-acts button.prim{background:var(--accent);border-color:var(--accent);color:var(--osh-on-accent,#fff);font-weight:700}" +
+    "#osh-dlg .osh-acts button.prim{background:var(--accent);border-color:var(--accent);color:var(--osh-on-accent,var(--accent-ink,#fff));font-weight:700}" +
     "#osh-dlg .osh-acts button:disabled{opacity:.45;cursor:default}" +
     "#osh-dlg .osh-acts button:not(:disabled):hover,#osh-dlg .osh-foot button:hover{border-color:var(--accent)}" +
     "#osh-dlg .osh-foot{display:flex;justify-content:flex-end;margin-top:12px}" +

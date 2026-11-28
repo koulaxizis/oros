@@ -184,6 +184,9 @@ input, textarea, select {
 .emo-name {
   font-size: 11.5px;
   font-weight: 700;
+  /* TUX-CONTRAST: the emotion colour, pulled toward the text colour so the
+     name reads on light and dark (Happy green was 1.9:1 on white) */
+  color: color-mix(in srgb, currentColor 45%, var(--text));
 }
 .emotile.on {
   border-color: currentColor;

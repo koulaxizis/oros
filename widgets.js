@@ -365,7 +365,7 @@
     ".wg-grid .wg-wd { font-size: 11px; color: var(--text-dim); padding: 4px 0; text-transform: capitalize; }",
     ".wg-grid .wg-day { min-height: 32px; font-size: 13px; padding: 0; font-variant-numeric: tabular-nums; }",
     ".wg-grid .wg-day.wg-out { color: var(--text-dim); opacity: .6; }",
-    ".wg-grid .wg-day.wg-now { background: var(--accent); color: var(--wg-on, #fff); font-weight: 800; border-radius: 50%; }",
+    ".wg-grid .wg-day.wg-now { background: var(--accent); color: var(--wg-on, var(--accent-ink, #fff)); font-weight: 800; border-radius: 50%; }",
     ".wg-list { display: flex; flex-direction: column; gap: 2px; }",
     ".wg-row { display: flex; align-items: baseline; gap: 8px; width: 100%; text-align: left; padding: 7px 6px; min-height: 40px; box-sizing: border-box; }",
     ".wg-row .wg-when { flex: none; width: 46px; font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }",
@@ -384,7 +384,7 @@
     // COVERTINT-1: the cover's colours, as a rounded panel
     ".wg-mbig.wg-tinted { background: var(--wg-tint-bg); color: var(--text); border-radius: 14px; padding: 10px; }",
     ".wg-mbig.wg-tinted button { color: var(--text); }",
-    ".wg-mbig.wg-tinted .wg-play { background: var(--accent); color: var(--wg-on); }",
+    ".wg-mbig.wg-tinted .wg-play { background: var(--accent); color: var(--wg-on, var(--accent-ink, #fff)); }",
     ".wg-mbig.wg-tinted .wg-bar { background: rgba(255, 255, 255, 0.18); }",
     ".wg-mtop { display: flex; align-items: center; gap: 10px; min-width: 0; }",
     ".wg-cover { flex: none; width: 56px; height: 56px; border-radius: 10px; background: var(--accent-soft, rgba(127,127,127,.2)) center / cover no-repeat;",
@@ -404,7 +404,7 @@
 
     ".wg-media .wg-row { flex: 1; min-width: 0; flex-direction: column; align-items: flex-start; gap: 0; }",
     ".wg-media .wg-what { width: 100%; font-weight: 700; }",
-    ".wg-play { width: 40px; height: 40px; flex: none; border-radius: 50%; background: var(--accent); color: var(--wg-on, #fff); display: inline-flex;",
+    ".wg-play { width: 40px; height: 40px; flex: none; border-radius: 50%; background: var(--accent); color: var(--wg-on, var(--accent-ink, #fff)); display: inline-flex;",
     "  align-items: center; justify-content: center; }",
     ".wg-play:hover, .wg-play:focus-visible { background: var(--accent-hover, var(--accent)); }",
     ".wg-play svg { width: 18px; height: 18px; }",
@@ -416,7 +416,7 @@
     ".wg-pm-st { font-size: 12px; color: var(--text-dim); min-height: 15px; }",
     ".wg-pm-ctl { display: flex; align-items: center; gap: 6px; }",
     ".wg-pm-ctl .wg-btn { min-height: 40px; min-width: 40px; padding: 0 10px; border: 1px solid var(--border); font-size: 13px; }",
-    ".wg-pm-ctl .wg-pm-main { flex: 1; background: var(--accent); color: var(--wg-on, #fff); border-color: var(--accent); font-weight: 700; }",
+    ".wg-pm-ctl .wg-pm-main { flex: 1; background: var(--accent); color: var(--wg-on, var(--accent-ink, #fff)); border-color: var(--accent); font-weight: 700; }",
     ".wg-pm-ctl .wg-btn:disabled { opacity: .35; cursor: default; }",
     ".wg-sync { display: flex; align-items: center; gap: 10px; }",
     ".wg-sync .wg-what { flex: 1; font-size: 14px; }",
@@ -435,7 +435,7 @@
     ".wg-step .wg-chk { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); box-sizing: border-box;",
     "  display: inline-flex; align-items: center; justify-content: center; }",
     ".wg-step .wg-chk svg { width: 14px; height: 14px; }",
-    ".wg-step.wg-ok .wg-chk { background: var(--accent); border-color: var(--accent); color: var(--wg-on, #fff); }",
+    ".wg-step.wg-ok .wg-chk { background: var(--accent); border-color: var(--accent); color: var(--wg-on, var(--accent-ink, #fff)); }",
     ".wg-step.wg-ok .wg-what { color: var(--text-dim); }",
     ".wg-start-foot { display: flex; align-items: center; gap: 8px; padding: 6px 6px 0; }",
     ".wg-start-foot span { flex: 1; font-size: 12px; color: var(--text-dim); }",
@@ -460,7 +460,7 @@
     "  background: var(--bg); color: var(--text); font: inherit; margin-bottom: 8px; }",
     ".wg-gal-seg { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }",
     ".wg-gal-seg .wg-btn { min-height: 36px; padding: 0 12px; border: 1px solid var(--border); border-radius: 999px; font-size: 13px; }",
-    ".wg-gal-seg .wg-btn[aria-pressed=\"true\"] { background: var(--accent); color: var(--wg-on, #fff); border-color: var(--accent); }",
+    ".wg-gal-seg .wg-btn[aria-pressed=\"true\"] { background: var(--accent); color: var(--wg-on, var(--accent-ink, #fff)); border-color: var(--accent); }",
     ".wg-gal { overflow-y: auto; min-height: 0; flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 2px; }",
     ".wg-gi { display: flex; gap: 12px; align-items: center; padding: 8px; border: 1px solid var(--border); border-radius: 14px; }",
     ".wg-gi.wg-gon { border-color: var(--accent); }",
@@ -481,7 +481,7 @@
     ".wg-ga .wg-btn:disabled { opacity: .3; cursor: default; }",
     "@media (max-width: 480px) { .wg-gi { flex-direction: column; align-items: stretch; } .wg-prev { flex-basis: auto; max-height: 100px; } }",
     ".wg-dlg-foot { display: flex; justify-content: flex-end; margin-top: 12px; }",
-    ".wg-dlg-foot .wg-btn { padding: 8px 16px; min-height: 40px; background: var(--accent); color: var(--wg-on, #fff); font-weight: 700; }"
+    ".wg-dlg-foot .wg-btn { padding: 8px 16px; min-height: 40px; background: var(--accent); color: var(--wg-on, var(--accent-ink, #fff)); font-weight: 700; }"
   ].join("\n");
 
   var SV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
