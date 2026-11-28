@@ -164,7 +164,8 @@ test("normalize: junk out, unknown events from a newer bundle kept, sorted", () 
     "ev.easter": { v: true, t: 4 }, on: { v: "yes", t: 1 }, motion: { v: "still", t: -2 },
     "BAD KEY": { v: true, t: 1 }, "ev.future": { v: { x: 1 }, t: 2 }, amount: null,
   } });
-  assert.equal(J(n), J({ ver: 1, f: { "ev.easter": { v: true, t: 4 }, motion: { v: "still", t: 0 } } }));
+  // FWD-1: "yes" for "on" may be a newer orOS's value: kept (never used)
+  assert.equal(J(n), J({ ver: 1, f: { "ev.easter": { v: true, t: 4 }, motion: { v: "still", t: 0 }, on: { v: "yes", t: 1 } } }));
 });
 
 test("merge: per field newer wins, symmetric, idempotent (fuzz)", () => {
@@ -215,4 +216,15 @@ test("still: scenes without still pieces get a frozen frame", () => {
   assert.match(src, /slow: degraded/);
   const core = fs.readFileSync(path.join(ROOT, "settings", "core.js"), "utf8");
   assert.equal((core.match(/"z\.slow":/g) || []).length, 2, "EN + EL");
+});
+
+test("FWD-1: a newer orOS's value for a known field is kept, never used", () => {
+  const src = { ver: 1, f: { amount: { v: "mid", t: 2 }, easter: { v: "julian", t: 7 } } };
+  const n = S.normalize(src);
+  assert.equal(J(n), J(src), "kept as it came");
+  assert.equal(S.get(n, "easter"), "orthodox", "this orOS answers the default");
+  const m1 = S.merge(src, S.normalize(null)), m2 = S.merge(S.normalize(null), src);
+  assert.equal(J(m1), J(m2));
+  assert.equal(m1.f.easter.v, "julian");
+  assert.equal(S.setField(n, "easter", "western", 9).f.easter.v, "western", "a choice made here still wins");
 });

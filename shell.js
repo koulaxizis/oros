@@ -7888,16 +7888,39 @@
     x = (x && typeof x === "object") ? x : {};
     var legacy = !(x.sm && typeof x.sm === "object");
     var f = {};
+    function stampOf(n) {
+      return legacy ? 1
+           : (aheadOwn(x.sm, n) && typeof x.sm[n] === "number" && isFinite(x.sm[n]) && x.sm[n] >= 0) ? x.sm[n] : 0;
+    }
     for (var i = 0; i < SHELL_FIELDS.length; i++) {
       var n = SHELL_FIELDS[i];
       var v = shellCanon(n, x[n]);
-      if (v === undefined) { f[n] = { v: shellDefault(n), t: 0 }; continue; }
-      var t = legacy ? 1
-            : (typeof x.sm[n] === "number" && isFinite(x.sm[n]) && x.sm[n] >= 0) ? x.sm[n] : 0;
+      var t = stampOf(n);
+      if (v === undefined) {
+        // FWD-1: a value this version cannot read (a newer orOS's
+        // wallpaper, skin, pack…) that someone chose (stamp > 0)
+        // keeps its place in the merge instead of turning into the
+        // default here, so it is never overwritten from this device.
+        var av = (x[n] === null) ? undefined : aheadVal(x[n]);
+        if (av !== undefined && t > 0) { f[n] = { v: av, t: t, ahead: true }; continue; }
+        f[n] = { v: shellDefault(n), t: 0 };
+        continue;
+      }
       f[n] = { v: v, t: t };
     }
+    // FWD-1: fields a newer orOS added, carried as they came.
+    var ex = {};
+    Object.keys(x).filter(aheadName).sort().slice(0, AHEAD_MAX).forEach(function (k) {
+      var av = aheadVal(x[k]);
+      if (av !== undefined) ex[k] = { v: av, t: stampOf(k) };
+    });
     return {
       f: f,
+      ex: ex,
+      // FWD-1: where a newer orOS put its fields, so this one writes
+      // them back in the same places (the engine compares the JSON
+      // text: another key order would read as a change, an upload).
+      ord: Object.keys(ex).length ? { body: Object.keys(x), sm: legacy ? [] : Object.keys(x.sm) } : null,
       alarms: Array.isArray(x.alarms) ? x.alarms : [],
       // Expired tombstones are dropped per side, BEFORE the union: an
       // entry that is already dead must not lend its stamp to a live
@@ -7906,11 +7929,123 @@
     };
   }
 
+  // ----- FWD-1: what a newer orOS sends survives this one -----
+  // An older orOS (a Live USB image, a Portable copy or a phone not
+  // updated yet) used to read a wallpaper, skin or pack it did not
+  // know as "the default, stamp 0", and a field it did not know not
+  // at all. Its merge then differed from the cloud, so it uploaded
+  // the default; the newer device won again and uploaded its value;
+  // and so on at every sync (Chris 2026-11-28: the theme "never
+  // synced" to orOS USB, whose orOS was older than the Light show
+  // wallpaper). Now such a value or field keeps its stamp, wins or
+  // loses like any other, and when it wins it is kept here in
+  // "oros-shell-ahead" { <field>: { v, t } } (device-local, never
+  // applied) and sent on unchanged, so the merge equals the cloud
+  // and nothing is uploaded. Once this device's orOS knows the
+  // value (after an update) it is applied (aheadPromote).
+  var SHELL_AHEAD_KEY = "oros-shell-ahead";
+  var AHEAD_MAX = 32;            // fields of a newer orOS kept at most
+  var AHEAD_VMAX = 8192;         // characters of JSON per value at most
+  var AHEAD_NAME_RE = /^[a-z][a-zA-Z0-9]{0,31}$/;
+  var SHELL_RESERVED = ["alarms", "ver", "sm", "alarmTombs"];
+  var SHELL_AHEAD_ORD = "oros-shell-ahead-ord";   // { body:[keys], sm:[keys] } of the copy the extras came in
+
+  function aheadOwn(o, k) { return !!o && typeof o === "object" && Object.prototype.hasOwnProperty.call(o, k); }
+  // A field name a newer orOS may have added (not ours, not reserved).
+  function aheadName(k) {
+    return AHEAD_NAME_RE.test(k) && SHELL_FIELDS.indexOf(k) < 0 && SHELL_RESERVED.indexOf(k) < 0;
+  }
+  // A plain-data copy of a value small enough to carry, or undefined.
+  // Never applied, never executed: it only travels.
+  function aheadVal(v) {
+    if (v === undefined || typeof v === "function") return undefined;
+    var s;
+    try { s = JSON.stringify(v); } catch (e) { return undefined; }
+    if (typeof s !== "string" || s.length > AHEAD_VMAX) return undefined;
+    return JSON.parse(s);
+  }
+  // A stored key order, checked: two short lists of field names.
+  function aheadOrd(o) {
+    function names(a) {
+      return Array.isArray(a) ? a.filter(function (k) { return typeof k === "string" && /^[A-Za-z][A-Za-z0-9]{0,31}$/.test(k); }).slice(0, 96) : [];
+    }
+    return (o && typeof o === "object") ? { body: names(o.body), sm: names(o.sm) } : null;
+  }
+  // Same order as shellMerge: newer stamp, then the larger JSON.
+  function aheadWins(e, mine) {
+    if (e.t !== mine.t) return e.t > mine.t;
+    return JSON.stringify(e.v) >= JSON.stringify(mine.v);
+  }
+  function aheadRead() {
+    var out = {};
+    try {
+      var raw = JSON.parse(localStorage.getItem(SHELL_AHEAD_KEY));
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
+      Object.keys(raw).sort().forEach(function (k) {
+        if (Object.keys(out).length >= AHEAD_MAX) return;
+        if (SHELL_FIELDS.indexOf(k) < 0 && !aheadName(k)) return;
+        var e = raw[k];
+        if (!e || typeof e !== "object" || typeof e.t !== "number" || !isFinite(e.t) || e.t < 0) return;
+        var v = aheadVal(e.v);
+        if (v === undefined) return;
+        out[k] = { v: v, t: e.t };
+      });
+    } catch (e2) {}
+    return out;
+  }
+  function aheadWrite(ah) {
+    try {
+      if (Object.keys(ah).length) localStorage.setItem(SHELL_AHEAD_KEY, JSON.stringify(ah));
+      else localStorage.removeItem(SHELL_AHEAD_KEY);
+    } catch (e) {}
+  }
+  // FWD-2 (Chris 2026-11-28, proposal 5): say once, on this device
+  // only, that choices of a newer orOS arrived, with Update now. Once
+  // per set of kept fields and stamps ("oros-shell-ahead-seen"); not
+  // marked seen while the notices are not ready (the next pull tries).
+  var SHELL_AHEAD_SEEN = "oros-shell-ahead-seen";
+  function aheadNotice(ah) {
+    var keys = Object.keys(ah).sort();
+    if (!keys.length) return;
+    var sig = keys.map(function (k) { return k + ":" + ah[k].t; }).join(",");
+    try { if (localStorage.getItem(SHELL_AHEAD_SEEN) === sig) return; } catch (e) { return; }
+    var N = window.orosNotifs;
+    if (!N || typeof N.transient !== "function") return;
+    var cand = { ns: "system", title: window.t("fwd.title"), body: window.t("fwd.body") };
+    if (typeof window.orosUpdateNow === "function") {
+      cand.action = { label: window.t("update.now"), fn: function () {
+        window.orosUpdateNow(function (st, why) {
+          if (st === "checking" || typeof window.orosUpdateNowText !== "function") return;
+          try { N.transient({ ns: "system", title: window.orosUpdateNowText(st, why) }); } catch (e2) {}
+        });
+      } };
+    }
+    var id = null;
+    try { id = N.transient(cand); } catch (e3) {}
+    if (id) { try { localStorage.setItem(SHELL_AHEAD_SEEN, sig); } catch (e4) {} }
+  }
+
+  // A value kept for a newer orOS that this orOS now knows (it was
+  // updated, or the module that checks it has loaded): apply it as a
+  // pull would, with its stamp. Never a push (the cloud has it).
+  var aheadPromoting = false;
+  function aheadPromote() {
+    if (aheadPromoting) return;
+    aheadPromoting = true;
+    setTimeout(function () {
+      aheadPromoting = false;
+      try { shellSliceSet(shellSliceGet()); } catch (e) {}
+    }, 0);
+  }
+
   // Canonical slice object — ONE builder for the getter and the merge.
-  function shellBuild(vals, stamps, alarms, tombs) {
+  // `extras` (FWD-1): fields of a newer orOS, after the known ones,
+  // sorted; absent when there are none, so the slice of a device
+  // without them is exactly what it was before FWD-1.
+  function shellBuild(vals, stamps, alarms, tombs, extras, ord) {
     var sm = {};
     for (var i = 0; i < SHELL_FIELDS.length; i++) sm[SHELL_FIELDS[i]] = stamps[SHELL_FIELDS[i]];
-    return {
+    var out = {
       lang:         vals.lang,
       theme:        vals.theme,
       skin:         vals.skin,
@@ -7929,13 +8064,52 @@
       sm:           sm,
       alarmTombs:   tombs
     };
+    if (!extras || !Object.keys(extras).length) return out;
+    var smx = {};
+    Object.keys(extras).forEach(function (k2) { smx[k2] = extras[k2].t; });
+    var body = {};
+    Object.keys(extras).forEach(function (k2) { body[k2] = extras[k2].v; });
+    var res = shellOrdered(out, body, ord && ord.body);
+    res.sm = shellOrdered(sm, smx, ord && ord.sm);
+    return res;
+  }
+
+  // `base` (our keys, our order) and `more` (a newer orOS's fields)
+  // laid out in the order `keys` gives; what `keys` does not name
+  // follows: ours in our order, then the rest sorted.
+  function shellOrdered(base, more, keys) {
+    var res = {};
+    (Array.isArray(keys) ? keys : []).forEach(function (k) {
+      if (typeof k !== "string" || aheadOwn(res, k)) return;
+      if (aheadOwn(base, k)) res[k] = base[k];
+      else if (aheadOwn(more, k)) res[k] = more[k];
+    });
+    Object.keys(base).forEach(function (k) { if (!aheadOwn(res, k)) res[k] = base[k]; });
+    Object.keys(more).sort().forEach(function (k) { if (!aheadOwn(res, k)) res[k] = more[k]; });
+    return res;
   }
 
   function shellSliceGet() {
     var now = Date.now();
     var stamps = shellStampsRefresh();
     var tombs = alarmTombsLive(alarmTombsRead(), now);
-    return shellBuild(shellNow(), stamps, alarmsCanonical(alarmsRead(), tombs, now), tombs);
+    var vals = shellNow();
+    // FWD-1: what is kept for a newer orOS goes out as it came, where
+    // it still wins over this device's own choice.
+    var ah = aheadRead(), extras = null, drop = false, promote = false;
+    Object.keys(ah).forEach(function (n) {
+      var e = ah[n];
+      if (SHELL_FIELDS.indexOf(n) < 0) { (extras = extras || {})[n] = e; return; }
+      if (!aheadWins(e, { v: vals[n], t: stamps[n] })) { delete ah[n]; drop = true; return; }
+      vals[n] = e.v;
+      stamps[n] = e.t;
+      if (shellCanon(n, e.v) !== undefined) promote = true;
+    });
+    if (drop) aheadWrite(ah);
+    if (promote) aheadPromote();
+    var ord = null;
+    if (extras) { try { ord = JSON.parse(localStorage.getItem(SHELL_AHEAD_ORD)); } catch (eO) {} }
+    return shellBuild(vals, stamps, alarmsCanonical(alarmsRead(), tombs, now), tombs, extras, aheadOrd(ord));
   }
 
   // mergeFn(local, remote) — symmetric: shellMerge(a, b) and
@@ -7952,6 +8126,14 @@
       vals[n] = w.v;
       stamps[n] = w.t;
     }
+    // FWD-1: fields of a newer orOS, the same rule per field.
+    var extras = null;
+    Object.keys(A.ex).concat(Object.keys(B.ex)).sort().forEach(function (k) {
+      if (extras && aheadOwn(extras, k)) return;
+      var p = aheadOwn(A.ex, k) ? A.ex[k] : null, q = aheadOwn(B.ex, k) ? B.ex[k] : null;
+      var w = (!p || !q) ? (p || q) : (aheadWins(p, q) ? p : q);
+      if (Object.keys(extras || {}).length < AHEAD_MAX) (extras = extras || {})[k] = w;
+    });
     var tombs = {};
     [A.tombs, B.tombs].forEach(function (src) {
       Object.keys(src).forEach(function (id) {
@@ -7966,7 +8148,10 @@
       });
     });
     tombs = alarmTombsLive(tombs, now);
-    return shellBuild(vals, stamps, alarmsCanonical(A.alarms.concat(B.alarms), tombs, now), tombs);
+    // The order of the copy that brought them; both did: the larger
+    // key list (the same answer in both argument orders).
+    var ord = A.ord && B.ord ? (JSON.stringify(A.ord) >= JSON.stringify(B.ord) ? A.ord : B.ord) : (A.ord || B.ord);
+    return shellBuild(vals, stamps, alarmsCanonical(A.alarms.concat(B.alarms), tombs, now), tombs, extras, ord);
   }
 
   function shellSliceSet(data) {
@@ -8056,6 +8241,19 @@
     // pull-fed path, NO markDirty.
     var nowSet = Date.now();
     var side = shellSide(data, nowSet);
+    // FWD-1: keep (never apply) what only a newer orOS can read.
+    var ahNew = {};
+    for (var ah = 0; ah < SHELL_FIELDS.length; ah++) {
+      var an = SHELL_FIELDS[ah];
+      if (side.f[an].ahead) ahNew[an] = { v: side.f[an].v, t: side.f[an].t };
+    }
+    Object.keys(side.ex).forEach(function (k) { ahNew[k] = side.ex[k]; });
+    aheadWrite(ahNew);
+    try {
+      if (side.ord) localStorage.setItem(SHELL_AHEAD_ORD, JSON.stringify(aheadOrd(side.ord)));
+      else localStorage.removeItem(SHELL_AHEAD_ORD);
+    } catch (eOrd) {}
+    aheadNotice(ahNew);
     if (Array.isArray(data.alarms)) {
       var tombsNew = alarmTombsLive(side.tombs, nowSet);
       var keep = alarmsCanonical(side.alarms, tombsNew, nowSet);

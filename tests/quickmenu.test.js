@@ -88,13 +88,29 @@ test("merge is symmetric and idempotent; the newer change of an item wins", () =
 });
 
 test("bad input is dropped, text is capped and control characters removed", () => {
-  const d = Q.normalize({ items: [null, { id: "X" }, { id: "qa", k: "nope" },
+  const d0 = Q.normalize({ items: [null, { id: "X" }, { id: "qb", k: "No pe!" }, { id: "qa", k: "nope", n: "x", m: 3 },
     { id: "qz", k: "ask", n: "a\u0001b".padEnd(200, "n"), p: "p".repeat(5000), m: -4 }] });
+  // FWD-1: a kind of a newer orOS ("nope") is kept as it came, never shown
+  assert.deepEqual(d0.items.map((i) => i.id), ["qa", "qz"]);
+  assert.equal(JSON.stringify(d0.items[0]), JSON.stringify({ id: "qa", k: "nope", n: "x", m: 3, o: 0, d: 0 }));
+  assert.ok(!Q.list(d0).some((i) => i.id === "qa"));
+  const d = { items: d0.items.slice(1) };
   assert.equal(d.items.length, 1);
   assert.equal(d.items[0].n.length, Q.MAX_NAME);
   assert.ok(!/\u0001/.test(d.items[0].n));
   assert.equal(d.items[0].p.length, Q.MAX_TEXT);
   assert.equal(d.items[0].m, 0);
+});
+
+test("FWD-1: fields of a newer orOS survive a change made here, and the merge", () => {
+  const src = { ver: 1, items: [{ id: "u1", k: "ask", n: "N", p: "P", app: "", send: 0, icon: "star", o: 1, d: 0, m: 5 }], pinned: ["u1"] };
+  assert.equal(JSON.stringify(Q.normalize(src)), JSON.stringify(src));
+  const moved = Q.put(src, { id: "u1", k: "ask", n: "N2", p: "P", app: "", send: 0 }, 9);
+  assert.equal(moved.items[0].icon, "star");
+  assert.deepEqual(moved.pinned, ["u1"]);
+  const other = { ver: 1, items: [{ id: "u2", k: "brief", n: "", p: "", app: "", send: 0, o: 2, d: 0, m: 1 }] };
+  assert.equal(JSON.stringify(Q.merge(src, other)), JSON.stringify(Q.merge(other, src)));
+  assert.deepEqual(Q.merge(other, src).pinned, ["u1"]);
 });
 
 test("expand fills {date}, {clipboard} and {selection}; needsClip sees the clipboard", () => {

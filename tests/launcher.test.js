@@ -13,7 +13,7 @@ test("normalize: empty, junk and canonical order", () => {
   assert.deepEqual(L.normalize(null), { ver: 1, items: [] });
   assert.deepEqual(L.normalize({ items: "x" }), { ver: 1, items: [] });
   const n = L.normalize({ items: [
-    { mtime: 5, dock: null, desk: 2, id: "notes", extra: 1 },
+    { mtime: 5, dock: null, desk: 2, id: "notes" },
     { id: "Bad Id", desk: 1, mtime: 1 },
     { id: "calendar", desk: "1", dock: NaN, mtime: -3 },
     null,
@@ -22,6 +22,29 @@ test("normalize: empty, junk and canonical order", () => {
     { id: "calendar", desk: null, dock: null, mtime: 0 },
     { id: "notes", desk: 2, dock: null, mtime: 5 },
   ] }));
+});
+
+test("FWD-1: fields of a newer orOS are kept as they came, in their order", () => {
+  const src = { ver: 1, items: [{ id: "notes", desk: 2, dock: null, pin: { x: 1 }, mtime: 5 }], look: "3d" };
+  const n = L.normalize(src);
+  assert.equal(J(n), J(src), "byte for byte");
+  // a stored item keeps them through a change made here
+  const p = L.pin(n, "notes", "dock", true, 9);
+  assert.deepEqual(p.items[0].pin, { x: 1 });
+  assert.equal(p.look, "3d");
+  assert.deepEqual(Object.keys(p.items[0]), ["id", "desk", "dock", "pin", "mtime"]);
+  // merge keeps them both ways alike
+  const other = { ver: 1, items: [{ id: "mail", desk: 1, dock: null, mtime: 3 }] };
+  assert.equal(J(L.merge(src, other)), J(L.merge(other, src)));
+  assert.equal(L.merge(other, src).look, "3d");
+  assert.deepEqual(L.merge(other, src).items.find((i) => i.id === "notes").pin, { x: 1 });
+  // what we know and drop on purpose is not an extra; odd names and big values are not kept
+  const odd = L.normalize({ items: [{ id: "a", desk: 1, dock: null, grp: "g1", Bad: 1, big: "x".repeat(2000), mtime: 1 }] });
+  assert.equal(J(odd.items[0]), J({ id: "a", desk: 1, dock: null, mtime: 1 }));
+  // the menu too
+  const m = { ver: 1, apps: [{ id: "chess", hidden: true, why: "kids", mtime: 4 }] };
+  assert.equal(J(L.menuNormalize(m)), J(m));
+  assert.equal(L.menuSetHidden(m, ["chess"], false, 9).apps[0].why, "kids");
 });
 
 test("normalize: duplicate ids keep the newer item", () => {

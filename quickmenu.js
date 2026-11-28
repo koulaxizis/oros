@@ -101,6 +101,57 @@
     { id: "d-week", k: "ask", n: "", p: "", app: "", send: 0, o: 3, d: 0, m: 0 }
   ];
 
+  // ---------- FWD-1: fields of a newer orOS survive this one ----------
+  // (Chris 2026-11-28, sync audit proposal 6.) An older orOS used to
+  // drop what it did not know; its copy then differed from the cloud,
+  // so it uploaded it without them, the newer device put them back,
+  // and so on. Now unknown fields (name ^[a-z][a-zA-Z0-9]{0,23}$, at
+  // most MORE_N, MORE_MAX characters of JSON each) are kept as they
+  // came, in the key order they came in (the engine compares JSON
+  // text), and never used here. Without such fields nothing changes.
+  var MORE_RE = /^[a-z][a-zA-Z0-9]{0,23}$/, MORE_N = 16;
+  function moreOwn(o, k) { return !!o && typeof o === "object" && Object.prototype.hasOwnProperty.call(o, k); }
+  // `out` (cleaned, our key order) plus the fields of `src` this orOS
+  // does not know (`known`: ours, also those it drops on purpose).
+  function withMore(src, out, known, max) {
+    if (!src || typeof src !== "object" || Array.isArray(src)) return out;
+    var more = {}, n = 0;
+    Object.keys(src).forEach(function (k) {
+      if (n >= MORE_N || known.indexOf(k) >= 0 || moreOwn(out, k) || !MORE_RE.test(k)) return;
+      var s;
+      try { s = JSON.stringify(src[k]); } catch (e) { return; }
+      if (typeof s !== "string" || s.length > (max || 1024)) return;
+      more[k] = JSON.parse(s);
+      n++;
+    });
+    if (!n) return out;
+    var res = {};
+    Object.keys(src).forEach(function (k) {
+      if (moreOwn(out, k)) res[k] = out[k];
+      else if (moreOwn(more, k)) res[k] = more[k];
+    });
+    Object.keys(out).forEach(function (k) { if (!moreOwn(res, k)) res[k] = out[k]; });
+    return res;
+  }
+  // Two whole copies as one source for withMore: per field the larger
+  // JSON, in the key order of the copy with the larger key list (the
+  // same answer in both argument orders).
+  function moreSrc(a, b) {
+    var A = (a && typeof a === "object") ? a : {}, B = (b && typeof b === "object") ? b : {};
+    var first = JSON.stringify(Object.keys(A)) >= JSON.stringify(Object.keys(B)) ? A : B;
+    var second = first === A ? B : A, src = {};
+    Object.keys(first).concat(Object.keys(second)).forEach(function (k) {
+      if (moreOwn(src, k)) return;
+      var p = moreOwn(A, k) ? A[k] : undefined, q = moreOwn(B, k) ? B[k] : undefined;
+      src[k] = p === undefined ? q : q === undefined ? p : (JSON.stringify(p) >= JSON.stringify(q) ? p : q);
+    });
+    return src;
+  }
+
+  var ITEM_KNOWN = ["id", "k", "n", "p", "app", "send", "o", "d", "m"];
+  var TOP_KNOWN = ["ver", "items"];
+  var KIND_RE = /^[a-z][a-z0-9]{0,15}$/;
+
   // ---------- 1. Model (pure) ----------
   function str(v, max) {
     return typeof v === "string" ? v.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").slice(0, max) : "";
@@ -112,20 +163,24 @@
 
   function cleanItem(it) {
     if (!it || typeof it !== "object" || typeof it.id !== "string" || !ID_RE.test(it.id)) return null;
-    if (KINDS.indexOf(it.k) === -1) return null;
     var m = (typeof it.m === "number" && isFinite(it.m) && it.m >= 0) ? Math.floor(it.m) : 0;
     var o = (typeof it.o === "number" && isFinite(it.o)) ? it.o : 0;
-    if (it.d) return { id: it.id, k: it.k, n: "", p: "", app: "", send: 0, o: o, d: 1, m: m };
+    if (KINDS.indexOf(it.k) === -1) {
+      // FWD-1: a kind of a newer orOS: kept as it came, never shown here.
+      if (typeof it.k !== "string" || !KIND_RE.test(it.k)) return null;
+      return withMore(it, { id: it.id, k: it.k, o: o, d: it.d ? 1 : 0, m: m }, ["id", "k", "o", "d", "m"], 4096);
+    }
+    if (it.d) return withMore(it, { id: it.id, k: it.k, n: "", p: "", app: "", send: 0, o: o, d: 1, m: m }, ITEM_KNOWN);
     var app = it.k === "app" && typeof it.app === "string" && ID_RE.test(it.app) ? it.app : "";
     if (it.k === "app" && !app) return null;
-    return {
+    return withMore(it, {
       id: it.id, k: it.k,
       n: str(it.n, MAX_NAME).trim(),
       p: it.k === "ask" ? str(it.p, MAX_TEXT).replace(/^\s+|\s+$/g, "") : "",
       app: app,
       send: it.k === "ask" && it.send ? 1 : 0,
       o: o, d: 0, m: m
-    };
+    }, ITEM_KNOWN);
   }
 
   function newer(a, b) {
@@ -146,11 +201,12 @@
     if (ids.length > MAX_ITEMS) {
       ids = ids.sort(function (a, b) { return byId[b].m - byId[a].m || (a < b ? -1 : 1); }).slice(0, MAX_ITEMS).sort();
     }
-    return { ver: 1, items: ids.map(function (id) { return byId[id]; }) };
+    return withMore(data, { ver: 1, items: ids.map(function (id) { return byId[id]; }) }, TOP_KNOWN, 8192);
   }
 
   function merge(a, b) {
-    return normalize({ items: normalize(a).items.concat(normalize(b).items) });
+    var na = normalize(a), nb = normalize(b);
+    return withMore(moreSrc(na, nb), normalize({ items: na.items.concat(nb.items) }), TOP_KNOWN, 8192);
   }
 
   function find(data, id) {
@@ -164,7 +220,7 @@
     var d = normalize(data);
     var all = d.items.slice();
     EXAMPLES.forEach(function (ex) { if (!find(d, ex.id)) all.push(ex); });
-    return all.filter(function (it) { return !it.d; })
+    return all.filter(function (it) { return !it.d && KINDS.indexOf(it.k) >= 0; })   // FWD-1: a newer kind is not shown
       .sort(function (a, b) { return (a.o - b.o) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0); })
       .map(function (it) { return { id: it.id, k: it.k, n: it.n, p: it.p, app: it.app, send: it.send, o: it.o, d: 0, m: it.m }; });
   }
@@ -178,11 +234,12 @@
     for (var i = 0; i < shown.length; i++) if (shown[i].id === item.id) cur = shown[i];
     var o = cur ? cur.o : shown.reduce(function (mx, it) { return Math.max(mx, Math.floor(it.o)); }, 0) + 1;
     var stored = find(d, item.id);
-    var next = cleanItem({ id: item.id, k: item.k, n: item.n, p: item.p, app: item.app, send: item.send, o: o, d: 0,
-                           m: Math.max(now, stored ? stored.m + 1 : 0) });
+    var next = cleanItem(Object.assign(stored ? JSON.parse(JSON.stringify(stored)) : {},   // FWD-1: keeps its fields
+      { id: item.id, k: item.k, n: item.n, p: item.p, app: item.app, send: item.send, o: o, d: 0,
+        m: Math.max(now, stored ? stored.m + 1 : 0) }));
     if (!next) return d;
     if (cur && JSON.stringify(Object.assign({}, cur, { m: 0 })) === JSON.stringify(Object.assign({}, next, { m: 0 }))) return d;
-    return normalize({ items: d.items.filter(function (x) { return x.id !== item.id; }).concat([next]) });
+    return withMore(d, normalize({ items: d.items.filter(function (x) { return x.id !== item.id; }).concat([next]) }), TOP_KNOWN, 8192);
   }
 
   function remove(data, id, now) {
@@ -192,14 +249,15 @@
     if (!cur) return d;
     var stored = find(d, id);
     var tomb = { id: id, k: cur.k, n: "", p: "", app: "", send: 0, o: cur.o, d: 1, m: Math.max(now, stored ? stored.m + 1 : 0) };
-    return normalize({ items: d.items.filter(function (x) { return x.id !== id; }).concat([tomb]) });
+    return withMore(d, normalize({ items: d.items.filter(function (x) { return x.id !== id; }).concat([tomb]) }), TOP_KNOWN, 8192);
   }
 
   function withOrder(d, it, o, now) {
     var stored = find(d, it.id);
-    var next = { id: it.id, k: it.k, n: it.n, p: it.p, app: it.app, send: it.send, o: o, d: 0,
-                 m: Math.max(now, stored ? stored.m + 1 : 0) };
-    return normalize({ items: d.items.filter(function (x) { return x.id !== it.id; }).concat([next]) });
+    var next = Object.assign(stored ? JSON.parse(JSON.stringify(stored)) : {},   // FWD-1: keeps its fields
+      { id: it.id, k: it.k, n: it.n, p: it.p, app: it.app, send: it.send, o: o, d: 0,
+        m: Math.max(now, stored ? stored.m + 1 : 0) });
+    return withMore(d, normalize({ items: d.items.filter(function (x) { return x.id !== it.id; }).concat([next]) }), TOP_KNOWN, 8192);
   }
 
   // dir -1 = earlier, +1 = later. Only the moved item changes, unless
@@ -234,7 +292,7 @@
       if (!stored) return;                       // never stored: already the example
       items.push(Object.assign({}, ex, { m: Math.max(now, stored.m + 1) }));
     });
-    return normalize({ items: items });
+    return withMore(d, normalize({ items: items }), TOP_KNOWN, 8192);
   }
 
   // {date}, {clipboard} and {selection} in a task's text.
