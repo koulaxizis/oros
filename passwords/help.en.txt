@@ -116,6 +116,8 @@ The vault locks itself after 5 minutes without use and as soon as you leave the 
 
 Copied passwords, hidden fields and codes are cleared from the clipboard after 30 seconds. If you are in another app at that moment, it happens when you come back.
 
+In the orOS app and in orOS Passwords on Android, the app copies them marked as private: Android's copy preview shows dots instead of the password, keyboards leave it out of their clipboard history, and the app clears it after 30 seconds even if you are in another app. In a browser on its own a web page cannot mark a copy as private, so the preview there shows the text.
+
 ## Master password and recovery key
 `⋯` then `Change master password` asks for the current one and the new one. `New recovery key` makes a new key; the old one stops working.
 

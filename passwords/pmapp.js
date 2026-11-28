@@ -800,20 +800,36 @@
     if (Date.now() - lastActivity > mins * 60000) lock(true);
   }
 
-  var clip = { timer: null, pending: false, waitFocus: false };
+  var clip = { timer: null, pending: false, waitFocus: false, app: false };
   function writeClip(s) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       return navigator.clipboard.writeText(s).then(function () { return true; }, function () { return false; });
     }
     return Promise.resolve(false);
   }
+  // PW-CLIP (BR-PHONE v14): in the orOS app and in orOS Passwords on
+  // Android a secret is copied by the app, marked sensitive (Android
+  // shows dots in its copy preview, keyboards leave it out of their
+  // clipboard history) and cleared by the app after CLIP_MS even when
+  // orOS is not on screen. Elsewhere, or when the app does not answer,
+  // the plain web copy below (the web cannot mark it sensitive).
+  function clipApp() {
+    try {
+      var p = window.parent && window.parent !== window ? window.parent.orosPhone : null;
+      return p && p.clip && p.clipAvailable && p.clipAvailable() ? p : null;
+    } catch (e) { return null; }
+  }
   function copySecret(text, secret) {
     if (!text) return;
-    writeClip(text).then(function (ok) {
-      if (!ok) { toast(t("c.fail")); return; }
+    var p = secret ? clipApp() : null;
+    (p ? p.clip(text, CLIP_MS) : Promise.resolve(false)).then(function (byApp) {
+      if (byApp) return "app";
+      return writeClip(text).then(function (ok) { return ok ? "web" : ""; });
+    }).then(function (how) {
+      if (!how) { toast(t("c.fail")); return; }
       if (!secret) { toast(t("c.copiedPlain")); return; }
       toast(t("c.copied"));
-      clip.pending = true; clip.waitFocus = false;
+      clip.pending = true; clip.waitFocus = false; clip.app = how === "app";
       clearTimeout(clip.timer);
       clip.timer = setTimeout(function () { clearClip(false); }, CLIP_MS);
     });
@@ -824,6 +840,14 @@
   function clearClip(quiet) {
     clearTimeout(clip.timer); clip.timer = null;
     if (!clip.pending) return;
+    if (clip.app) {
+      // The app clears its own copy at CLIP_MS; Lock clears it now.
+      var p = clipApp();
+      if (p && p.clipClear) p.clipClear();
+      clip.pending = false; clip.waitFocus = false; clip.app = false;
+      if (!quiet) toast(t("c.cleared"));
+      return;
+    }
     if (!document.hasFocus()) { clip.waitFocus = true; return; }
     writeClip("").then(function (done) {
       if (done) { clip.pending = false; clip.waitFocus = false; if (!quiet) toast(t("c.cleared")); }

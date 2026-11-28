@@ -52,6 +52,10 @@ import java.util.concurrent.Executors;
  * autofill is off and af-keys / af-index / clear af go to orOS
  * Passwords (AfFeed): the page seals for orOS Passwords' keys, this
  * side only passes ciphertext on; af carries via:"pass".
+ * v14 (PW-CLIP): Passwords copies secrets through the app
+ * ({t:"clip"}, Clip), marked sensitive and cleared after 30 s by the
+ * app itself; state and af-state carry clip:true. Also in orOS
+ * Passwords. The text is never logged.
  */
 public class PhoneBridge {
     private static final String TAG = "orOS/PhoneBridge";
@@ -321,7 +325,7 @@ public class PhoneBridge {
     /** orOS Passwords (the single app): fingerprint unlock (PW-BIO) and
      *  autofill (PW-AF2/3) only, nothing of Contacts, Calendar… */
     static boolean soloTakes(String t, JSONObject m) {
-        if ("pw-bio".equals(t) || "af-keys".equals(t) || "af-index".equals(t) || "af-state".equals(t)) return true;
+        if ("pw-bio".equals(t) || "af-keys".equals(t) || "af-index".equals(t) || "af-state".equals(t) || "clip".equals(t)) return true;
         if ("clear".equals(t)) return "af".equals(m.optString("what"));
         if ("applied".equals(t)) return "af-save".equals(m.optString("what"));
         return false;
@@ -373,6 +377,7 @@ public class PhoneBridge {
             o.put("t", "af-state");
             o.put("af", afState());
             o.put("pkg", app.getPackageName());
+            o.put("clip", true);   // v14 (PW-CLIP)
         } catch (JSONException ignored) {
         }
         return o;
@@ -426,6 +431,7 @@ public class PhoneBridge {
             o.put("rec", ScreenRecordService.running());   // QS-REC-1: the app records the screen
             o.put("app", BuildConfig.VERSION_NAME);
             o.put("af", afState());
+            o.put("clip", true);   // v14 (PW-CLIP): secrets copy through the app
         } catch (JSONException ignored) {
         }
         return o;
@@ -621,6 +627,37 @@ public class PhoneBridge {
                 case "af-state":
                     send(afStateMsg());
                     return;
+                case "clip": {
+                    // v14 (PW-CLIP): op "set" copies text marked sensitive and
+                    // clears it after ms; op "clear" clears the app's copy now.
+                    String op = m.optString("op");
+                    final boolean set = "set".equals(op);
+                    if (!set && !"clear".equals(op)) return;
+                    final String text = set ? m.optString("text", "") : "";
+                    if (set && (text.isEmpty() || text.length() > Clip.MAX_CHARS)) throw new IllegalArgumentException("bad text");
+                    final long ms = m.optLong("ms", 0);
+                    final long cseq = seq;
+                    main.post(() -> {
+                        JSONObject o = new JSONObject();
+                        try {
+                            o.put("what", "clip");
+                            o.put("seq", cseq);
+                            o.put("op", set ? "set" : "clear");
+                            try {
+                                if (set) Clip.set(app, text, ms);
+                                else Clip.clear(app);
+                                o.put("t", "done");
+                            } catch (RuntimeException e) {
+                                o.put("t", "error");
+                                o.put("msg", e.getClass().getSimpleName());
+                            }
+                        } catch (JSONException ignored) {
+                        }
+                        diag("clip " + (set ? "set" : "clear") + ": " + o.optString("t"));   // never the text
+                        send(o);
+                    });
+                    return;
+                }
                 case "af-keys":
                     keyIo.execute(this::sendAfKeys);
                     return;

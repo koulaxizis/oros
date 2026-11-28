@@ -397,9 +397,27 @@
     return Promise.resolve(false);
   }
 
+  // PW-CLIP (BR-PHONE v14): in the orOS app and orOS Passwords on
+  // Android the app copies it marked sensitive (dots in Android's copy
+  // preview) and clears it itself when the option is on.
+  function clipApp() {
+    try {
+      var p = window.parent && window.parent !== window ? window.parent.orosPhone : null;
+      return p && p.clip && p.clipAvailable && p.clipAvailable() ? p : null;
+    } catch (e) { return null; }
+  }
+
   function copyCurrent() {
     if (!current) return;
-    writeClip(current.value).then(function (ok) {
+    var value = current.value, p = clipApp();
+    (p ? p.clip(value, prefs.clear ? CLEAR_MS : 0) : Promise.resolve(false)).then(function (byApp) {
+      if (byApp) { clearTimeout(clearTimer); showToast(t("toast.copied")); return; }
+      writeCopied(value);
+    });
+  }
+
+  function writeCopied(value) {
+    writeClip(value).then(function (ok) {
       showToast(t(ok ? "toast.copied" : "toast.copyFail"));
       clearTimeout(clearTimer);
       if (!ok || !prefs.clear) return;

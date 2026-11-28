@@ -66,6 +66,11 @@
 //                 records the screen; an app without it cannot record)
 //               {t:"af-state"}                 (v10: autofill state only;
 //                 the single app "orOS Passwords" has no full state)
+//               {t:"clip", op:"set", seq, text, ms}  (v14, PW-CLIP: Passwords
+//                 copies a secret; the app marks it sensitive, so Android
+//                 shows dots in its copy preview, and clears it after ms
+//                 even when orOS is not on screen)
+//               {t:"clip", op:"clear", seq}    (v14: clear that copy now)
 //   app → page: {t:"state", v, contacts, calendar, reminders, exact,
 //                widgets, wcal, wtodo, health, drive, app}  (drive: the
 //                orOS Drive app is installed, DRIVE-APP; widgets, wcal,
@@ -93,6 +98,9 @@
 //                 none (no secret for kid) | failed)
 //               {t:"af-state", af, pkg}        (v10: what "state" carries
 //                 in af, plus the package for the autofill-setting link)
+//               {t:"done"|"error", what:"clip", seq, op}  (v14: the copy
+//                 was made or cleared; state and af-state carry clip:true
+//                 when the app knows how)
 // v13 (PW-AF6): in the orOS app with orOS Passwords installed, af-keys
 // are orOS Passwords' keys and af carries via:"pass": the orOS app hands
 // the sealed copy to orOS Passwords, the phone's only autofill.
@@ -1280,6 +1288,17 @@
   var port = null, appState = null, seq = 0, lastSent = {}, listeners = [], timer = null;
   var afKeys = null;   // PW-AF2: {idx, names} public keys from the app, this page only
   var afSolo = null, afPkg = "";   // v10: the single app's autofill state (no appState there)
+  // v14 (PW-CLIP): the app copies Passwords' secrets marked sensitive.
+  var clipOk = false, clipWait = {};
+  var CLIP_WAIT_MS = 3000, CLIP_MAX = 100000;
+  function clipCan() { var h = bioHost(); return clipOk && (!!port || !!(h && h.available())); }
+  function clipDone(m) {
+    var w = clipWait[m.seq];
+    if (!w) return;
+    delete clipWait[m.seq];
+    clearTimeout(w.timer);
+    w.ok(m.t === "done");
+  }
 
   // Passwords: unlock with fingerprint or face (PW-BIO, v9). The app
   // keeps a 32-byte secret per vault sealed in its Keystore; Passwords
@@ -1772,6 +1791,7 @@
         app: typeof m.app === "string" ? m.app.slice(0, 20) : "",
         af: afState(m.af)
       };
+      clipOk = m.clip === true;
       emit();
       pushAll(true);
     } else if (m.t === "pw-bio") {
@@ -1785,6 +1805,7 @@
     } else if (m.t === "af-state") {
       setAf(afState(m.af));
       if (typeof m.pkg === "string" && BIO_PKG.test(m.pkg)) afPkg = m.pkg;
+      clipOk = m.clip === true;
       emit();
     } else if (m.t === "done" && m.what === "af-index") {
       setAf(afState(m.af));
@@ -1794,6 +1815,8 @@
       if (!a0) { a0 = afState({}); setAf(a0); }
       a0.err = String(m.msg || "error").slice(0, 120);
       emit();
+    } else if ((m.t === "done" || m.t === "error") && m.what === "clip") {
+      clipDone(m);
     } else if (m.t === "health-in") {
       takeHealth(m);
     } else if (m.t === "ticks" && Array.isArray(m.items)) {
@@ -1992,6 +2015,21 @@
       // for its first af-state answer.
       if (h) h.go("intent://autofill#Intent;scheme=oros-permission;package=" + (afPkg || "online.useoros.passwords") + ";end");
     },
+    // PW-CLIP (v14): Passwords copies a secret through the app, marked
+    // sensitive (Android shows dots in its copy preview) and cleared by
+    // the app after ms. Resolves false when the app cannot, did not
+    // answer or failed: the caller then copies the plain web way.
+    clipAvailable: function () { return clipCan(); },
+    clip: function (text, ms) {
+      text = typeof text === "string" ? text : "";
+      if (!text || text.length > CLIP_MAX || !clipCan()) return Promise.resolve(false);
+      var n = ++seq;
+      return new Promise(function (ok) {
+        if (!bioSend({ t: "clip", op: "set", seq: n, text: text, ms: Math.max(0, Math.floor(Number(ms) || 0)) })) { ok(false); return; }
+        clipWait[n] = { ok: ok, timer: setTimeout(function () { if (clipWait[n]) { delete clipWait[n]; ok(false); } }, CLIP_WAIT_MS) };
+      });
+    },
+    clipClear: function () { return clipOk && bioSend({ t: "clip", op: "clear", seq: ++seq }); },
     // Passwords: unlock with fingerprint or face (PW-BIO, v9). Works in
     // the orOS app and in the single app "orOS Passwords". The screen
     // lock (lock.js, LK-BIO) uses it too with its own kid and use "lock".
