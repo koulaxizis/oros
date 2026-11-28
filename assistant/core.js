@@ -796,6 +796,22 @@
     if (p && p.local) return { img: !!(conf && conf.vis), pdf: false };
     return { img: !!(a && a.img), pdf: !!(a && a.pdf) };
   }
+  // AS-OCR: which pages of a PDF to read as pictures. lens: characters
+  // (no spaces) of each page's own text; pics: the page draws a picture.
+  // A whole scan (under 40 characters in all) → its first max pages;
+  // otherwise the pages with under OCR_PAGE_MIN characters that draw a
+  // picture (a blank or title page is left alone). → { pages, left }
+  var OCR_PAGE_MIN = 25;
+  function ocrPlan(lens, pics, max) {
+    lens = Array.isArray(lens) ? lens : [];
+    pics = Array.isArray(pics) ? pics : [];
+    max = Math.max(0, Math.floor(+max) || 0);
+    var all = lens.reduce(function (s, x) { return s + (+x || 0); }, 0), want = [];
+    for (var i = 0; i < lens.length; i++) {
+      if (all < 40 || ((+lens[i] || 0) < OCR_PAGE_MIN && pics[i] === true)) want.push(i);
+    }
+    return { pages: want.slice(0, max), left: Math.max(0, want.length - max) };
+  }
   function attKind(type) { return ATT_TYPES[type] || ""; }
   function attLimit(type) { var k = attKind(type); return k === "doc" ? ATT_DOC : k === "pdf" ? ATT_PDF : ATT_IMG; }
   var KIND_WORD = { pdf: "PDF", img: "photo", doc: "document" };
@@ -2680,7 +2696,7 @@
   };
   var TOOL_FILES_READ = {
     name: "files_read",
-    description: "Read one file on the orOS disk as text: text files as they are; Word, LibreOffice, spreadsheets, slides and e-books by their text; PDFs by their text layer (a scan is read with OCR, the first pages). " +
+    description: "Read one file on the orOS disk as text: text files as they are; Word, LibreOffice, spreadsheets, slides and e-books by their text; PDFs by their text layer (scanned pages are read with OCR on the device: the first 5, up to 15 with ocr true). " +
       "100,000 characters a call: pass next_offset as offset for the rest. Also returns version: pass it as if_version to files_write, files_move or files_delete. " +
       "A picture (JPG, PNG, WebP, GIF, BMP, TIFF, AVIF) is shown to you to look at when your model sees pictures, with its pixels; with ocr true (or a model that can't see) its text is also read on the device (Greek and English OCR). " +
       "This is how you look at a page: Layout's thumbs command saves page pictures, then read them here; never say you can't see a picture before trying. Audio and video give their size and type only. " +
@@ -2689,7 +2705,7 @@
       type: "object",
       properties: {
         path: { type: "string", description: "The file, e.g. \"Drive/ckdesktop/Χειρόγραφα/Νέο.docx\" or \"local:Vythos/Final Images/26m.jpg\"." },
-        ocr: { type: "boolean", description: "A picture: also read its text on the device (for proofreading text set in a picture)." },
+        ocr: { type: "boolean", description: "A picture: also read its text on the device (for proofreading text set in a picture). A PDF: read up to 15 scanned pages instead of 5." },
         offset: { type: "integer", minimum: 0, description: "First character (0 = the start)." },
         length: { type: "integer", minimum: 1, maximum: 100000, description: "Characters to return (at most 100,000)." }
       },
@@ -5942,7 +5958,7 @@
     GONE_FILE: GONE_FILE, GONE_DAYS: GONE_DAYS, GONE_MAX: GONE_MAX, TOMB_KEEP: TOMB_KEEP,
     normGone: normGone, mergeGone: mergeGone, parseGoneFile: parseGoneFile, goneFile: goneFile, goneWins: goneWins, spareCopy: spareCopy,
     ATT_TYPES: ATT_TYPES, ATT_MAX: ATT_MAX, ATT_FILE: ATT_FILE, attRoom: attRoom, attBudget: attBudget, ATT_IMG: ATT_IMG, ATT_PDF: ATT_PDF, ATT_DOC: ATT_DOC, ATT_SEND: ATT_SEND,
-    ATT_TEXT: ATT_TEXT, ATT_TEXT_DOC: ATT_TEXT_DOC, attLimit: attLimit, attCaps: attCaps, attKind: attKind, normAtt: normAtt, checkAtt: checkAtt,
+    ATT_TEXT: ATT_TEXT, ATT_TEXT_DOC: ATT_TEXT_DOC, attLimit: attLimit, attCaps: attCaps, attKind: attKind, ocrPlan: ocrPlan, OCR_PAGE_MIN: OCR_PAGE_MIN, normAtt: normAtt, checkAtt: checkAtt,
     WEB_USES: WEB_USES, webCan: webCan, webTool: webTool, webSources: webSources,
     KEY_IDS: KEY_IDS, SEARCH_IDS: SEARCH_IDS, SEARCH_N: SEARCH_N, PAGE_MAX: PAGE_MAX, webAny: webAny, webSrc: webSrc,
     searchReq: searchReq, searchParse: searchParse, pageReq: pageReq, pageParse: pageParse, pagePart: pagePart, PAGE_PARTS: PAGE_PARTS, siteOf: siteOf, pageAllowed: pageAllowed, pageUrl: pageUrl, pageKey: pageKey, webResult: webResult,

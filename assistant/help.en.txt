@@ -276,6 +276,9 @@ With web search on, ask "is noxpress.tech up?", "what are the MX records of glar
 ## Exact sums
 For totals, VAT, percentages, dates and loans the assistant uses the formulas of [Spreadsheet](app:spreadsheet) instead of counting in its head ("what is 24% VAT on these 38 lines?", "how many working days in December?"). It can also give the SHA-256 of a file on the orOS disk, to check a download.
 
+## Text from pictures and scans
+The assistant reads the text of a picture or a scanned PDF on the orOS disk on your device (Greek and English), also in a routine ("what is the total on the receipt in Drive/Scans?"). In a PDF it reads the pages that are scans and leaves pages with their own text as they are: the first 5 such pages, or up to 15 when you ask for more. Pictures in orOS Drive's folders that are in the cloud only are fetched first (up to 60 MB). Nothing leaves your device for this.
+
 ## GitHub (read only)
 With a GitHub account in orOS Settings › Connected services (best a fine-grained token that may only read, naming its repositories), ask for example "what is the latest Noxpress release and how often was it downloaded?", "show me updates.json on main" or "did the last Actions run fail?". The assistant can only read: releases, files, Actions runs, pull requests, commits and issues. It never sees the token. A routine reads GitHub only when you tick `May read GitHub`.
 
