@@ -7987,6 +7987,32 @@
       else localStorage.removeItem(SHELL_AHEAD_KEY);
     } catch (e) {}
   }
+  // FWD-2 (Chris 2026-11-28, proposal 5): say once, on this device
+  // only, that choices of a newer orOS arrived, with Update now. Once
+  // per set of kept fields and stamps ("oros-shell-ahead-seen"); not
+  // marked seen while the notices are not ready (the next pull tries).
+  var SHELL_AHEAD_SEEN = "oros-shell-ahead-seen";
+  function aheadNotice(ah) {
+    var keys = Object.keys(ah).sort();
+    if (!keys.length) return;
+    var sig = keys.map(function (k) { return k + ":" + ah[k].t; }).join(",");
+    try { if (localStorage.getItem(SHELL_AHEAD_SEEN) === sig) return; } catch (e) { return; }
+    var N = window.orosNotifs;
+    if (!N || typeof N.transient !== "function") return;
+    var cand = { ns: "system", title: window.t("fwd.title"), body: window.t("fwd.body") };
+    if (typeof window.orosUpdateNow === "function") {
+      cand.action = { label: window.t("update.now"), fn: function () {
+        window.orosUpdateNow(function (st, why) {
+          if (st === "checking" || typeof window.orosUpdateNowText !== "function") return;
+          try { N.transient({ ns: "system", title: window.orosUpdateNowText(st, why) }); } catch (e2) {}
+        });
+      } };
+    }
+    var id = null;
+    try { id = N.transient(cand); } catch (e3) {}
+    if (id) { try { localStorage.setItem(SHELL_AHEAD_SEEN, sig); } catch (e4) {} }
+  }
+
   // A value kept for a newer orOS that this orOS now knows (it was
   // updated, or the module that checks it has loaded): apply it as a
   // pull would, with its stamp. Never a push (the cloud has it).
@@ -8190,6 +8216,7 @@
     }
     Object.keys(side.ex).forEach(function (k) { ahNew[k] = side.ex[k]; });
     aheadWrite(ahNew);
+    aheadNotice(ahNew);
     if (Array.isArray(data.alarms)) {
       var tombsNew = alarmTombsLive(side.tombs, nowSet);
       var keep = alarmsCanonical(side.alarms, tombsNew, nowSet);

@@ -200,3 +200,32 @@ test("shell.js: the pull keeps what is ahead, the getter and the merge carry it"
   assert.match(cut(SHELL, "shellMerge"), /, tombs, extras\);/);
   assert.match(cut(SHELL, "aheadPromote"), /shellSliceSet\(shellSliceGet\(\)\)/);
 });
+
+test("FWD-2: one notice on this device per set of kept choices, with Update now", () => {
+  const store = new Map();
+  const localStorage = { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) };
+  const shown = [];
+  const win = {
+    t: (k) => k,
+    orosNotifs: { ready: false, transient(c) { if (!this.ready) return null; shown.push(c); return "tmp_1"; } },
+    orosUpdateNow: () => {},
+  };
+  const notice = new Function("localStorage", "window", line(/var SHELL_AHEAD_SEEN = [^;]+;/) + "\n" + cut(SHELL, "aheadNotice") + "\nreturn aheadNotice;")(localStorage, win);
+  notice({});
+  notice({ wallpaper: { v: "viz", t: 5 } });
+  assert.equal(shown.length, 0, "notices not ready: nothing shown, not marked seen");
+  win.orosNotifs.ready = true;
+  notice({ wallpaper: { v: "viz", t: 5 } });
+  notice({ wallpaper: { v: "viz", t: 5 } });
+  assert.equal(shown.length, 1, "once per set");
+  assert.equal(shown[0].title, "fwd.title");
+  assert.equal(shown[0].action.label, "update.now");
+  notice({ wallpaper: { v: "viz", t: 5 }, dock: { v: 1, t: 9 } });
+  assert.equal(shown.length, 2, "a new choice of a newer orOS is said again");
+  assert.match(cut(SHELL, "shellSliceSet"), /aheadNotice\(ahNew\)/);
+  for (const f of ["translations.js", "i18n/de/shell.js"]) {
+    const src = fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+    assert.ok((src.match(/"fwd\.title"/g) || []).length >= (f === "translations.js" ? 2 : 1), f + " fwd.title");
+    assert.ok((src.match(/"fwd\.body"/g) || []).length >= (f === "translations.js" ? 2 : 1), f + " fwd.body");
+  }
+});

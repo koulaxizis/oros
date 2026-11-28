@@ -1165,6 +1165,8 @@ orosPack("de", "shell", {
  "update.now.network": "Die neue Version konnte nicht geladen werden. Prüfe die Verbindung und versuche es erneut.",
  "update.now.offline": "Dieses Gerät ist offline. Verbinde dich und versuche es erneut.",
  "update.now.failed": "Die Aktualisierung wurde nicht abgeschlossen. Versuche es erneut.",
+ "fwd.title": "Einstellungen aus einem neueren orOS",
+ "fwd.body": "Ein anderes Gerät nutzt Einstellungen, die dieses orOS noch nicht kennt (ein Hintergrund, ein Aussehen…). Sie bleiben erhalten. Aktualisiere orOS auf diesem Gerät, um sie zu sehen.",
  "update.done": "orOS wurde aktualisiert auf",
  "update.ready": "Neue Version · Neu starten",
  "update.ready.title": "Eine neue Version von orOS ist bereit. Starte orOS neu, um sie zu verwenden.",
