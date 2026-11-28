@@ -306,9 +306,10 @@ test("a piece comes only from Dropbox's content host, and a too-big piece is ref
 });
 
 // GATE-PC (2026-11-28): a computer's mirror is tens of thousands of files.
-// The device packs the index (v2: each folder once) and sends it in parts;
-// a folder the owner adds after the copy counts at once, with a note.
-test("GATE-PC: index v2 in parts, a folder added after the copy, notes for empty and cut", async () => {
+// The device packs the index (v2: each folder once) and keeps it under the
+// box's limit (the biggest subfolders are cut first, and named); a folder
+// the owner adds after the copy counts at once, with a note.
+test("GATE-PC: index v2, a folder added after the copy, notes for empty and cut", async () => {
   const w = world();
   assert.equal((await dev(w, { act: "new", th: hex(TOK) })).status, 200);
   const b = w.boxes.get(ID);
@@ -318,18 +319,12 @@ test("GATE-PC: index v2 in parts, a folder added after the copy, notes for empty
   const t = await tokens(w);
   const F = "/internal/Drive/ckDesktop/Documents";
   const files = [];
-  for (let i = 0; i < 6000; i++) files.push({ d: i % 3, n: "τιμολόγιο αριθμός " + i + " με αρκετά μεγάλο όνομα για τον έλεγχο.pdf", s: 1000 + i, m: 1.7e12, k: "pdf", v: "0123456789abcdef", x: "none" });
-  const idx = { v: 2, at: 1.7e12, f: [F, "/internal/Empty"], q: FC.QUOTA_DEF, used: 0, cut: 12, d: [F + "/Τιμολόγια/Έσοδα", F + "/Τιμολόγια/Έξοδα", F + "/Συμφωνητικά"], files };
+  for (let i = 0; i < 3000; i++) files.push({ d: i % 3, n: "τιμολόγιο " + i + ".pdf", s: 1000 + i, m: 1.7e12, k: "pdf", v: "0123456789abcdef", x: "none" });
+  const idx = { v: 2, at: 1.7e12, f: [F, "/internal/Empty"], q: FC.QUOTA_DEF, used: 0, cut: 61000, cutIn: [F + "/ComfyUI"], d: [F + "/Τιμολόγια/Έσοδα", F + "/Τιμολόγια/Έξοδα", "/internal/../x"], files };
   const sealed = await G.sealText(K, JSON.stringify(idx));
-  assert.ok(sealed.length > 900 * 1024, "too big for one message: " + sealed.length);
-  const P = 800 * 1024, n = Math.ceil(sealed.length / P);
-  // a stray part of another set is dropped, then the real set in order
-  await b.box.webSocketMessage(sock, JSON.stringify({ fidxp: sealed.slice(0, 10), fi: 1, fn: n, fs: "zzz" }));
-  assert.equal(await b.st.storage.get("fpart"), undefined);
-  for (let i = 0; i < n; i++) await b.box.webSocketMessage(sock, JSON.stringify({ fidxp: sealed.slice(i * P, (i + 1) * P), fi: i, fn: n, fs: "set1" }));
+  assert.ok(sealed.length < 900 * 1024);
+  await b.box.webSocketMessage(sock, JSON.stringify({ fidx: sealed }));
   assert.match(sock.sent[sock.sent.length - 1], /fidxok/);
-  assert.equal(await b.st.storage.get("fpart"), undefined, "the parts are cleaned up");
-  assert.equal([...b.st.kv.keys()].filter((k) => k.indexOf("y:") === 0).length, 0);
   sock.closed = true;
   await b.st.storage.put("devtools", [
     { name: "files_list", description: "x", inputSchema: { type: "object" }, annotations: { readOnlyHint: true } },
@@ -337,9 +332,11 @@ test("GATE-PC: index v2 in parts, a folder added after the copy, notes for empty
   ]);
   const tc = async (name, args) => (await (await call(w, "POST", "/mcp", { bearer: t.access_token, json: { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args || {} } } })).json()).result;
   let r = JSON.parse((await tc("files_list", { path: "Drive/ckDesktop/Documents/Τιμολόγια/Έσοδα" })).content[0].text);
-  assert.equal(r.total, 2000);
-  assert.match(r.entries[0].name, /^τιμολόγιο αριθμός/);
-  assert.match(r.note, /12 files left out/);
+  assert.equal(r.total, 1000);
+  assert.match(r.entries[0].name, /^τιμολόγιο/);
+  assert.match(r.note, /61000 files left out for size, from the folders with the most files: Drive\/ckDesktop\/Documents\/ComfyUI/);
+  r = JSON.parse((await tc("files_list", { path: "Drive/ckDesktop/Documents", depth: 3 })).content[0].text);
+  assert.equal(r.total, 2003, "the files of a folder path that is not valid are dropped (2000 files + 3 folders)");
   r = JSON.parse((await tc("files_list", { path: "Empty" })).content[0].text);
   assert.equal(r.total, 0);
   assert.match(r.note, /no files in Empty/);
@@ -347,12 +344,34 @@ test("GATE-PC: index v2 in parts, a folder added after the copy, notes for empty
   r = await tc("files_list", { path: "Drive/ckMobile" });
   assert.equal(r.isError, true);
   await b.box.addGrant(K, "/internal/Drive/ckMobile", Date.now());
+  await b.box.addGrant(K, "/internal/Mail", Date.now());
+  await b.box.addGrant(K, "/internal/Drive/../Mail", Date.now());
   assert.doesNotMatch(JSON.stringify(await b.st.storage.get("fadd")), /ckMobile/, "kept sealed");
   r = JSON.parse((await tc("files_list")).content[0].text);
   assert.ok(r.folders.includes("Drive/ckMobile"));
+  assert.ok(!r.folders.some((f) => /Mail/.test(f)), "never Mail");
   r = await tc("files_list", { path: "Drive/ckMobile" });
   assert.equal(r.isError, false);
   assert.match(JSON.parse(r.content[0].text).note, /added Drive\/ckMobile to Claude's folders at .*after this copy/);
-  // a grant the copy already has, or one older than the copy, adds nothing
-  assert.equal(G.fileIndexOpen({ v: 2, d: ["/internal/a"], files: [{ d: 0, n: "x" }, { d: 5, n: "y" }, { d: 0, n: "a/b" }] }).files.length, 1, "bad rows are dropped");
+  assert.equal(G.fileIndexOpen({ v: 2, d: ["/internal/a"], files: [{ d: 0, n: "x" }, { d: 5, n: "y" }, { d: 0, n: "a/b" }, { d: 0, n: ".hidden" }] }).files.length, 1, "bad rows are dropped");
+});
+
+// GATE-PC: the device's cut keeps the small subfolders (gate.js fcOrder / fcTops / fcPack).
+test("GATE-PC: the cut drops the biggest subfolders first and the index packs", () => {
+  const src = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "gate", "gate.js"), "utf8");
+  const body = src.slice(src.indexOf("  // GATE-PC: { …, files: [{ p, … }] }"), src.indexOf("  function fcBytes(r) {"));
+  const f = new Function(body + "\nreturn { fcPack, fcOrder, fcTops };")();
+  const D = "/internal/Drive/ckDesktop/Documents", files = [];
+  for (let i = 0; i < 50; i++) files.push({ p: D + "/ComfyUI/m/" + i + ".py", s: 1 });
+  for (let i = 0; i < 3; i++) files.push({ p: D + "/Τιμολόγια/Έσοδα/" + i + ".pdf", s: 1 });
+  files.push({ p: D + "/top.txt", s: 1 });
+  f.fcOrder(files, [D]);
+  assert.match(files[0].p, /top\.txt$/);
+  assert.match(files[1].p, /Τιμολόγια/);
+  assert.match(files[53].p, /ComfyUI/);
+  assert.deepEqual(f.fcTops(files.slice(10), [D]), [D + "/ComfyUI"]);
+  const pk = f.fcPack({ v: 1, at: 1, f: [D], files: files.slice(0, 4) });
+  assert.equal(pk.v, 2);
+  assert.deepEqual(pk.d, [D, D + "/Τιμολόγια/Έσοδα"]);
+  assert.deepEqual(G.fileIndexOpen(JSON.parse(JSON.stringify(pk))).files.map((e) => e.p), files.slice(0, 4).map((e) => e.p));
 });

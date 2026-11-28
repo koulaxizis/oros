@@ -4097,7 +4097,7 @@
   // Never while Sensitive work is on (window.orosStrict, PR #1010) or
   // the device is locked; one run at a time; unchanged files are not
   // read again (FC_KEY keeps size, time and hash per path).
-  var FC_KEY = "oros-gate-fcopy", FIDX_MAX = 7000000,   // GATE-PC: was 880000 (one socket message); sent in parts now
+  var FC_KEY = "oros-gate-fcopy", FIDX_MAX = 660000,   // GATE-PC: sealed base64 is 4/3 of it and must stay under the relay's 900 KiB (880000 did not)
       fcBusy = false, fcTimer = null, fcErr = "";
   var fcModP = null;
   function fcMod() {
@@ -4304,12 +4304,25 @@
     out.d = dirs;
     return out;
   }
-  // The sealed index, in parts the relay joins (a socket message stays under its limit).
-  var FC_PART = 800 * 1024;
-  function fcSend(sealed) {
-    if (sealed.length <= FC_PART) { ws.send(JSON.stringify({ fidx: sealed })); return; }
-    var n = Math.ceil(sealed.length / FC_PART), id = Math.random().toString(36).slice(2, 10);
-    for (var i = 0; i < n; i++) ws.send(JSON.stringify({ fidxp: sealed.slice(i * FC_PART, (i + 1) * FC_PART), fi: i, fn: n, fs: id }));
+  // GATE-PC: the subfolder of a granted folder a file is in (or the folder itself)
+  function fcTop(p, folders) {
+    var f = "";
+    (folders || []).forEach(function (x) { if (p.indexOf(x + "/") === 0 && x.length > f.length) f = x; });
+    if (!f) return "";
+    var rest = p.slice(f.length + 1), i = rest.indexOf("/");
+    return i > 0 ? f + "/" + rest.slice(0, i) : f;
+  }
+  function fcOrder(files, folders) {
+    var n = {};
+    files.forEach(function (e) { var t = fcTop(e.p, folders); e.__t = t; n[t] = (n[t] || 0) + 1; });
+    files.sort(function (a, b) { return n[a.__t] - n[b.__t] || (a.p < b.p ? -1 : a.p > b.p ? 1 : 0); });
+    files.forEach(function (e) { delete e.__t; });
+  }
+  // the subfolders a cut left out, the biggest first
+  function fcTops(files, folders) {
+    var n = {};
+    files.forEach(function (e) { var t = fcTop(e.p, folders); n[t] = (n[t] || 0) + 1; });
+    return Object.keys(n).filter(Boolean).sort(function (a, b) { return n[b] - n[a]; });
   }
   function fcBytes(r) {
     if (r.cloud) return root.orosVault.peek(r.p).then(function (b) { return new Uint8Array(b); });
@@ -4423,14 +4436,18 @@
       // computer's Documents is tens of thousands of files.
       var text = JSON.stringify(fcPack(idx));
       if (utf8Len(text) > FIDX_MAX) {
+        // the files of the smallest subfolders first, so a cut drops the
+        // biggest trees (a ComfyUI install) and keeps Invoices and the like
+        fcOrder(idx.files, idx.f);
         var lo = 0, hi = idx.files.length, all = idx.files;
         while (lo < hi) { var mid = Math.ceil((lo + hi) / 2); idx.files = all.slice(0, mid); if (utf8Len(JSON.stringify(fcPack(idx))) <= FIDX_MAX) lo = mid; else hi = mid - 1; }
         idx.files = all.slice(0, lo); idx.cut = all.length - lo;
+        idx.cutIn = fcTops(all.slice(lo), idx.f).slice(0, 10);
         text = JSON.stringify(fcPack(idx));
       }
       return seal(k, text).then(function (sealed) {
         if (!ws || ws.readyState !== 1) throw new Error("offline");
-        fcSend(sealed);
+        ws.send(JSON.stringify({ fidx: sealed }));
         writeJSON(FC_KEY, { at: idx.at, c: newCache, idx: { files: files.map(function (e) { return { h: e.h, c: e.c, t: e.t }; }).filter(function (e) { return e.h; }) }, n: Object.keys(names), up: put, used: pl.used, err: fcErr });
         changed();
       });
