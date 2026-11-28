@@ -1196,6 +1196,76 @@
     }, now, { after: after });
   }
 
+  // DICT-1 Remove silences: cut the timeline ranges `cuts` ([{ start,
+  // end }] seconds, sorted, from montage/vad.js) out of the main track's
+  // video clips that have sound, in one edit. A clip with no speech at
+  // all (only silences) is left whole, transitions are never cut into,
+  // a piece shorter than MIN is not made. Items on the other tracks
+  // move left by what was removed before them, so text and music stay
+  // with the picture. opts.only = one clip id. mkId() → a new item id.
+  // → { data, removed (seconds), n (cuts made) }
+  function cutRanges(data, pid, cuts, now, mkId, opts) {
+    var d = clone(data), p = d.projects[pid], out = { data: d, removed: 0, n: 0 };
+    if (!p || !Array.isArray(cuts) || !cuts.length) return out;
+    var only = opts && opts.only, seq = mainSeq(p), done = [];
+    for (var si = seq.length - 1; si >= 0; si--) {
+      var s = seq[si], it = s.it;
+      if (it.k !== "video" || it.mu || it.rv || it.vol === 0 || (only && it.id !== only)) continue;
+      var next = seq[si + 1], lo = s.start + s.tx, hi = s.end - (next ? next.tx : 0);
+      var mine = [];
+      cuts.forEach(function (c) {
+        var a = Math.max(lo, c.start), b = Math.min(hi, c.end);
+        if (b - a >= MIN) mine.push([a, b]);
+      });
+      var silent = mine.reduce(function (t, c) { return t + c[1] - c[0]; }, 0);
+      if (!mine.length || silent >= (s.end - s.start) - 2 * MIN) continue;   // no speech: leave it
+      for (var ci = mine.length - 1; ci >= 0; ci--) {
+        var c = mine[ci], pl = placeOf(p, it.id);
+        if (!pl) break;
+        var atA = c[0] - pl.start, atB = c[1] - pl.start, dur = pl.end - pl.start;
+        if (atA < MIN && dur - atB < MIN) continue;
+        var idB = mkId();
+        if (atA < MIN) {                       // silence at the start: drop the left piece
+          d = split(d, pid, it.id, c[1], now, idB); p = d.projects[pid];
+          if (!p.items[idB]) continue;
+          // the right piece keeps going as this clip (earlier cuts are done)
+          p.tombs[it.id] = tick(p.items[it.id].m, now); delete p.items[it.id];
+          d = merge(d, null); p = d.projects[pid];
+          it = p.items[idB];
+        } else if (dur - atB < MIN) {          // silence at the end: drop the right piece
+          d = split(d, pid, it.id, c[0], now, idB); p = d.projects[pid];
+          if (!p.items[idB]) continue;
+          d = delItem(d, pid, idB, now); p = d.projects[pid];
+        } else {
+          var idM = mkId();
+          d = split(d, pid, it.id, c[1], now, idB); p = d.projects[pid];
+          if (!p.items[idB]) continue;
+          d = split(d, pid, it.id, c[0], now, idM); p = d.projects[pid];
+          if (!p.items[idM]) continue;
+          d = delItem(d, pid, idM, now); p = d.projects[pid];
+        }
+        done.push([c[0], c[1]]); out.n++; out.removed += c[1] - c[0];
+        it = p.items[it.id] || it;
+      }
+    }
+    if (!out.n) return out;
+    // the other tracks follow
+    var shiftAt = function (t) {
+      var sh = 0;
+      done.forEach(function (r) { sh += Math.max(0, Math.min(t, r[1]) - r[0]); });
+      return r3(Math.max(0, t - sh));
+    };
+    Object.keys(p.items).forEach(function (k) {
+      var x = p.items[k];
+      if (x.tr === "main") return;
+      var at = shiftAt(x.at);
+      if (at !== x.at) { x.at = at; x.m = tick(x.m, now); }
+    });
+    out.removed = r3(out.removed);
+    out.data = merge(d, null);
+    return out;
+  }
+
   var api = {
     VER: VER, MIN: MIN, MAX_ITEMS: MAX_ITEMS, KINDS: KINDS, TRACKS: TRACKS, TRACK_KINDS: TRACK_KINDS,
     SHAPES: SHAPES.slice(), RATIOS: Object.keys(RATIOS), FPS: FPS.slice(), TRANSITIONS: TRANSITIONS.slice(), FILTERS: FILTERS.slice(), ANIMS: ANIMS.slice(),
@@ -1205,7 +1275,7 @@
     outputSize: outputSize, framePlan: framePlan, soundPlan: soundPlan, gainAt: gainAt, fadeAt: fadeAt, mediaOf: mediaOf,
     newProject: newProject, setProject: setProject, delProject: delProject,
     addItem: addItem, setItem: setItem, delItem: delItem, moveMain: moveMain,
-    split: split, duplicate: duplicate, detachSound: detachSound, restoreProject: restoreProject, undeleteProject: undeleteProject, replaceSrc: replaceSrc,
+    split: split, cutRanges: cutRanges, duplicate: duplicate, detachSound: detachSound, restoreProject: restoreProject, undeleteProject: undeleteProject, replaceSrc: replaceSrc,
     projectList: projectList, fmtTime: fmtTime, exportName: exportName,
     kfAt: kfAt, kfSet: kfSet, kfSplit: kfSplit, kfProps: kfProps, MAX_KEYS: MAX_KEYS,
     parseCube: parseCube, lutPixels: lutPixels, srcTime: srcTime,

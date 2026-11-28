@@ -290,9 +290,18 @@
     var total = samples.length / SR, seek = 0, cues = [], lang = opts.lang && opts.lang !== "auto" ? opts.lang : null;
     var layers = m.layers || LAYERS, heads = m.heads || HEADS;
     var emptyPast = function () { return new T("float32", new Float32Array(0), [1, heads, 0, HEAD_DIM]); };
-    while (seek < total - 0.2) {
+    // DICT-1: opts.spans = [{ start, end }] seconds (montage/vad.js
+    // windows): only those parts are heard; without it, everything.
+    var spans = Array.isArray(opts.spans) ? opts.spans : [{ start: 0, end: total }], si = 0, stop = total;
+    if (spans.length) { seek = spans[0].start; stop = Math.min(total, spans[0].end); }
+    while (si < spans.length) {
+      if (seek >= stop - 0.2) {
+        if (++si >= spans.length) break;
+        seek = spans[si].start; stop = Math.min(total, spans[si].end);
+        continue;
+      }
       if (cancelled()) throw new Error("cancelled");
-      var a = Math.floor(seek * SR), win = samples.subarray(a, Math.min(samples.length, a + SR * CHUNK)), winLen = win.length / SR;
+      var a = Math.floor(seek * SR), win = samples.subarray(a, Math.min(samples.length, a + SR * CHUNK, Math.ceil(stop * SR))), winLen = win.length / SR;
       progress(seek / total, "listen");
       // a quiet window is skipped whole
       var peak = 0;
@@ -494,9 +503,67 @@
     });
   }
 
+  // ---------- DICT-1: the runtime and single files for other models ----------
+  // (Silero VAD, montage/vad.js): the same runtime and IndexedDB.
+  // file(f) = { key, ver, url, size, sha }: kept only when it is exactly
+  // that copy (size and SHA-256).
+  var rtP = null;
+  function runtime(onProgress, signal) {
+    if (rtP) return rtP;
+    var got = {}, done = 0, total = RUNTIME_MB * 1024 * 1024;
+    var p = rtP = RUNTIME.reduce(function (q, k) {
+      var f = { key: k, url: FILES[k], ver: FILES_VER };
+      return q.then(function () {
+        return stored(f).then(function (b) {
+          if (b) { got[k] = b; return; }
+          return fetchFile(f.url, function (n) { done += n; if (onProgress) onProgress(Math.min(0.99, done / total)); }, signal).then(function (blob) {
+            got[k] = blob;
+            return tx("readwrite", function (s) { s.put({ v: f.ver, blob: blob }, f.key); }).catch(function () {});
+          });
+        });
+      });
+    }, Promise.resolve()).then(function () {
+      return loadScript(got.js);
+    }).then(function () {
+      var ort = root.ort;
+      if (!ort || !ort.InferenceSession) throw new Error("runtime");
+      if (!ort.env.wasm.wasmPaths) {
+        ort.env.wasm.numThreads = 1;
+        ort.env.wasm.proxy = false;
+        ort.env.wasm.wasmPaths = {
+          mjs: URL.createObjectURL(new Blob([got.mjs], { type: "text/javascript" })),
+          wasm: URL.createObjectURL(new Blob([got.wasm], { type: "application/wasm" }))
+        };
+      }
+      if (onProgress) onProgress(1);
+      return ort;
+    });
+    p.catch(function () { if (rtP === p) rtP = null; });
+    return p;
+  }
+  function hexOf(buf) {
+    var b = new Uint8Array(buf), out = "";
+    for (var i = 0; i < b.length; i++) out += (b[i] < 16 ? "0" : "") + b[i].toString(16);
+    return out;
+  }
+  function oneFile(f, onBytes, signal) {
+    return stored(f).then(function (b) {
+      if (b) return b;
+      return fetchFile(f.url, onBytes || function () {}, signal).then(function (blob) {
+        if (blob.size !== f.size) throw new Error("hash");
+        return blob.arrayBuffer().then(function (buf) { return crypto.subtle.digest("SHA-256", buf); }).then(function (d) {
+          if (hexOf(d) !== f.sha) throw new Error("hash");
+          return tx("readwrite", function (s) { s.put({ v: f.ver, blob: blob }, f.key); }).catch(function () {}).then(function () { return blob; });
+        });
+      });
+    });
+  }
+  function hasFile(f) { return stored(f).then(Boolean, function () { return false; }); }
+
   root.MontageASR = {
     ready: ready, run: run, forget: forget, decimate3: decimate3, MODEL_MB: MODEL_MB, RUNTIME_MB: RUNTIME_MB,
     melFilters: melFilters, logMel: logMel, splitCue: splitCue,
+    runtime: runtime, file: oneFile, has: hasFile,
     mbOf: function (model) { return MODELS[modelOf(model)].mb; },
     // download (if needed) and load a model ahead of the first run
     prepare: function (model, onProgress, signal) { return models(model, onProgress, signal).then(function () { return true; }); }

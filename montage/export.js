@@ -466,12 +466,14 @@
   // The project's sound for speech to text: the same mix as an export,
   // folded to mono and brought down to 16 kHz window by window (so a
   // long project never holds its 48 kHz mix whole).
-  //   opts = { project, file, cancelled, progress } → Float32Array at 16 kHz
+  //   opts = { project, file, cancelled, progress, mainOnly } → Float32Array at 16 kHz
   var SPEECH_MAX_SEC = 30 * 60;
   async function speech16k(opts) {
     var C = root.MontageCore, p = opts.project;
     var cancelled = opts.cancelled || function () { return false; };
     var total = Math.min(C.duration(p), SPEECH_MAX_SEC), sound = C.soundPlan(p);
+    // DICT-1 Remove silences: only the main row (music would hide the pauses)
+    if (opts.mainOnly) sound = sound.filter(function (s) { var it = p.items[s.id]; return it && it.tr === "main"; });
     var out = new Float32Array(Math.ceil(total * 16000) + 16000), n = 0;
     var lib = new Library(opts.file);
     var sink = {
