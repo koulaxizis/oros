@@ -83,5 +83,13 @@ An app you switched off under `Which apps may notify` stays quiet on the phone t
 ## System notifications
 If your browser allows it, orOS also shows notifications through your system, so you see them while orOS is in the background. orOS asks for this permission only when you save a Calendar event with a reminder. You can also allow or block it any time in your browser's site settings. Clicking one brings orOS to the front and opens what it points to, such as the event. Without it, notifications still appear inside orOS.
 
+- `On the device's notifications` (Settings › Notifications, on by default, all your devices) switches these system notifications off and on.
+- Private apps stay private there: [Passwords](app:passwords), [One-Sentence Diary](app:diary), [Mood](app:mood), [Cycle](app:cycle), [Health](app:health), [Baby](app:baby), [Mail](app:mail), the [Assistant](app:assistant) and [Workouts](app:fitness) show only their name and `New notification`, because anyone near the screen can read the system's notifications. Turn on `Text of private apps on the device` to see what they say. Locked apps never show their text there.
+
+### orOS on the computer (installed and orOS USB)
+While orOS runs on your computer with its icon in the tray, its notifications also appear as the computer's own notifications: on Windows 10 and 11 in the corner and in the notification centre, on Linux and orOS USB through the desktop's notifications. They come whenever you are not looking at the orOS window (minimised or behind other windows); while you look at it, orOS shows them itself, so you never get one twice. Click one to open orOS at that app. Windows' own Do Not Disturb silences them too. No browser permission is needed.
+
+`Reminders with orOS closed (this computer)` is off until you turn it on, on an installed orOS. With it on, the tray keeps orOS running in the background without a window while every orOS window is closed, so alarms and reminders still reach the computer's notifications. Nothing leaves the computer and no push service is involved. It uses some memory (about 200 to 300 MB) and turns on `Start with the computer` in the tray menu.
+
 ## Game mode
 Settings › Notifications › Game mode (off by default, this device only). While a game from the Games category runs full screen, or its window fills the screen, notifications stay silent and the top bar and the Dock step aside. Move the pointer to the top edge to see the bar for three seconds. Leave full screen and everything comes back.
