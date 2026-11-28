@@ -1608,7 +1608,11 @@
       zipCreate: zipCreate,
       zipExtract: zipExtract,
       zipOpen: zipOpen,
-      findDupes: openDupes
+      findDupes: openDupes,
+      // DRIVE-OPEN: files of folders orOS Drive mirrors open from orOS
+      vault: vaultApi,
+      openFile: openFileAt,
+      openDrive: function (p) { var d = drv(); if (d) d.enter(p); }
     });
   }
 

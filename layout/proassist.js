@@ -34,7 +34,7 @@
     var V = vault();
     try { return !!(V && V.isRemoteOnly && V.isRemoteOnly(path)); } catch (e) { return false; }
   }
-  // LOCAL-1: the local-folder bridge (localroots.js in the shell)
+  // LOCAL-1: the local-folder bridge (removed in 9.02.00, LOCAL-GONE)
   function local() { try { return shellWin().orosLocal || null; } catch (e) { return null; } }
   function isLocal(p) { return typeof p === "string" && /^local:/i.test(p.trim()); }
   function localWhy(e) { return e && /^(notAllowedRoot|badPath|bridgePaused|needsReconnect|notThere|notFile|notFolder|timeout)$/.test(e.why) ? e.why : "unreadable"; }

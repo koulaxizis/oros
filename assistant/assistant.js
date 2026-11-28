@@ -5218,7 +5218,7 @@
   }
   function cfErr(msg) { return { content: "Error: " + msg, err: 1, ui: { k: "toolErr", why: "cf" } }; }
   // LOCAL-1 (temporary): the local folders the owner opened for Claude
-  // (localroots.js in the shell), listed read-only; Layout or Files must
+  // (removed in 9.02.00, LOCAL-GONE), listed read-only; Layout or Files must
   // be readable for Claude.
   function localBridge() { try { var p = window.parent && window.parent !== window ? window.parent : window; return p.orosLocal || null; } catch (e) { return null; } }
   // LOCAL-1: what a local-folder error means and the path form to use
@@ -5231,7 +5231,7 @@
     needsReconnect: "the browser lost its permission for the folder after a restart: the owner must press Reconnect on the bar at the bottom of orOS, then try again (or open it again as a folder of the computer by its path, which keeps: local_folders_request)",
     notHere: "that folder is on the owner's computer, and this device is not it: it runs where orOS runs on that computer (a window, minimised, or in the tray)",
     bridgePaused: "the owner paused the local folders (the bar at the bottom of orOS has Resume)",
-    noBridge: "this orOS has no local folders", tooBig: "the file is larger than 80 MB",
+    noBridge: "paths starting with local: are no longer offered (LOCAL-GONE): orOS Drive mirrors the owner's computer folders into /internal/Drive/<computer>/<folder>; use that path (files_list on /internal/Drive), and ask for it with claude_folders_request if it is not among Claude's folders", tooBig: "the file is larger than 80 MB",
     cancelled: "the commands were stopped (cancel, or the owner pressed Stop); what they changed before stays, with Undo",
     timeout: "a file did not answer in time (15 s for a read, 60 s without progress for the whole run), so Layout stopped; nothing more was changed and Layout takes the next command"
   };
@@ -5243,8 +5243,11 @@
       (h.at ? ", waiting for " + String(h.at).slice(0, 200) : "") + (h.idle >= 0 ? ", " + (+h.idle) + " s since its last progress" : "") +
       "; it stops by itself after 60 s without progress, or send steps [{\"op\":\"cancel\"}] to stop it now";
   }
+  // LOCAL-GONE (Chris 2026-11-27): no local folders any more; the hint
+  // points to orOS Drive's folders on the orOS disk.
   function localHint() {
     var L = localBridge(), l = [];
+    if (!L) return " " + "Paths starting with local: are no longer offered (LOCAL-GONE): orOS Drive mirrors the owner's computer folders into /internal/Drive/<computer>/<folder>; use that path (files_list on /internal/Drive), and ask for it with claude_folders_request if it is not among Claude's folders" + ".";
     try { l = L && typeof L.names === "function" ? L.names() : []; } catch (e) { l = []; }
     var roots = l.map(function (r) { return "local:" + r.name + (r.mode === "w" ? " (write)" : ""); });
     return " Use local:<root>/<path inside it> with / between the parts, as files_list shows it (files_list with no path lists the roots" +
@@ -5264,7 +5267,7 @@
   }
   function localList(a, apps) {
     var L = localBridge();
-    if (!L) return Promise.resolve(cfErr("local folders are not available on this device."));
+    if (!L) return Promise.resolve(cfErr("paths starting with local: are no longer offered (LOCAL-GONE): orOS Drive mirrors the owner's computer folders into /internal/Drive/<computer>/<folder>; use that path (files_list on /internal/Drive), and ask for it with claude_folders_request if it is not among Claude's folders."));
     if (!appOf(apps, "layout") && !appOf(apps, "files")) return Promise.resolve(cfErr("Claude may not read Layout or Files."));
     var depth = Math.max(1, Math.min(3, Math.floor(Number(a.depth) || 1))), off = Math.max(0, Math.floor(Number(a.offset) || 0));
     return Promise.all([L.ls(String(a.path).trim(), depth, "files_list"), cfMod()]).then(function (r) {
