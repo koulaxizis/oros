@@ -130,7 +130,17 @@
       "rec.name": "Voice {n}",
       "tx.push": "Push up", "tx.zoom": "Zoom", "tx.circle": "Circle",
       "flt.vintage": "Vintage", "flt.chrome": "Chrome", "flt.dusk": "Dusk", "flt.golden": "Golden",
-      "tool.subs": "Subtitles", "tool.freeze": "Freeze frame",
+      "tool.subs": "Subtitles", "tool.freeze": "Freeze frame", "tool.silence": "Remove silences",
+      "sil.title": "Remove silences",
+      "sil.hint": "Finds the pauses in what is said in the videos of the main row and cuts them out. Text, music and overlays move with the picture. Everything happens on this device, and you can undo it.",
+      "sil.hintOne": "Finds the pauses in what is said in this clip and cuts them out. Text, music and overlays move with the picture. Everything happens on this device, and you can undo it.",
+      "sil.need": "The first time, Montage downloads the speech detector (Silero VAD, {mb} MB, from our own copy) and the speech runtime (about {rt} MB, from this site) and keeps them on this device.",
+      "sil.ready": "The speech detector is on this device.",
+      "sil.min": "Shortest pause to cut", "sil.s": "{s} s", "sil.go": "Find the pauses",
+      "sil.mixing": "Reading the sound… {p}%", "sil.listen": "Finding where someone speaks… {p}%",
+      "sil.none": "No pauses to cut were found.", "sil.found": "Found {n} pauses, {s} s in total. Cut them out?",
+      "sil.cut": "Cut them", "sil.done": "{n} pauses cut, the video is {s} s shorter.",
+      "sil.fail": "The pauses could not be found.", "sil.net": "The speech detector could not be downloaded. Check your connection and try again.",
       "sub.title": "Subtitles", "sub.count": "{n} text clips on the Text row. Each one becomes a subtitle line when you save an SRT file.",
       "sub.add": "Add a subtitle", "sub.import": "Open an SRT file", "sub.export": "Save as SRT",
       "sub.hint": "SRT files (and WebVTT) from YouTube, subtitle sites or other editors come in as text clips you can edit.",
@@ -280,7 +290,17 @@
       "rec.name": "Φωνή {n}",
       "tx.push": "Σπρώξιμο πάνω", "tx.zoom": "Ζουμ", "tx.circle": "Κύκλος",
       "flt.vintage": "Παλιό", "flt.chrome": "Χρώμιο", "flt.dusk": "Σούρουπο", "flt.golden": "Χρυσό",
-      "tool.subs": "Υπότιτλοι", "tool.freeze": "Πάγωμα καρέ",
+      "tool.subs": "Υπότιτλοι", "tool.freeze": "Πάγωμα καρέ", "tool.silence": "Αφαίρεση σιωπών",
+      "sil.title": "Αφαίρεση σιωπών",
+      "sil.hint": "Βρίσκει τις παύσεις στην ομιλία των βίντεο της κύριας γραμμής και τις κόβει. Τα κείμενα, η μουσική και οι επικαλύψεις μετακινούνται μαζί με την εικόνα. Όλα γίνονται σε αυτή τη συσκευή και μπορείς να το αναιρέσεις.",
+      "sil.hintOne": "Βρίσκει τις παύσεις στην ομιλία αυτού του κλιπ και τις κόβει. Τα κείμενα, η μουσική και οι επικαλύψεις μετακινούνται μαζί με την εικόνα. Όλα γίνονται σε αυτή τη συσκευή και μπορείς να το αναιρέσεις.",
+      "sil.need": "Την πρώτη φορά το Μοντάζ κατεβάζει τον ανιχνευτή ομιλίας (Silero VAD, {mb} MB, από το δικό μας αντίγραφο) και το πρόγραμμα που τον τρέχει (περίπου {rt} MB, από αυτόν τον ιστότοπο) και τα κρατά σε αυτή τη συσκευή.",
+      "sil.ready": "Ο ανιχνευτής ομιλίας είναι σε αυτή τη συσκευή.",
+      "sil.min": "Μικρότερη παύση που κόβεται", "sil.s": "{s} δ.", "sil.go": "Βρες τις παύσεις",
+      "sil.mixing": "Διαβάζω τον ήχο… {p}%", "sil.listen": "Βρίσκω πού μιλά κάποιος… {p}%",
+      "sil.none": "Δεν βρέθηκαν παύσεις για κόψιμο.", "sil.found": "Βρέθηκαν {n} παύσεις, {s} δ. συνολικά. Να κοπούν;",
+      "sil.cut": "Κόψ' τες", "sil.done": "Κόπηκαν {n} παύσεις, το βίντεο έγινε {s} δ. μικρότερο.",
+      "sil.fail": "Δεν ήταν δυνατό να βρεθούν οι παύσεις.", "sil.net": "Δεν ήταν δυνατή η λήψη του ανιχνευτή ομιλίας. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "sub.title": "Υπότιτλοι", "sub.count": "{n} κείμενα στη γραμμή Κείμενο. Το καθένα γίνεται μια γραμμή υποτίτλων όταν αποθηκεύεις αρχείο SRT.",
       "sub.add": "Πρόσθεσε υπότιτλο", "sub.import": "Άνοιξε αρχείο SRT", "sub.export": "Αποθήκευση ως SRT",
       "sub.hint": "Αρχεία SRT (και WebVTT) από το YouTube, σελίδες υποτίτλων ή άλλα προγράμματα μπαίνουν ως κείμενα που μπορείς να αλλάξεις.",
@@ -400,7 +420,7 @@
 
   // ---------- 2. Storage, prefs, edits + undo ----------
   var data = C.merge(null, null);
-  var prefs = { pps: 40, short: 1080, keep: false, what: "video", gif: 480, asr: "auto" };
+  var prefs = { pps: 40, short: 1080, keep: false, what: "video", gif: 480, asr: "auto", sil: 0.6 };
 
   function load() {
     var raw = null;
@@ -431,6 +451,7 @@
         prefs.what = p.what === "sound" || p.what === "gif" ? p.what : "video";
         prefs.gif = p.gif === 320 ? 320 : 480;
         prefs.asr = p.asr === "en" || p.asr === "el" ? p.asr : "auto";
+        prefs.sil = [0.3, 0.6, 1.2].indexOf(p.sil) >= 0 ? p.sil : 0.6;
       }
     } catch (e) {}
   }
@@ -955,6 +976,7 @@
       bar.appendChild(toolBtn("audio", t("tool.audio"), addSound));
       bar.appendChild(toolBtn("text", t("tool.text"), addText));
       bar.appendChild(toolBtn("cc", t("tool.subs"), subtitlesDialog));
+      if (window.MontageASR && MX.speech16k) bar.appendChild(toolBtn("silence", t("tool.silence"), function () { silencesDialog(null); }, null, !C.soundPlan(p).length));
       bar.appendChild(toolBtn("shapes", t("tool.shapes"), shapesDialog));
       bar.appendChild(toolBtn("tr_a2", t("tool.voice"), recordVoice));
       bar.appendChild(toolBtn("split", t("tool.split"), splitAtPlayhead, null, !clipAt(tNow)));
@@ -990,6 +1012,7 @@
       bar.appendChild(toolBtn(it.mu ? "volume" : "mute", t(it.mu ? "tool.unmute" : "tool.mute"), function () { edit({ mu: !it.mu }); }));
       if (!it.mu) bar.appendChild(toolBtn("detach", t("tool.detach"), detachSound));
       if (it.tr === "main") bar.appendChild(toolBtn("freeze", t("tool.freeze"), freezeFrame));
+      if (it.tr === "main" && !it.mu && !it.rv && window.MontageASR && MX.speech16k) bar.appendChild(toolBtn("silence", t("tool.silence"), function () { silencesDialog(it.id); }));
       bar.appendChild(toolBtn("reverse", t(it.rv ? "tool.forward" : "tool.reverse"), function () {
         if (edit({ rv: !it.rv }) && !it.rv) showToast(t("toast.reversed"));
       }));
@@ -1646,7 +1669,19 @@
       project: p, file: MM.get, cancelled: cancelled,
       progress: function (q) { busy(t("asr.mixing", { p: Math.round(q * 100) }), q, cancel); }
     }).then(function (samples) {
+      // DICT-1: only where someone speaks (Whisper invents words in
+      // silence); without the detector, everything as before.
+      return loadVad().then(function (VAD) {
+        return VAD.speech(samples, { cancelled: cancelled, signal: ctl ? ctl.signal : undefined,
+          progress: function (q) { busy(t("sil.listen", { p: Math.round(q * 100) }), q, cancel); } });
+      }).then(function (sp) { return VADW.windows(sp); }, function (e) {
+        if (stop) throw e;
+        return null;
+      }).then(function (spans) { return { samples: samples, spans: spans }; });
+    }).then(function (x) {
+      var samples = x.samples;
       return MontageASR.run(samples, {
+        spans: x.spans || undefined,
         lang: lang, cancelled: cancelled, signal: ctl ? ctl.signal : undefined,
         progress: function (q, stage) {
           busy(t(stage === "download" ? "asr.download" : "asr.working", { p: Math.round(q * 100) }), q, cancel);
@@ -1666,6 +1701,80 @@
       busy(null);
       if (stop) return;
       showToast(e && /^http|fetch|network/i.test(String(e.message || e)) ? t("asr.net") : t("asr.fail"));
+    });
+  }
+  // ---------- DICT-1: Remove silences ----------
+  // Silero VAD (vad.js, loaded when first needed) finds where someone
+  // speaks in the main row's sound; the pauses of at least prefs.sil
+  // seconds are cut out of the main row's videos (core cutRanges), one
+  // edit with Undo. onlyId = one clip.
+  var VADW = null, vadP = null;
+  function loadVad() {
+    if (window.OrosVAD) { VADW = window.OrosVAD; return Promise.resolve(VADW); }
+    if (!vadP) {
+      vadP = new Promise(function (resolve, reject) {
+        var sc = document.createElement("script"), v = (document.querySelector('script[src*="asr.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+        sc.src = "vad.js" + (m ? "?v=" + m[1] : "");
+        sc.onload = function () { if (window.OrosVAD) { VADW = window.OrosVAD; resolve(VADW); } else reject(new Error("no-vad")); };
+        sc.onerror = function () { sc.remove(); reject(new Error("no-vad")); };
+        document.head.appendChild(sc);
+      });
+      vadP.catch(function () { vadP = null; });
+    }
+    return vadP;
+  }
+  function silencesDialog(onlyId) {
+    var p = cur();
+    if (!p) return;
+    if (player && player.playing()) player.pause();
+    var body = openDialog(t("sil.title"));
+    body.appendChild(el("p", "hint", t(onlyId ? "sil.hintOne" : "sil.hint")));
+    var need = el("p", "hint small", t("sil.need", { mb: 2.3, rt: MontageASR.RUNTIME_MB }));
+    body.appendChild(need);
+    var gap = prefs.sil;
+    chipField(body, t("sil.min"), [[0.3, t("sil.s", { s: fmtSec(0.3) })], [0.6, t("sil.s", { s: fmtSec(0.6) })], [1.2, t("sil.s", { s: fmtSec(1.2) })]], gap, function (v) {
+      gap = v; prefs.sil = v; savePrefs();
+    });
+    actions(body, [[t("sil.go"), "primary", function () { closeDialog(); findSilences(onlyId, gap); }]]);
+    loadVad().then(function (V) { return V.ready(); }).then(function (yes) { if (yes) need.textContent = t("sil.ready"); }, function () {});
+  }
+  function fmtSec(x) { return (LANG === "en" ? String(x) : String(x).replace(".", ",")); }
+  function findSilences(onlyId, gap) {
+    var p = cur();
+    if (!p) return;
+    var stop = false, ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var cancel = function () { stop = true; if (ctl) ctl.abort(); };
+    var cancelled = function () { return stop; };
+    var at = pid;
+    busy(t("sil.mixing", { p: 0 }), 0, cancel);
+    var dur = Math.min(C.duration(p), MX.SPEECH_MAX_SEC);
+    Promise.all([loadVad(), MX.speech16k({
+      project: p, file: MM.get, cancelled: cancelled, mainOnly: true,
+      progress: function (q) { busy(t("sil.mixing", { p: Math.round(q * 100) }), q, cancel); }
+    })]).then(function (r) {
+      return r[0].speech(r[1], { cancelled: cancelled, signal: ctl ? ctl.signal : undefined,
+        progress: function (q) { busy(t("sil.listen", { p: Math.round(q * 100) }), q, cancel); } });
+    }).then(function (speech) {
+      busy(null);
+      if (stop || pid !== at || !cur()) return;
+      var cuts = VADW.silences(speech, dur, gap, 0.15);
+      var trial = C.cutRanges(data, pid, cuts, Date.now(), uid, { only: onlyId || null });
+      if (!trial.n) { showToast(t("sil.none")); return; }
+      var body = openDialog(t("sil.title"));
+      body.appendChild(el("p", "hint", t("sil.found", { n: trial.n, s: fmtSec(Math.round(trial.removed * 10) / 10) })));
+      actions(body, [[t("btn.cancel"), "", closeDialog], [t("sil.cut"), "primary", function () {
+        closeDialog();
+        if (pid !== at) return;
+        var r = C.cutRanges(data, pid, cuts, Date.now(), uid, { only: onlyId || null });
+        if (r.n && commit(r.data)) {
+          select(null);
+          undoToast(t("sil.done", { n: r.n, s: fmtSec(Math.round(r.removed * 10) / 10) }), undo);
+        }
+      }]]);
+    }, function (e) {
+      busy(null);
+      if (stop) return;
+      showToast(e && /^http|fetch|network|hash|no-vad/i.test(String(e.message || e)) ? t("sil.net") : t("sil.fail"));
     });
   }
   function addSubtitle() {
@@ -2668,6 +2777,7 @@
     shapes: SV('<circle cx="8" cy="8" r="5"/><rect x="11" y="11" width="10" height="10" rx="1"/>'),
     chroma: SV('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="10" r="2.6"/><path d="M7.5 20c.6-3.4 2.4-5.2 4.5-5.2s3.9 1.8 4.5 5.2"/>'),
     reframe: SV('<path d="M8 3H4v4M16 3h4v4M8 21H4v-4M16 21h4v-4"/><rect x="9" y="7" width="6" height="10" rx="1"/>'),
+    silence: SV('<path d="M2 12h4M18 12h4"/><path d="M8 6v12M16 6v12"/><path d="M10.5 12h3" stroke-dasharray="1 2"/>'),
     denoise: SV('<path d="M2 12h3l2-4 3 9 3-12 3 12 2-5h4"/>'),
     tr_a2: SV('<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/>')
   };

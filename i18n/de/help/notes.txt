@@ -47,6 +47,14 @@ Die Kalender-Taste neben dem Titel (`Notiz von heute`) öffnet die Seite für he
 
 Vorlagen sind Seiten unter einer Seite namens `Vorlagen` (in einem beliebigen Notizbuch). Die Vorlagen-Taste unter dem Baum oder `Neue Seite aus Vorlage…` im Seitenmenü listet sie auf; wähle eine, gib der neuen Seite einen Titel, und ihr Text wird hineinkopiert. In einer Vorlage wird `{{date}}` zum heutigen Datum, `{{time}}` zur Uhrzeit und `{{title}}` zum Titel der neuen Seite. Eine Vorlage namens `Täglich` wird statt der eingebauten für die tägliche Notiz verwendet.
 
+## Diktieren
+
+Die Schaltfläche `Diktieren` (das Mikrofon mit Linien, als Erstes in der Formatleiste) schreibt, was du sagst, direkt in die Seite, an deinem Cursor (oder am Ende). Sprich ganz normal: Bei jeder Pause wird der eben gesagte Satz geschrieben, während du weitersprichst.
+- Es stoppt, wenn du es noch einmal antippst, 3 Sekunden nach deinem letzten Satz oder nach 8 Sekunden, wenn du am Anfang nichts sagst.
+- Am Ende nimmt ein Hinweis mit `Rückgängig` das ganze Diktat wieder heraus; Strg+Z nimmt es Satz für Satz heraus.
+- Es hört in der Sprache zu, die in den `Einstellungen` des Assistenten → `Spracheingabe` → `Die Sprache, die du sprichst` steht (anfangs die Sprache von orOS). Alles geschieht auf diesem Gerät mit dem Sprachmodell Whisper und einem kleinen Spracherkenner (Silero VAD); nichts, was du sagst, wird aufgenommen oder irgendwohin gesendet. Wo der Browser die Grafikkarte nutzen kann (WebGPU), nimmt es Whisper small, das Griechisch viel besser schreibt; sonst Whisper base (oder das Modell, das du für die Spracheingabe des Assistenten gewählt hast). Beim ersten Mal fragt es, bevor es sie herunterlädt (die Größe wird angezeigt), danach funktioniert es offline.
+- Namen und Zahlen können falsch herauskommen: lies es noch einmal durch.
+
 ## Sprachnotizen
 Die Mikrofon-Taste neben dem Titel nimmt in die offene Seite auf. Die Leiste unter der Werkzeugleiste zeigt die Zeit und den Pegel; `Pause` hält an, der Haken beendet und speichert, `×` verwirft. Nach dem Beenden kommt eine Zeile wie `🎙 voice:2026-11-12-181005-a7k2.webm (0:42)` in die Seite, nach der Zeile, in der dein Cursor stand (sonst ans Ende), und ein Player erscheint unter der Seite in der Leiste `Aufnahmen` und in der `Vorschau` an der Stelle dieser Zeile. Der Player spielt und pausiert, springt an jede Stelle und spielt mit 1×, 1,5× oder 2×; sein Menü `⋯` hat den Rest: `Transkribieren`, `Kürzen…`, `An Studio senden`, `Herunterladen` und `Löschen`.
 

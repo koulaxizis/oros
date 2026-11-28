@@ -658,6 +658,12 @@
       "fmt.task": "Checkbox",
       "fmt.link": "Link",
       "fmt.code": "Code",
+      "dk.btn": "Dictate", "dk.stop": "Stop dictating", "dk.go": "Download and start",
+      "dk.need": "Dictation writes what you say on this device, with Whisper. The first time it downloads about {mb} MB (the speech model from our own copy, the speech detector and the runtime from this site) and keeps them; after that it works offline. Nothing you say leaves this device.",
+      "dk.loading0": "Getting ready…", "dk.loading": "Getting ready… {p}%", "dk.listen": "Listening: speak now", "dk.listenMore": "Listening…",
+      "dk.hear": "Hearing you…", "dk.write": "Writing…", "dk.finishing": "Finishing…",
+      "dk.none": "Nothing was heard.", "dk.done": "Dictation: {n} phrases added to the page.", "dk.fail": "Dictation could not start.",
+      "dk.net": "The speech model could not be downloaded. Check your connection and try again.",
       "tr.btn": "Translate", "tr.replace": "Replace", "tr.replaceSel": "Replace the selection", "tr.below": "Add below",
       "tr.none": "There is no text to translate yet.", "tr.fail": "The translator could not be loaded.", "tr.changed": "The page changed meanwhile, so nothing was put in.",
       "preview.empty": "Nothing here yet. Switch to Edit to write.",
@@ -696,6 +702,12 @@
       "fmt.task": "Κουτάκι επιλογής",
       "fmt.link": "Σύνδεσμος",
       "fmt.code": "Κώδικας",
+      "dk.btn": "Υπαγόρευση", "dk.stop": "Τέλος υπαγόρευσης", "dk.go": "Λήψη και έναρξη",
+      "dk.need": "Η υπαγόρευση γράφει όσα λες σε αυτή τη συσκευή, με το Whisper. Την πρώτη φορά κατεβάζει περίπου {mb} MB (το μοντέλο ομιλίας από το δικό μας αντίγραφο, τον ανιχνευτή ομιλίας και το πρόγραμμα που τα τρέχει από αυτόν τον ιστότοπο) και τα κρατά· μετά δουλεύει και χωρίς σύνδεση. Τίποτα από όσα λες δεν φεύγει από τη συσκευή.",
+      "dk.loading0": "Ετοιμάζομαι…", "dk.loading": "Ετοιμάζομαι… {p}%", "dk.listen": "Ακούω: μίλα τώρα", "dk.listenMore": "Ακούω…",
+      "dk.hear": "Σε ακούω…", "dk.write": "Γράφω…", "dk.finishing": "Ολοκληρώνω…",
+      "dk.none": "Δεν ακούστηκε τίποτα.", "dk.done": "Υπαγόρευση: μπήκαν {n} φράσεις στη σελίδα.", "dk.fail": "Η υπαγόρευση δεν ξεκίνησε.",
+      "dk.net": "Δεν ήταν δυνατή η λήψη του μοντέλου ομιλίας. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "tr.btn": "Μετάφραση", "tr.replace": "Αντικατάσταση", "tr.replaceSel": "Αντικατάσταση της επιλογής", "tr.below": "Προσθήκη από κάτω",
       "tr.none": "Δεν υπάρχει ακόμη κείμενο για μετάφραση.", "tr.fail": "Ο μεταφραστής δεν φορτώθηκε.", "tr.changed": "Η σελίδα άλλαξε στο μεταξύ, οπότε δεν μπήκε τίποτα.",
       "preview.empty": "Δεν υπάρχει τίποτα ακόμη. Πάτα Επεξεργασία για να γράψεις.",
@@ -3381,6 +3393,100 @@
   // Translate (translate/panel.js, TRANSLATE T3): the selection, or the
   // whole page, on the device. Replace / Add below go in as one edit of
   // the textarea (Ctrl+Z undoes it), only if the page is still the same.
+  // ---------- DICT-2: Dictate (../montage/listen.js) ----------
+  // The microphone → Silero VAD cuts at the pauses → Whisper writes
+  // each phrase at the caret while the person keeps talking. All on
+  // this device. Stops on a tap, 8 s after the start if nobody speaks,
+  // or 3 s after the last phrase. One notice at the end takes the
+  // whole dictation out again (Undo); Ctrl+Z also undoes phrase by phrase.
+  var DK_ICON = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="6" height="11" rx="3"/><path d="M2 10a6 6 0 0 0 12 0"/><line x1="8" y1="16" x2="8" y2="20"/><line x1="15" y1="13" x2="22" y2="13"/><line x1="15" y1="17" x2="22" y2="17"/><line x1="11" y1="21" x2="22" y2="21"/></svg>';
+  var dk = { run: null, st: "", pid: null, pos: 0, before: null, n: 0 };
+  function dkModel() {
+    var A = window.MontageASR;
+    return A && A.preferred ? A.preferred() : "base";
+  }
+  function dkLang() {
+    var A = window.MontageASR;   // the language chosen in the Assistant's Voice input, shared
+    return A && A.speakLang ? A.speakLang(LANG) : (LANG === "el" || LANG === "de" ? LANG : "auto");
+  }
+  function dkLoad() {
+    if (window.OrosListen) return window.OrosListen.load().then(function () { return window.OrosListen; });
+    return loadScript("../montage/listen.js").then(function () {
+      if (!window.OrosListen) throw new Error("no-listen");
+      return window.OrosListen.load().then(function () { return window.OrosListen; });
+    });
+  }
+  function dkDraw(note) {
+    var b = document.getElementById("btn-dictate"), n = document.getElementById("dk-note");
+    if (b) {
+      var on = !!dk.run;
+      b.classList.toggle("rec", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      var lbl = t(on ? "dk.stop" : "dk.btn");
+      b.title = lbl; b.setAttribute("aria-label", lbl);
+    }
+    if (n && note !== undefined) { n.hidden = !note; n.textContent = note || ""; }
+  }
+  function dictateTap() {
+    if (dk.run) { dk.run.stop(); dkDraw(t("dk.finishing")); return; }
+    var ta = document.getElementById("page-text"), page = pageById(prefs.current);
+    if (!ta || !page || ta.disabled) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast(t("vc.noMic")); return; }
+    dkLoad().then(function (L) {
+      if (!L.can()) { toast(t("vc.noMic")); return; }
+      var A = window.MontageASR, V = window.OrosVAD;
+      return Promise.resolve(A.pick ? A.pick() : dkModel()).then(function (model) {
+        // keep the choice, so the runtime loaded first (VAD) is the one it needs
+        if (A.setPreferred) A.setPreferred(model);
+        return Promise.all([A.ready(model), V.ready(), model]);
+      }).then(function (r) {
+        var model = r[2];
+        var at = document.activeElement === ta || voiceCaretPage === page.id ? ta.selectionEnd : ta.value.length;
+        if (r[0] && r[1]) { dkStart(L, model, at); return; }
+        uiDlg(t("dk.btn"), tf("dk.need", { mb: Math.round((r[0] ? 0 : A.mbOf(model)) + (r[1] ? 0 : V.MB) + (A.rtMbOf ? A.rtMbOf(model) : A.RUNTIME_MB)) }), [
+          { label: t("dlg.cancel") },
+          { label: t("dk.go"), primary: true, fn: function () { dkStart(L, model, at); } }
+        ], null);
+      });
+    }).catch(function () { toast(t("dk.fail")); });
+  }
+  function dkStart(L, model, at) {
+    var ta = document.getElementById("page-text"), page = pageById(prefs.current);
+    if (!ta || !page || dk.run) return;
+    dk.pid = page.id; dk.before = ta.value; dk.n = 0;
+    dk.pos = at >= 0 ? Math.min(at, ta.value.length) : ta.value.length;
+    dk.run = L.start({
+      lang: dkLang(), langs: window.MontageASR && window.MontageASR.SPEAK_AUTO, model: model, waitFirst: 8000, waitAfter: 3000,
+      onState: function (st, info) {
+        if (st === "load") dkDraw(tf("dk.loading", { p: Math.round((info || 0) * 100) }));
+        else if (st === "listen") dkDraw(t(dk.n ? "dk.listenMore" : "dk.listen"));
+        else if (st === "speak") dkDraw(t("dk.hear"));
+        else if (st === "write") dkDraw(t("dk.write"));
+        else if (st === "done" || st === "error") {
+          var n = dk.n, pid = dk.pid, before = dk.before, after = (document.getElementById("page-text") || {}).value;
+          dk.run = null; dkDraw(null);
+          if (st === "error") { toast(t(info === "denied" ? "vc.denied" : info === "nomic" ? "vc.noMic" : info === "net" ? "dk.net" : "dk.fail")); }
+          if (!n) { if (st === "done") toast(t("dk.none")); return; }
+          notifyUndo(tf("dk.done", { n: n }), function () {
+            var el = document.getElementById("page-text");
+            if (!el || prefs.current !== pid || el.value !== after) { toast(t("tr.changed")); return; }
+            replaceEditorText(el, before, before.length, before.length);
+          });
+        }
+      },
+      onText: function (text) {
+        var el = document.getElementById("page-text");
+        if (!el || el.disabled || prefs.current !== dk.pid) return;
+        var cur = el.value, pos = Math.min(dk.pos, cur.length), head = cur.slice(0, pos);
+        var sep = !head || /[\s(\[«"'“]$/.test(head) ? "" : " ";
+        var tail = cur.slice(pos, pos + 1), ins = sep + text + (tail && !/[\s.,;:!?·)\]»"'”]/.test(tail) ? " " : "");
+        var end = pos + sep.length + text.length;
+        replaceEditorText(el, head + ins + cur.slice(pos), end, end);
+        dk.pos = pos + sep.length + text.length; dk.n++;
+      }
+    });
+    dkDraw(t("dk.loading0"));
+  }
   function translatePage() {
     var ta = document.getElementById("page-text");
     var page = pageById(prefs.current);
@@ -3447,7 +3553,26 @@
     trb.addEventListener("mousedown", function (e) { e.preventDefault(); });
     trb.addEventListener("click", translatePage);
     fmt.appendChild(trb);
+    // DICT-2: dictate into the page (Whisper on this device)
+    var dkb = document.createElement("button");
+    dkb.type = "button";
+    dkb.className = "fmt-btn";
+    dkb.id = "btn-dictate";
+    dkb.title = t("dk.btn");
+    dkb.setAttribute("aria-label", t("dk.btn"));
+    dkb.setAttribute("aria-pressed", "false");
+    dkb.innerHTML = DK_ICON;
+    dkb.addEventListener("pointerdown", function (e) { e.preventDefault(); });
+    dkb.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    dkb.addEventListener("click", dictateTap);
+    fmt.insertBefore(dkb, fmt.firstChild);
     bar.appendChild(fmt);
+    var dkn = document.createElement("span");
+    dkn.id = "dk-note";
+    dkn.className = "dk-note";
+    dkn.setAttribute("aria-live", "polite");
+    dkn.hidden = true;
+    bar.appendChild(dkn);
     var vw = document.createElement("div");
     vw.className = "vw-group";
     vw.setAttribute("role", "group");

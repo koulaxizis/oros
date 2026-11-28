@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "9.22.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "9.23.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -10299,6 +10299,12 @@
         { name: "Whisper tiny (ONNX export by Xenova)", url: "https://huggingface.co/Xenova/whisper-tiny",
           by: "OpenAI; ONNX export by Joshua Lochner", lic: "MIT; Apache-2.0 (export)",
           k: "cr.whisper-tiny" },
+        { name: "Silero VAD 6.2", url: "https://github.com/snakers4/silero-vad",
+          by: "Silero Team", lic: "MIT",
+          k: "cr.silero-vad" },
+        { name: "Whisper small (4-bit ONNX export by onnx-community)", url: "https://huggingface.co/onnx-community/whisper-small",
+          by: "OpenAI; ONNX export by onnx-community", lic: "MIT; Apache-2.0 (export)",
+          k: "cr.whisper-small" },
         { name: "Bergamot translator 0.4.9", url: "https://github.com/browsermt/bergamot-translator",
           by: "The Bergamot project (Edinburgh, Prague, Sheffield, Tartu, Mozilla); Marian NMT", lic: "MPL-2.0",
           k: "cr.bergamot" },

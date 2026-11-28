@@ -3,6 +3,14 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.23.00
+- **Dictation in Notes.** `Dictate` (the first button of the formatting bar) writes what you say at the cursor, phrase by phrase, while you keep talking. It stops when you tap it or stop speaking. One `Undo` takes the whole dictation out again.
+- **Remove silences in Montage.** It finds the pauses in the main row's speech, says how many and how long, and cuts them in one edit. Automatic subtitles now listen only where someone speaks.
+- **The Assistant's microphone writes phrase by phrase** and stops by itself 2 seconds after you stop talking.
+- **Better Greek with the graphics card.** Where the browser can use it (WebGPU), dictation and the Assistant use Whisper small, which writes Greek much better.
+- **Choose the language you speak** (Assistant › Settings › Voice input). With an English orOS, Greek speech no longer comes out in English.
+- All of it happens on this device: a small speech detector (Silero VAD) finds the pauses and Whisper writes. Nothing you say leaves the device.
+
 ## Version 9.22.00
 - **The Assistant reads your Printful store.** Add Printful in `Settings › Connected services` (a token for one store that may only read) and ask "which products are not synced yet?", "how many orders are on hold?" or "what does this tee cost in the catalogue?". Orders come by number and status only, never with the customer's name or address. A routine reads Printful only when you tick `May read Printful`.
 
