@@ -61,7 +61,6 @@ const ASSISTANT_ONLY = {
   printful_read: { why: "Claude reads Printful through its own access when the owner connects it; the gate reads and changes orOS, not Printful (AS-PF)." },
   web_check: { why: "Claude checks sites with its own web tools; the gate reads and changes orOS, not the web." },
   calc: { why: "Claude computes with its own tools; the gate reads and changes orOS." },
-  file_hash: { why: "Gate twin is planned with wave 5b (it needs the gate's tool list in the relay, a Mail-thread change); until then Claude reads the file's text with files_read." },
   open_file: { why: "It opens a file attached to the Assistant's conversation; a gate call has no attachments (a file on the orOS disk opens with do_action open)." }
 };
 

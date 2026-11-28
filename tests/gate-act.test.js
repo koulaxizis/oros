@@ -49,7 +49,7 @@ test("gate tools: only the gate's set, no card or press in any text", () => {
   assert.deepEqual(bad, []);
   g.forEach((t) => {
     assert.equal(t.inputSchema.type, "object", t.name);
-    assert.equal(t.annotations.readOnlyHint, ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "change_history", "files_list", "files_read"].indexOf(t.name) >= 0, t.name);
+    assert.equal(t.annotations.readOnlyHint, ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "change_history", "files_list", "files_read", "file_hash"].indexOf(t.name) >= 0, t.name);
   });
   assert.match(g.find((t) => t.name === "change_item").description, /paused/);
   assert.match(g.find((t) => t.name === "create_items").description, /paused/);

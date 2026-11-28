@@ -274,7 +274,7 @@ A routine is a job the assistant does by itself on a schedule, like a colleague 
 With web search on, ask "is noxpress.tech up?", "what are the MX records of glarolykoi.net?" or "how many pages does the sitemap of useoros.online list?". The page is checked through the orOS relay, DNS through Cloudflare. Only sites you named (or that a search found) are checked. A routine checks sites when it may search the web.
 
 ## Exact sums
-For totals, VAT, percentages, dates and loans the assistant uses the formulas of [Spreadsheet](app:spreadsheet) instead of counting in its head ("what is 24% VAT on these 38 lines?", "how many working days in December?"). It can also give the SHA-256 of a file on the orOS disk, to check a download.
+For totals, VAT, percentages, dates and loans the assistant uses the formulas of [Spreadsheet](app:spreadsheet) instead of counting in its head ("what is 24% VAT on these 38 lines?", "how many working days in December?"). It can also give the SHA-256 of a file on the orOS disk, to check a download; Claude can ask for it through orOS Gate too, in Claude's folders, while orOS is open.
 
 ## Text from pictures and scans
 The assistant reads the text of a picture or a scanned PDF on the orOS disk on your device (Greek and English), also in a routine ("what is the total on the receipt in Drive/Scans?"). In a PDF it reads the pages that are scans and leaves pages with their own text as they are: the first 5 such pages, or up to 15 when you ask for more. Pictures in orOS Drive's folders that are in the cloud only are fetched first (up to 60 MB). Nothing leaves your device for this.

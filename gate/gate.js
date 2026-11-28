@@ -2179,7 +2179,8 @@
   // joins the gate with its own tools (assistant/claudefiles.js), only
   // inside Claude's folders (FILES_KEY, synced). Files stays outside
   // ACT: change_item on files is not offered through the gate.
-  var FILE_READ = ["files_list", "files_read"], FILE_WRITE = ["files_write", "files_move", "files_delete"];
+  // AS-GHASH (2026-11-28): file_hash is the Assistant's SHA-256 of a file, read only like files_read
+  var FILE_READ = ["files_list", "files_read", "file_hash"], FILE_WRITE = ["files_write", "files_move", "files_delete"];
   var FRESH_COPY = FILE_WRITE.concat(["export_pdf", "export_epub", "edit_in_app"]);
   // The changes the relay may queue while orOS is closed (relay/gate.js
   // closedCall): its own change tools less budget_delete and
