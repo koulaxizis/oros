@@ -616,22 +616,10 @@ export const TOOLS = [
     // like files_link: it only makes an address; the change itself is files_write
     annotations: { readOnlyHint: true }
   },
-  {
-    name: "local_folders_request",
-    description: "Asks the owner to open a folder of their computer for Claude (Layout's pictures and texts to read, or a folder to save proofs and PDFs into), for the local:<root>/<path> paths edit_in_app and files_list take. The owner answers on any device where orOS is on screen, the phone too; with nobody at a screen the question waits, encrypted, for the next one (one question per call). Once allowed, it works where orOS runs on that computer, in a window, minimised or in the tray, and the owner can close it any time. Never a whole drive or home folder, nor system, program or key folders. Ask only for the folder the work needs.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        path: { type: "string", description: "The folder's full path on the owner's computer, as Windows shows it (C:\\Users\\<name>\\Documents\\<folder>), or ~/<folder>." },
-        access: { type: "string", enum: ["read", "write"], description: "read (default): only read; write: only new files are saved there, nothing is replaced or deleted." },
-        days: { type: "integer", minimum: 1, maximum: 90, description: "How long, 30 when left out." },
-        reason: { type: "string", description: "One line for the owner: what it is for." }
-      },
-      required: ["path"],
-      additionalProperties: false
-    },
-    annotations: { readOnlyHint: false, destructiveHint: false }
-  },
+  // LOCAL-GONE (Chris 2026-11-27, 9.02.00): local_folders_request is gone.
+  // orOS Drive mirrors the computer's folders into /internal/Drive/<computer>/<folder>,
+  // which Claude asks for with claude_folders_request. A question still
+  // waiting is answered by the device (FOLDER_ASKS keeps it a files question).
   // CF-ASK (Chris 2026-11-22 «Πρόσθεσε τους φακέλους που χρειάζεσαι, σου
   // δίνω έγκριση»): the same question for a folder of the orOS disk, so
   // Claude asks for one of «Claude's folders» instead of the owner adding
@@ -838,6 +826,8 @@ export function isScreenTool(name, args) {
   if (!Object.prototype.hasOwnProperty.call(SCREEN_TOOLS, name)) return false;
   return !(name === "edit_in_app" && args && typeof args === "object" && args.dry_run === true);
 }
+// LOCAL-GONE: local:<root>/<path> paths are gone with local folders for Claude
+const LOCAL_GONE = "local:… paths are gone: orOS Drive mirrors the computer's folders into /internal/Drive/<computer>/<folder>; ask for that folder with claude_folders_request and use its /internal/ path";
 // TRAY-2, CF-ASK: questions for the owner about a folder, kept for a screen
 const FOLDER_ASKS = ["local_folders_request", "claude_folders_request"];
 const LF_NOTE = "Nobody is at an orOS screen now, so the question waits, encrypted, and is asked the next time orOS is on screen on one of the owner's devices (the phone too). Nothing is opened before the owner allows it. Tell the owner to open orOS (on the phone is enough) and answer; change_history shows it pending, and undo_change with change_id cancels it.";
@@ -978,17 +968,19 @@ export function mockupCheck(mock, args, idx, queued, lv) {
   }
   const img = typeof a.image === "string" ? a.image.trim() : "";
   if (!img) errs.push("image: the picture's path");
-  else if (!/^local:/i.test(img)) {
+  else if (/^local:/i.test(img)) errs.push(LOCAL_GONE);
+  else {
     const fp = filePath(img);
-    if (!fp) errs.push("image: a /internal/… path on the orOS disk or local:<root>/<path>");
+    if (!fp) errs.push("image: a /internal/… path on the orOS disk");
     else if (idx && Array.isArray(idx.files) && !(Array.isArray(queued) && queued.indexOf(fp) >= 0) && !idx.files.some((x) => x && x.p === fp)) {
       errs.push("image: " + JSON.stringify(fileShow(fp).slice(0, 200)) + " is neither in the copy of Claude's folders nor waiting in a files_write (bring it in with files_upload and files_write first)");
     }
   }
   const out = typeof a.out === "string" && a.out.trim() ? a.out.trim() : "/internal/Mockups/Claude";
-  if (!/^local:/i.test(out)) {
+  if (/^local:/i.test(out)) errs.push(LOCAL_GONE);
+  else {
     const op = filePath(out);
-    if (!op) errs.push("out: a folder /internal/… on the orOS disk or local:<root>/<folder>");
+    if (!op) errs.push("out: a folder /internal/… on the orOS disk");
     else {
       if (!(lv && lv.files === "write")) errs.push("saving on the orOS disk needs Files at «may change» (the owner's switch)");
       if (idx && Array.isArray(idx.f) && !idx.f.some((d) => underDir(op, d))) errs.push("out: " + JSON.stringify(fileShow(op)) + " is outside Claude's folders: " + idx.f.map(fileShow).join(", "));

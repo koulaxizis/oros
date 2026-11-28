@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.03.01
+- **Claude no longer offers local folders.** Claude and the apps' exports work with Claude's folders on the orOS disk, where orOS Drive brings your computer's folders (Drive › your computer › the folder).
+
 ## Version 9.03.00
 - **Game mode.** While a game from the Games category runs full screen, notifications stay silent and the top bar and the Dock step aside; move the pointer to the top edge to see the bar. Off at first, this device only: Settings › Notifications › Game mode.
 

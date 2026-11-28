@@ -88,7 +88,7 @@
     "project: bpm (" + S.MIN_BPM + "-" + S.MAX_BPM + ", MIDI clips keep their bars and beats, audio stays in time), sig (beats in a bar, 2-7), vol (the master, dB), loop on|off, bars (the loop, e.g. \"5-8\" = bars 5 to 8)",
     "rename: the project's name becomes `title`",
     "create: open a .orosstudio file from Claude's folders as a NEW project (only as the one command, with designs new): from (its /internal/ path, as files_upload or files_write gave it), title (the new project's name; the file's own name when empty). Nothing that exists changes, the user can undo it, and nothing is published",
-    "export: the project's mix (as Export makes it: the loop range or the whole song) as a file, saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Mixes with Files at «may change»; never over a file): fmt wav | mp3 | opus; changes nothing"
+    "export: the project's mix (as Export makes it: the loop range or the whole song) as a file, saved into `out` (a folder of Claude's on the orOS disk such as Drive/Mixes with Files at «may change»; never over a file): fmt wav | mp3 | opus; changes nothing"
   ].join("\n") + "\nA project that is a part of an audiobook (opening, chapter or closing credits) is named \"<book> · <part>\" and its outline carries `book` (the book, the part's place, the other parts, the requirements ACX or Storytel, whether it is normalised); the same commands work on it. Checking, normalising and exporting a book are done in Studio's Books window, not by commands.";
 
   // ---------- 1. Checking ----------

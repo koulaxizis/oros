@@ -96,7 +96,7 @@
     "project: ratio " + M.RATIOS.join("|") + ", fps 30|60, back (the colour behind everything), duck (0-90: how much the music drops under the voice, 0 = off)",
     "rename: the project's name becomes `title`",
     "create: open a .orosmontage file from Claude's folders as a NEW project (only as the one command, with designs new): from (its /internal/ path, as files_upload or files_write gave it), title (the new project's name; the file's own name when empty). Nothing that exists changes, the user can undo it, and nothing is published",
-    "export: the project rendered as Export makes it (fmt video: MP4 or WebM, as the device can; sound: the sound alone; gif: a short GIF), saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Videos with Files at «may change»; never over a file); changes nothing; a long video takes as long as its length or more"
+    "export: the project rendered as Export makes it (fmt video: MP4 or WebM, as the device can; sound: the sound alone; gif: a short GIF), saved into `out` (a folder of Claude's on the orOS disk such as Drive/Videos with Files at «may change»; never over a file); changes nothing; a long video takes as long as its length or more"
   ].join("\n");
 
   // ---------- 1. Checking ----------

@@ -36,7 +36,6 @@ const GATE_ONLY = {
   oros_update: { why: "GL-7: asks the owner's other open devices to fetch and apply the newest orOS, for Claude working from outside while the owner is away; inside orOS the owner presses Update in Settings or the app updates itself." },
   gate_call: { why: "GL-5: runs another gate tool by name for a conversation whose tool list is older; the Assistant always calls its tools directly." },
   claude_folders_request: { why: "CF-ASK: asking the owner, on any device on screen, to add a folder of the orOS disk to Claude's folders from outside; inside orOS the owner adds it in Settings › Connected services › orOS Gate › Claude's folders." },
-  local_folders_request: { why: "Asking the owner, on any device on screen, to open a folder of their computer for Claude from outside; inside orOS the owner opens it in Settings › Connected services › orOS Gate." },
   kanban_add_cards: { twin: ["create_items"] },    // create_items app kanban
   kanban_move_cards: { twin: ["change_item"] },    // change_item action move
   kanban_change_card: { twin: ["change_item"] },
