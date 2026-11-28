@@ -244,8 +244,21 @@
       case "text":
         var rx = finder(st);
         (doc.stories || []).forEach(function (s) {
-          var k = 0;
-          (s.paras || []).forEach(function (p) { k += replacePara(p, rx, st.repl); });
+          var k = 0, emptied = false;
+          (s.paras || []).forEach(function (p) {
+            var had = (p.runs || []).length, got = replacePara(p, rx, st.repl);
+            if (got && had && !(p.runs || []).length) { p.gone = 1; emptied = true; }
+            k += got;
+          });
+          // AS-FR (Chris 2026-11-27): a paragraph the replacement left
+          // with nothing in it goes, so no empty line stays behind (a
+          // story keeps one paragraph)
+          if (emptied) {
+            var left = s.paras.filter(function (p) { return !p.gone; });
+            if (!left.length) { left = [s.paras[0]]; }
+            s.paras.forEach(function (p) { delete p.gone; });
+            s.paras = left;
+          }
           if (k) { touchStory(s, now); n += k; }
         });
         break;

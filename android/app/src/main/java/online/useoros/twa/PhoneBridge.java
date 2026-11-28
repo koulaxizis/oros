@@ -423,6 +423,7 @@ public class PhoneBridge {
             o.put("wtodo", AgendaWidgets.count(app, TodoWidget.class));
             o.put("health", HealthBridge.status(app));
             o.put("drive", hasDrive(app));
+            o.put("rec", ScreenRecordService.running());   // QS-REC-1: the app records the screen
             o.put("app", BuildConfig.VERSION_NAME);
             o.put("af", afState());
         } catch (JSONException ignored) {

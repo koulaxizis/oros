@@ -4617,6 +4617,7 @@
       var wrap = el("div", "ly-text" + (r.lines.length ? " synced" : ""));
       if (r.lines.length) {
         lines = r.lines;
+        if (H && typeof H.lyrics === "function") { try { H.lyrics(c.k, lines); } catch (e) {} }   // ISLAND-1
         rows = lines.map(function (x) {
           var b = el("button", "ly-l", x.s || "♪");
           b.type = "button";

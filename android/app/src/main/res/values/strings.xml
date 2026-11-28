@@ -78,4 +78,10 @@
     <string name="bio_title_lock">Unlock orOS</string>
     <string name="bio_title_on_lock">Turn on fingerprint unlock for orOS</string>
     <string name="bio_use_lock">Use PIN or passphrase</string>
+    <string name="channel_screenrec">Screen recording</string>
+    <string name="rec_running">orOS is recording the screen</string>
+    <string name="rec_running_text">Tap Stop to end it and save the video.</string>
+    <string name="rec_stop">Stop</string>
+    <string name="rec_saved">Screen recording saved</string>
+    <string name="rec_saved_text">In Movies › orOS. Tap to watch it.</string>
 </resources>

@@ -422,7 +422,9 @@
       var b = el("button", "row" + (u.id === cur ? " on" : ""));
       b.type = "button";
       b.setAttribute("aria-current", u.id === cur ? "true" : "false");
-      b.appendChild(el("span", "row-main", C.unitName(u, LANG)));
+      // RATES-1: a currency found by a country's name says which one
+      var land = money ? C.countryHit(u.id, $("pq").value, LANG) : "";
+      b.appendChild(el("span", "row-main", C.unitName(u, LANG) + (land ? " · " + land : "")));
       b.appendChild(el("span", "row-sym", u.sym));
       b.addEventListener("click", function () { pickUnit(u.id); });
       var li = el("li");

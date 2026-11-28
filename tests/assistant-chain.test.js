@@ -155,7 +155,7 @@ test("chain: pickChain takes the first service there on this device", async () =
 
 test("chain: the Assistant picks per turn, retries the next on a cooling error, and says who answers", () => {
   const js = read("assistant/assistant.js");
-  assert.match(js, /C\.pickChain\(data, \{ readKey: readKey, device: onDevice, tools: turnTools\(c\), cool: cool \}\)/);
+  assert.match(js, /C\.pickChain\(data, \{ readKey: readKey, device: onDevice, tools: turnTools\(c\), cool: cool, sys: sysAI \}\)/);
   assert.match(js, /C\.coolFor\(e\) && again \+ 1 < C\.chainOrder\(data\)\.length/);
   assert.match(js, /cool\[pid\] = Date\.now\(\) \+ C\.coolFor\(e\);/);
   assert.match(js, /id = "as-auto"|"as-auto"/);

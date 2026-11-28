@@ -134,6 +134,13 @@ function build(manifest) {
     <uses-sdk tools:overrideLibrary="androidx.health.connect.client" />
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Screen recording (QS-REC-1): a foreground service records the
+         screen with MediaProjection; the microphone only when orOS asks
+         for it and the person allows it. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Passwords' fingerprint unlock (PW-BIO) and autofill (PW-AF2):
          BiometricManager and BiometricPrompt throw without it. -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
@@ -335,6 +342,26 @@ ${aliases}
             </intent-filter>
         </activity>
 
+        <!-- Screen recording (QS-REC-1): opened by the page from a tap on
+             Quick settings' Screen recording ("intent://start?mic=1#Intent;scheme=oros-rec;…");
+             starts (Android's own consent screen) or stops the recording.
+             The orOS app only. -->
+        <activity android:name=".ScreenRecordActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="oros-rec" />
+            </intent-filter>
+        </activity>
+        <service android:name=".ScreenRecordService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection|microphone" />
+
         <activity android:name=".PermissionActivity"
             android:exported="true"
             android:excludeFromRecents="true"
@@ -517,7 +544,7 @@ ${aliases}
 // catches links under /<id>/ (the orOS app keeps the rest).
 const SOLO_LIST = path.join(__dirname, "..", "solo-apps.json");
 const SOLO_GEN = path.join(__dirname, "..", "app", "solo-gen");
-const REMOVE_PERMS = ["SCHEDULE_EXACT_ALARM", "RECEIVE_BOOT_COMPLETED", "READ_CONTACTS", "WRITE_CONTACTS",
+const REMOVE_PERMS = ["FOREGROUND_SERVICE_MEDIA_PROJECTION", "FOREGROUND_SERVICE_MICROPHONE", "RECORD_AUDIO", "SCHEDULE_EXACT_ALARM", "RECEIVE_BOOT_COMPLETED", "READ_CONTACTS", "WRITE_CONTACTS",
   "READ_CALENDAR", "WRITE_CALENDAR", "READ_SYNC_SETTINGS", "WRITE_SYNC_SETTINGS", "GET_ACCOUNTS",
   "health.READ_STEPS", "health.READ_HYDRATION", "health.WRITE_HYDRATION", "health.READ_EXERCISE",
   "health.WRITE_EXERCISE", "health.READ_WEIGHT", "health.READ_RESTING_HEART_RATE", "health.READ_SLEEP",
@@ -526,7 +553,8 @@ const REMOVE_NODES = [["activity", ".AddActivity"], ["activity", ".DiagActivity"
   ["receiver", ".ReminderReceiver"], ["activity", ".HealthPermissionActivity"], ["activity", ".HealthPrivacyActivity"],
   ["activity-alias", "ViewPermissionUsageActivity"], ["receiver", ".TodayWidget"], ["receiver", ".QuickWidget"], ["receiver", ".QuickBarWidget"], ["receiver", ".CalendarWidget"], ["receiver", ".TodoWidget"], ["service", ".AskTile"], ["service", ".QuickTile"],
   ["service", ".AuthenticatorService"], ["service", ".ContactsSyncService"], ["service", ".CalendarSyncService"],
-  ["service", ".OrosAutofillService"], ["activity", ".AfAuthActivity"], ["receiver", ".AfFeedReceiver"]];
+  ["service", ".OrosAutofillService"], ["activity", ".AfAuthActivity"], ["receiver", ".AfFeedReceiver"],
+  ["activity", ".ScreenRecordActivity"], ["service", ".ScreenRecordService"]];
 // orOS Passwords keeps its autofill (PW-AF2/3: the service, the
 // confirm screen, and the one link that opens Android's autofill
 // setting); every other single or page app removes them.

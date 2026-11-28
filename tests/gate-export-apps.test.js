@@ -28,7 +28,8 @@ test("each app's export step: its formats, out required, changes nothing", () =>
     assert.equal(ex.kind, "out", app);
     assert.deepEqual(ex.args.fmt.v, APPS[app], app + " formats");
     assert.equal(ex.args.out.req, 1, app + ": out is required");
-    assert.match(K.GUIDE, /export: .*`out`.*local:<root>\/<folder>.*never over a file/, app + " guide");
+    assert.match(K.GUIDE, /export: .*`out`.*a folder of Claude's on the orOS disk.*never over a file/, app + " guide");
+    assert.doesNotMatch(K.GUIDE, /local:<root>/, app + " guide: local folders are gone (LOCAL-GONE)");
     assert.equal(K.check([{ op: "export", fmt: APPS[app][0] }]).ok, false, app + ": no out, refused");
     const ok = K.check([{ op: "export", fmt: APPS[app][0], out: "Drive/Out" }]);
     assert.equal(ok.ok, true, app);

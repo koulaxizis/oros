@@ -108,7 +108,7 @@
     "notes: the speaker notes of the slides in `pages` become `text`; append true adds it after the notes there",
     "deck: theme " + C.THEME_IDS.join("|") + " (colours and fonts of the whole presentation), aspect 16:9|4:3, footer (footer text), num on|off (slide numbers), date on|off",
     "rename: the presentation's name becomes `title`",
-    "export: the presentation as files, saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Talks with Files at «may change»; never over a file): fmt pdf (handout true = with the speaker notes) | pptx | png (one picture per slide shown); changes nothing"
+    "export: the presentation as files, saved into `out` (a folder of Claude's on the orOS disk such as Drive/Talks with Files at «may change»; never over a file): fmt pdf (handout true = with the speaker notes) | pptx | png (one picture per slide shown); changes nothing"
   ].join("\n");
 
   // ---------- 1. Checking ----------

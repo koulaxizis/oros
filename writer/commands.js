@@ -79,7 +79,7 @@
     "page: paper " + PAPERS.join("|") + ", margins t, b, l, r (top, bottom, left, right in mm, 0-100), header, footer (printed on every page; a single space clears one)",
     "meta: author, tags (comma separated; replaces the list), category, lang (spelling language: auto|en|el|none)",
     "rename: the document's title becomes `title`",
-    "export: the document as a file, saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Texts with Files at «may change»; never over a file): fmt pdf | docx | md | html | txt; changes nothing"
+    "export: the document as a file, saved into `out` (a folder of Claude's on the orOS disk such as Drive/Texts with Files at «may change»; never over a file): fmt pdf | docx | md | html | txt; changes nothing"
   ].join("\n");
 
   // ---------- 1. Checking ----------

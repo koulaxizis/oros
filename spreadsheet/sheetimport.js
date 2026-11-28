@@ -127,10 +127,16 @@ function csvSheet(rows, o) {
 
 function xlPad(n) { return (n < 10 ? "0" : "") + n; }
 
+/* SheetJS 0.20 hands cell dates over "UTC-faithful": the day and time
+   written in the file sit in the UTC fields (1 Mar 2024 is
+   2024-03-01T00:00Z), whatever the device's time zone. Read them back
+   with the UTC getters, or in Athens the day gains a "02:00" and west
+   of Greenwich it becomes the day before. (sheet_to_json, used by
+   Split and Timesheet, converts to local time itself.)               */
 function xlDateStr(d) {
-  var s = d.getFullYear() + "-" + xlPad(d.getMonth() + 1) + "-" + xlPad(d.getDate());
-  if (d.getHours() || d.getMinutes() || d.getSeconds())
-    s += " " + xlPad(d.getHours()) + ":" + xlPad(d.getMinutes());
+  var s = d.getUTCFullYear() + "-" + xlPad(d.getUTCMonth() + 1) + "-" + xlPad(d.getUTCDate());
+  if (d.getUTCHours() || d.getUTCMinutes() || d.getUTCSeconds())
+    s += " " + xlPad(d.getUTCHours()) + ":" + xlPad(d.getUTCMinutes());
   return s;
 }
 
