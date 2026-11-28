@@ -208,3 +208,16 @@ test("wiring: hold labels, Links in my Dropbox, the Dropbox way after a failed d
     assert.ok(de.includes('"' + k + '":'), k + " in DE");
   }
 });
+
+test("wave 2 wiring: the direct link stays open for the next person; Close the link; busy on the receive side; EN/EL/DE", () => {
+  const app = fs.readFileSync(path.join(__dirname, "../transfer/app.js"), "utf8");
+  const de = fs.readFileSync(path.join(__dirname, "../i18n/de/transfer.js"), "utf8");
+  assert.ok(/function session\(\) \{/.test(app) && app.includes("session();"));
+  assert.ok(app.includes("var AGAIN = { left: 1, declined: 1, cancelled: 1, lost: 1, nodirect: 1, bad: 1, version: 1 };"));
+  assert.ok(app.includes('else if (p === "busy") recvStatus(t("st.busy"));'));
+  for (const k of ["share.keepMany", "st.next", "st.done.many", "btn.closeLink", "st.closed", "st.busy"]) {
+    assert.equal(app.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
+    assert.ok(de.includes('"' + k + '":'), k + " in DE");
+  }
+  assert.ok(!/works once, for one person/.test(app));
+});

@@ -9,7 +9,7 @@ Transfer sendet große Dateien und ganze Ordner von der orOS-Disk oder von diese
 - Drücke `Link erstellen`. Du bekommst einen Code wie 7K2M-9QXH-4RTB, einen QR-Code und einen Link. Schick den Link, nutze `Teilen…` auf dem Handy, lass die andere Person den QR-Code mit der Handykamera scannen, oder lies ihr den Code vor.
 - Der Hintergrund wird aus dem Code gezeichnet, deshalb zeigen beide Seiten dieselben Formen. Passt das kleine Bild auf deiner Seite zum Hintergrund der anderen Person, seid ihr miteinander verbunden und mit niemandem sonst.
 - Lass die Seite offen. Du siehst, wann sie sich verbindet, wann sie die Liste ansieht und wie viel angekommen ist. `Abbrechen` stoppt auf beiden Seiten.
-- Ein Link ist für eine Person und eine Übertragung. `Noch etwas senden` beginnt eine neue mit einem neuen Code.
+- Der Link bleibt offen, solange deine Seite offen ist: Hat eine Person die Dateien, kann die nächste denselben Link öffnen, eine Person nach der anderen, so viele du willst. Wer ihn öffnet, während jemand anderes empfängt, wartet, bis er dran ist (bis zu 10 Minuten). `Link schließen` beendet ihn; `Noch etwas senden` beginnt eine neue Übertragung mit einem neuen Code.
 - Mit orOS-Sync über Dropbox funktioniert `Über meine Dropbox senden`, ohne dass die Seite offen bleibt. Siehe „Über deine Dropbox“ unten.
 - Wähle in Dateien Dateien oder Ordner und dann `Mit Transfer senden…`: Transfer öffnet sich mit ihnen in der Liste.
 - Mit installiertem orOS Transfer auf Android legt `Teilen` › orOS Transfer beliebige Dateien (bis zu zehn) auf die Sendeliste. Drücke lange auf das Symbol der App für `Dateien senden`.

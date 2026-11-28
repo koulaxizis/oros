@@ -98,7 +98,12 @@
       "hist.cloud": "through Dropbox",
       "btn.remove": "Remove",
       "share.code": "Code",
-      "share.keep": "Keep this page open until the transfer is done. The link works once, for one person.",
+      "share.keep": "Keep this page open while people receive. The link works while it is open, for one person at a time, as many people as you like.",
+      "share.keepMany": "The link stays open while this page is open, for one person at a time. Received whole so far: {n}.",
+      "st.next": "The link is open. Waiting for the next person… ({n} so far)",
+      "st.done.many": "Every file arrived whole at {dev} ({n} so far). The link stays open for the next person.",
+      "st.busy": "Someone else is receiving these files right now. You are next: this page waits for its turn (up to 10 minutes)…",
+      "btn.closeLink": "Close the link", "st.closed": "The link is closed. Nobody else can receive these files from it.",
       "btn.copy": "Copy", "copied": "Link copied",
       "btn.cancel": "Cancel", "btn.sendMore": "Send something else",
       "recv.intro": "Type the code you were given, or open the link you got.",
@@ -223,7 +228,12 @@
       "hist.cloud": "μέσω Dropbox",
       "btn.remove": "Αφαίρεση",
       "share.code": "Κωδικός",
-      "share.keep": "Κράτα αυτή τη σελίδα ανοιχτή μέχρι να τελειώσει η μεταφορά. Ο σύνδεσμος ισχύει μία φορά, για ένα άτομο.",
+      "share.keep": "Κράτα αυτή τη σελίδα ανοιχτή όσο παραλαμβάνουν. Ο σύνδεσμος ισχύει όσο είναι ανοιχτή, για ένα άτομο τη φορά, για όσα άτομα θέλεις.",
+      "share.keepMany": "Ο σύνδεσμος μένει ανοιχτός όσο είναι ανοιχτή αυτή η σελίδα, για ένα άτομο τη φορά. Τα πήραν ακέραια μέχρι τώρα: {n}.",
+      "st.next": "Ο σύνδεσμος είναι ανοιχτός. Περιμένω τον επόμενο… ({n} μέχρι τώρα)",
+      "st.done.many": "Όλα τα αρχεία έφτασαν ακέραια στο {dev} ({n} μέχρι τώρα). Ο σύνδεσμος μένει ανοιχτός για τον επόμενο.",
+      "st.busy": "Κάποιος άλλος παραλαμβάνει αυτά τα αρχεία τώρα. Είσαι επόμενος: η σελίδα περιμένει τη σειρά της (έως 10 λεπτά)…",
+      "btn.closeLink": "Κλείσιμο συνδέσμου", "st.closed": "Ο σύνδεσμος έκλεισε. Κανείς άλλος δεν μπορεί να πάρει τα αρχεία από αυτόν.",
       "btn.copy": "Αντιγραφή", "copied": "Ο σύνδεσμος αντιγράφηκε",
       "btn.cancel": "Ακύρωση", "btn.sendMore": "Αποστολή κάτι άλλου",
       "recv.intro": "Γράψε τον κωδικό που σου έδωσαν ή άνοιξε τον σύνδεσμο που πήρες.",
@@ -746,52 +756,81 @@
       var p = f.file ? Promise.resolve(f.file) : fs.read(f.src);
       return p.then(function (b) { blobs = {}; blobs[i] = b; return b; });
     }
-    var dev = "", started = false, how = "direct";
-    function log(end, bad) { if (started) record({ dir: "sent", files: manifest, dev: dev, bad: bad, mode: how, end: end }); }
-    sender = new E.Transfer({
-      role: "sender", code: code, dev: devName(), files: manifest, meta: meta, bg: bgBytes,
-      read: function (i, a, b) {
-        return blobOf(i).then(function (blob) { return blob.slice(a, b).arrayBuffer(); }).then(function (buf) { return new Uint8Array(buf); });
-      },
-      onState: function (p, info) {
-        var st = $("send-status");
-        st.className = "status";
-        if (info.dev) dev = info.dev;
-        if (p === "connecting") st.textContent = t("st.connecting");
-        else if (p === "wait") st.textContent = t("st.wait.send");
-        else if (p === "linking") st.textContent = t("st.linking", { dev: dev });
-        else if (p === "offered") st.textContent = t("st.offered", { dev: dev });
-        else if (p === "sending") {
-          if (sender) how = sender.mode() || how;
-          started = true;
-          st.textContent = t(how === "relay" ? "st.sendingRelay" : "st.sending"); busy = true; stayAwake(true);
+    // TR-UNL wave 2: the link stays open while this page is open. When one
+    // person is done (or leaves, declines, cannot connect), a new session
+    // starts on the same code and room for the next one; one at a time
+    // (the relay room holds two sockets), as many as come. Only Close the
+    // link (or a failure on this side) ends it.
+    var served = 0;
+    sendStopped = false;
+    function session() {
+      var dev = "", started = false, how = "direct";
+      function log(end, bad) { if (started) record({ dir: "sent", files: manifest, dev: dev, bad: bad, mode: how, end: end }); }
+      sender = new E.Transfer({
+        role: "sender", code: code, dev: devName(), files: manifest, meta: meta, bg: bgBytes,
+        read: function (i, a, b) {
+          return blobOf(i).then(function (blob) { return blob.slice(a, b).arrayBuffer(); }).then(function (buf) { return new Uint8Array(buf); });
+        },
+        onState: function (p, info) {
+          var st = $("send-status");
+          st.className = "status";
+          if (info.dev) dev = info.dev;
+          if (p === "connecting") st.textContent = served ? t("st.next", { n: served }) : t("st.connecting");
+          else if (p === "wait") st.textContent = served ? t("st.next", { n: served }) : t("st.wait.send");
+          else if (p === "linking") st.textContent = t("st.linking", { dev: dev });
+          else if (p === "offered") st.textContent = t("st.offered", { dev: dev });
+          else if (p === "sending") {
+            if (sender) how = sender.mode() || how;
+            started = true;
+            show("send-prog", true);
+            st.textContent = t(how === "relay" ? "st.sendingRelay" : "st.sending"); busy = true; stayAwake(true);
+          }
+          else if (p === "reconnecting") st.textContent = t("st.reconnecting");
+          else if (p === "done") {
+            busy = false; stayAwake(false);
+            var bad = info.bad || [];
+            served++;
+            log("done", bad);
+            next(bad.length ? t("st.someBad", { n: bad.length, names: bad.slice(0, 5).map(function (i) { return manifest[i].p; }).join(", ") }) : t("st.done.many", { dev: dev || t("hist.someone"), n: served }), bad.length ? "warn" : "ok");
+          } else if (p === "error") {
+            busy = false; stayAwake(false);
+            log("stopped", []);
+            // no direct link and too big for the relay → the same files through the sender's own Dropbox, one press
+            var viaCloud = info.e === "nodirect" && !!cloudApi() && !!X;
+            show("to-cloud", viaCloud);
+            var why = errText(info.e) + (viaCloud ? " " + t("nodirect.cloud") : "");
+            if (sendStopped || !AGAIN[info.e]) { st.textContent = why; st.className = "status warn"; end(); return; }
+            next(why, "warn");
+          }
+        },
+        onProgress: function (pr) {
+          setProg("send-prog", pr.bytes, pr.total);
+          $("send-detail").textContent = t("prog", { a: size(pr.bytes), b: size(pr.total) });
         }
-        else if (p === "reconnecting") st.textContent = t("st.reconnecting");
-        else if (p === "done") {
-          busy = false; stayAwake(false);
-          var bad = info.bad || [];
-          st.textContent = bad.length ? t("st.someBad", { n: bad.length, names: bad.slice(0, 5).map(function (i) { return manifest[i].p; }).join(", ") }) : t("st.done.send");
-          st.className = "status " + (bad.length ? "warn" : "ok");
-          log("done", bad);
-          end();
-        } else if (p === "error") {
-          busy = false; stayAwake(false);
-          // TR-UNL: no direct link and too big for the relay → the same files through the sender's own Dropbox, one press
-          var viaCloud = info.e === "nodirect" && !!cloudApi() && !!X;
-          st.textContent = errText(info.e) + (viaCloud ? " " + t("nodirect.cloud") : "");
-          st.className = "status warn";
-          log("stopped", []);
-          end();
-          show("to-cloud", viaCloud);
-        }
-      },
-      onProgress: function (pr) {
-        setProg("send-prog", pr.bytes, pr.total);
-        $("send-detail").textContent = t("prog", { a: size(pr.bytes), b: size(pr.total) });
-      }
-    }).start();
-    function end() { show("send-cancel", false); show("send-again", true); sender = null; }
+      }).start();
+    }
+    // the finished session's words stay a moment, then the link waits for the next person
+    function next(text, cls) {
+      var st = $("send-status");
+      st.textContent = text; st.className = "status " + cls;
+      sender = null;
+      $("send-cancel").textContent = t("btn.closeLink");
+      $("share-keep").textContent = t("share.keepMany", { n: served });
+      setTimeout(function () {
+        if (sendStopped || sender || $("share-code").textContent !== C.fmtCode(code)) return;
+        show("send-prog", false); $("send-detail").textContent = "";
+        session();
+      }, 2500);
+    }
+    function end() {
+      show("send-cancel", false); show("send-again", true); sender = null; sendStopped = true;
+      $("send-cancel").textContent = t("btn.cancel");
+    }
+    session();
   }
+  // TR-UNL wave 2: what one receiver did that leaves the link open for the next (the rest end it here)
+  var AGAIN = { left: 1, declined: 1, cancelled: 1, lost: 1, nodirect: 1, bad: 1, version: 1 };
+  var sendStopped = true;
   // The system share sheet, where the browser has one (phones mostly)
   function shareNative(url, meta) {
     var b = $("share-native");
@@ -802,7 +841,19 @@
       navigator.share({ title: (meta && meta.t) || "orOS Transfer", url: url }).catch(function () {});
     } : null;
   }
-  function cancelSend() { if (sender) sender.cancel(); if (cloudSend) cloudSend.stop = true; }
+  // Cancel while one person receives; Close the link between people (TR-UNL wave 2): nobody new can come.
+  function cancelSend() {
+    var closing = !sender && !sendStopped && !cloudSend;
+    sendStopped = true;
+    if (sender) sender.cancel();
+    if (cloudSend) cloudSend.stop = true;
+    if (closing) {
+      var st = $("send-status");
+      st.textContent = t("st.closed"); st.className = "status";
+      show("send-cancel", false); show("send-again", true);
+      $("send-cancel").textContent = t("btn.cancel");
+    }
+  }
 
   // ---------- 6b. Send through my Dropbox (TRANSFER-1 wave 4) ----------
   function cloudApi() {
@@ -990,6 +1041,8 @@
     if (drop && X) X.sweep(drop);
   }
   function sendAgain() {
+    sendStopped = true;
+    if (sender) { var s0 = sender; sender = null; s0.cancel(); }
     chosen = []; expanded = null;
     if ($("meta-title")) { $("meta-title").value = ""; $("meta-msg").value = ""; }
     show("share-match", false); shareNative("", null);
@@ -1100,6 +1153,7 @@
       onState: function (p, info) {
         if (info.dev) dev = recvDev = info.dev;
         if (p === "connecting") recvStatus(t("st.connecting"));
+        else if (p === "busy") recvStatus(t("st.busy"));
         else if (p === "wait") recvStatus(t("st.wait.recv"));
         else if (p === "linking") recvStatus(t("st.linking", { dev: dev }));
         else if (p === "offer") showOffer(info, dev);
@@ -1407,7 +1461,11 @@
       $("tab-hist").addEventListener("click", function () { tab("hist"); });
       $("hist-clear").addEventListener("click", clearHist);
       if ($("links-refresh")) $("links-refresh").addEventListener("click", function () { renderLinks(true); });
-      if ($("to-cloud")) $("to-cloud").addEventListener("click", function () { if (!sender && !cloudSend) startCloud(); });
+      if ($("to-cloud")) $("to-cloud").addEventListener("click", function () {
+        sendStopped = true;                                    // the direct link closes; the same files go through Dropbox
+        if (sender) { var s0 = sender; sender = null; s0.cancel(); }
+        if (!cloudSend) startCloud();
+      });
       $("add-local").addEventListener("click", addLocal);
       $("add-big").addEventListener("click", function () { if (FS()) openDisk(); else addLocal(); });
       $("bg-pick").addEventListener("click", function () { $("bg-file").click(); });

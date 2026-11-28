@@ -46,7 +46,7 @@
    }).start(), .accept(sink) (receiver), .decline(), .cancel(), .mode()
    sink = { open(i, f) → Promise, write(i, bytes) → Promise, close(i, ok) → Promise }
    Phases, sender:   connecting → wait → linking → offered {mode} → sending → done {bad}
-           receiver: connecting → [wait] → linking → offer {files,total,biggest,mode} → receiving → done {bad}
+           receiver: connecting → [busy: someone else is receiving, waits its turn] → [wait] → linking → offer {files,total,biggest,mode} → receiving → done {bad}
            either:   reconnecting (then back to sending / receiving), error {e}
            e ∈ noroom, left, nodirect, declined, cancelled, lost, bad, version, nocrypto, io
    ============================================================ */
@@ -63,6 +63,7 @@
   var LINK_MS = 25000;              // a direct link must open within this
   var RECV_LINK_MS = 45000;         // the receiver waits longer: the sender decides relay or not
   var RESUME_MS = 40000;
+  var BUSY_GAP_MS = 10000, BUSY_TRIES = 60;   // TR-UNL wave 2: a receiver waits its turn up to 10 minutes
   var PING_MS = 20000;
   var RELAY_MAX = 50 * 1048576;     // the most a transfer may send through the relay room
   var RELAY_PIECE = 8192;           // "~" + base64(12 + 12 + 8192 + 16) ≈ 11,000 characters < 16 KB frame
@@ -134,7 +135,17 @@
         if (transferring()) { fail("lost"); return; }
         saidHi = false;
         // A full room (someone else is receiving) or no network: a few tries, then say so.
-        if (++tries > (gotOpen ? 6 : 3)) { fail("noroom"); return; }
+        // TR-UNL wave 2: a sender keeps its link open for one person after another, so a
+        // receiver that finds the room full waits its turn ("busy"), trying every
+        // BUSY_GAP_MS for up to BUSY_TRIES more times (10 minutes), then says so.
+        tries++;
+        var busyTries = o.busyTries >= 0 ? o.busyTries : BUSY_TRIES;
+        if (!gotOpen && role === "receiver" && tries > 3 && tries <= 3 + busyTries && !(root.navigator && root.navigator.onLine === false)) {
+          if (self.phase !== "busy") set("busy");
+          setTimeout(openRoom, o.busyGapMs || BUSY_GAP_MS);
+          return;
+        }
+        if (tries > (gotOpen ? 6 : 3)) { fail("noroom"); return; }
         setTimeout(openRoom, [0, 1000, 2000, 4000, 8000, 8000, 8000][tries]);
       };
     }
@@ -618,7 +629,7 @@
   }
 
   var api = { VERSION: "1.2.0", Transfer: Transfer, wsUrl: wsUrl, RELAY: RELAY, WINDOW: WINDOW,
-    RELAY_MAX: RELAY_MAX, RELAY_PIECE: RELAY_PIECE };
+    RELAY_MAX: RELAY_MAX, RELAY_PIECE: RELAY_PIECE, BUSY_GAP_MS: BUSY_GAP_MS, BUSY_TRIES: BUSY_TRIES };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.OrosTransferEngine = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 53090 of 53139 (99%)
+- Strings: 53097 of 53146 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -171,7 +171,7 @@ en and el); translators change them there, not in a pack.
 | today | 100% | 158 / 158 |
 | todo | 100% | 273 / 273 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 181 / 181 |
+| transfer | 100% | 188 / 188 |
 | travel | 100% | 558 / 558 |
 | typewriter | 100% | 46 / 46 |
 | typing | 100% | 170 / 170 |
