@@ -160,13 +160,13 @@
   };
   Effect.prototype.serVar = function (cur) {
     var s = this.ser;
-    if (s.write) { s.data.push(+cur || 0); return cur; }
+    if (s.write) { s.data.push(Math.fround(+cur || 0)); return cur; } // single precision, as REAPER saves it
     return s.pos < s.data.length ? +s.data[s.pos++] || 0 : cur;
   };
   Effect.prototype.serMem = function (mem, offs, len) {
     var s = this.ser, n = Math.max(0, Math.floor(len + 0.0001)), d = Math.floor(offs + 0.0001);
     if (n < 1 || d < 0) return 0;
-    if (s.write) { var a = mem.read(d, n); for (var i = 0; i < n; i++) s.data.push(a[i]); return n; }
+    if (s.write) { var a = mem.read(d, n); for (var i = 0; i < n; i++) s.data.push(Math.fround(a[i])); return n; }
     n = Math.min(n, s.data.length - s.pos);
     if (n < 1) return 0;
     mem.write(d, Float64Array.from(s.data.slice(s.pos, s.pos + n), function (x) { return +x || 0; }));
