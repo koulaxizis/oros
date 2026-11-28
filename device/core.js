@@ -90,6 +90,30 @@
     return out;
   }
 
+  // SY-Z: sync's mailbox ("oros-remote-carry") holds copies of apps
+  // this device keeps for the others (apps never opened here, cloud
+  // copies waiting for an app's merge). sizes = orosSync.carrySizes():
+  // { stored, apps: { name: JSON length } }. The mailbox entry is
+  // replaced by one entry per app, its stored size shared out by those
+  // lengths (it is packed, so only the shares are exact), so the space
+  // shows under the apps it is for. Unknown sizes → entries unchanged.
+  function splitCarry(entries, sizes) {
+    entries = entries || [];
+    var apps = sizes && sizes.apps, total = 0, stored = 0, i;
+    if (!apps || typeof apps !== "object") return entries;
+    for (var n in apps) if (Object.prototype.hasOwnProperty.call(apps, n)) total += +apps[n] || 0;
+    var out = [];
+    for (i = 0; i < entries.length; i++) {
+      if (entries[i].key === "oros-remote-carry") stored = entries[i].len || 0;
+      else out.push(entries[i]);
+    }
+    if (!total || !stored) return entries;
+    Object.keys(apps).sort().forEach(function (name) {
+      out.push({ key: "oros-" + name + "-data", len: Math.round(stored * (+apps[name] || 0) / total), carry: true });
+    });
+    return out;
+  }
+
   function totalBytes(rows) {
     var n = 0;
     (rows || []).forEach(function (r) { n += r.bytes; });
@@ -224,6 +248,7 @@
     keyOwner: keyOwner,
     entryBytes: entryBytes,
     sizeByOwner: sizeByOwner,
+    splitCarry: splitCarry,
     totalBytes: totalBytes,
     cacheOwner: cacheOwner,
     formatBytes: formatBytes,

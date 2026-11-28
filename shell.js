@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "9.00.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "9.00.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -7537,6 +7537,11 @@
   // since. The old engine would have dropped it at this very
   // registration ("older than this device's last push") — do the same.
   function shellDropParkedLegacy() {
+    // SY-Z: the mailbox may be packed; the engine reads it.
+    if (window.orosSync && typeof window.orosSync.carryDrop === "function") {
+      try { window.orosSync.carryDrop("shell"); } catch (e) {}
+      return;
+    }
     try {
       var c = JSON.parse(localStorage.getItem("oros-remote-carry"));
       if (c && typeof c === "object" && c.shell !== undefined) {
@@ -9605,9 +9610,11 @@
   // A72: an automatic sync that fails for a reason only the person
   // can fix (storage full, sign-in expired, a newer orOS needed) puts
   // ONE line a day in the bell, with a link to the place to fix it.
+  // SY-Z: a full store links to Settings › Device, where Space per app
+  // shows what takes the room (sync's mailbox counted under its apps).
   // Network trouble stays a red dot only: it heals by itself.
   var SYNC_NOTICE_FOR = {
-    "sync.err.storage":   "settings/backup",
+    "sync.err.storage":   "settings/device",   // SY-Z: Space per app (was Backups)
     "sync.err.auth":      "settings/sync",
     "sync.err.dav-auth":  "settings/sync",
     "sync.err.version":   "",
