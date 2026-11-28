@@ -66,7 +66,7 @@ test("Music host 1.6.0 reads streams that allow it, never restarts one", () => {
 
 test("the wallpaper listens before a song plays; Settings says when a song cannot be heard", () => {
   const sh = read("shell.js");
-  assert.match(sh, /wpVizListen\(p \|\| pre\);/);
+  assert.match(sh, /wpVizListen\(on \|\| pre\);/);
   assert.match(sh, /calm: !!\(wpVizCtl && wpVizCtl\.calm\)/);
   const st = read("settings/settings.js");
   assert.match(st, /else if \(s\.viz\.calm\) c3\.appendChild\(el\("p", "hint wp-still", t\("a\.wallpaper\.viz\.calm"\)\)\);/);
