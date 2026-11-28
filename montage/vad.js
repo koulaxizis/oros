@@ -180,7 +180,10 @@
     var self = this, T = this.m.ort.Tensor, inp = new Float32Array(CTX + FRAME);
     inp.set(this.ctx); inp.set(f, CTX);
     this.ctx = f.slice(FRAME - CTX);
-    return this.m.s.run({ input: new T("float32", inp, [1, CTX + FRAME]), state: this.state, sr: this.sr }).then(function (o) {
+    var s = this.m.s, feeds = { input: new T("float32", inp, [1, CTX + FRAME]), state: this.state, sr: this.sr };
+    var A = root.MontageASR, go = function () { return s.run(feeds); };
+    // one model run at a time across VAD and Whisper (the WebGPU build allows no other)
+    return (A && A.exclusive ? A.exclusive(go) : go()).then(function (o) {
       self.state = o.stateN;
       return o.output.data[0];
     });

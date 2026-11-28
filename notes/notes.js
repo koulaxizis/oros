@@ -3431,11 +3431,16 @@
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast(t("vc.noMic")); return; }
     dkLoad().then(function (L) {
       if (!L.can()) { toast(t("vc.noMic")); return; }
-      var A = window.MontageASR, V = window.OrosVAD, model = dkModel();
-      return Promise.all([A.ready(model), V.ready()]).then(function (r) {
+      var A = window.MontageASR, V = window.OrosVAD;
+      return Promise.resolve(A.pick ? A.pick() : dkModel()).then(function (model) {
+        // keep the choice, so the runtime loaded first (VAD) is the one it needs
+        if (A.setPreferred) A.setPreferred(model);
+        return Promise.all([A.ready(model), V.ready(), model]);
+      }).then(function (r) {
+        var model = r[2];
         var at = document.activeElement === ta || voiceCaretPage === page.id ? ta.selectionEnd : ta.value.length;
         if (r[0] && r[1]) { dkStart(L, model, at); return; }
-        uiDlg(t("dk.btn"), tf("dk.need", { mb: Math.round((r[0] ? 0 : A.mbOf(model)) + (r[1] ? 0 : V.MB) + A.RUNTIME_MB) }), [
+        uiDlg(t("dk.btn"), tf("dk.need", { mb: Math.round((r[0] ? 0 : A.mbOf(model)) + (r[1] ? 0 : V.MB) + (A.rtMbOf ? A.rtMbOf(model) : A.RUNTIME_MB)) }), [
           { label: t("dlg.cancel") },
           { label: t("dk.go"), primary: true, fn: function () { dkStart(L, model, at); } }
         ], null);

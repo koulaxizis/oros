@@ -229,6 +229,7 @@
       "vo.run": "Writing what you said… {p}%", "vo.dl": "Downloading the speech model… {p}%",
       "vo.title": "Speak to the Assistant", "vo.need": "What you say is turned into text on this device by the Whisper speech model; the sound never leaves the device and nothing is sent before you press Send. The model downloads once and then works offline.",
       "vo.tiny": "Small and quick ({mb} MB)", "vo.base": "More accurate, better for Greek ({mb} MB)",
+      "vo.small": "Best, much better Greek, on the graphics card ({mb} MB)", "set.voiceChange": "Change the model",
       "vo.go": "Download and start", "vo.none": "Nothing was heard. Try again a little closer to the microphone.",
       "vo.fail": "Speech could not be turned into text on this device.", "vo.net": "The speech model could not be downloaded. Check the connection and try again.",
       "vo.mic": "The microphone is not available. Allow it for this app and try again.", "vo.max": "Recording stops by itself after two minutes.",
@@ -1046,6 +1047,7 @@
       "vo.run": "Γράφω αυτό που είπες… {p}%", "vo.dl": "Λήψη του μοντέλου ομιλίας… {p}%",
       "vo.title": "Μίλα στον Βοηθό", "vo.need": "Αυτό που λες γίνεται κείμενο σε αυτή τη συσκευή από το μοντέλο ομιλίας Whisper· ο ήχος δεν φεύγει ποτέ από τη συσκευή και τίποτα δεν στέλνεται πριν πατήσεις Αποστολή. Το μοντέλο κατεβαίνει μία φορά και μετά δουλεύει χωρίς σύνδεση.",
       "vo.tiny": "Μικρό και γρήγορο ({mb} MB)", "vo.base": "Πιο ακριβές, καλύτερο για ελληνικά ({mb} MB)",
+      "vo.small": "Το καλύτερο, πολύ καλύτερα ελληνικά, στην κάρτα γραφικών ({mb} MB)", "set.voiceChange": "Αλλαγή μοντέλου",
       "vo.go": "Λήψη και έναρξη", "vo.none": "Δεν ακούστηκε τίποτα. Δοκίμασε ξανά λίγο πιο κοντά στο μικρόφωνο.",
       "vo.fail": "Η ομιλία δεν έγινε κείμενο σε αυτή τη συσκευή.", "vo.net": "Το μοντέλο ομιλίας δεν κατέβηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "vo.mic": "Το μικρόφωνο δεν είναι διαθέσιμο. Επίτρεψέ το σε αυτή την εφαρμογή και δοκίμασε ξανά.", "vo.max": "Η ηχογράφηση σταματά μόνη της μετά από δύο λεπτά.",
@@ -10773,7 +10775,14 @@
     if (vo.st || busy || !voCan()) return;
     voAsr().then(function (ASR) {
       var model = prefs.voice;
-      if (!model) { voAsk(ASR); return; }
+      if (!model) {
+        // a model already downloaded for Notes Dictate counts as chosen
+        var other = ASR.preferred ? ASR.preferred() : null;
+        return Promise.resolve(other ? ASR.ready(other) : false).catch(function () { return false; }).then(function (yes) {
+          if (!yes) { voAsk(ASR); return; }
+          prefs.voice = other; savePrefs(); voStart();
+        });
+      }
       return Promise.resolve(ASR.ready(model)).catch(function () { return false; }).then(function (yes) {
         if (yes) voStart(); else voAsk(ASR, model);
       });
@@ -10786,14 +10795,22 @@
     dlg.appendChild(el("div", "dlg-title", t("vo.title")));
     dlg.appendChild(el("p", "dlg-text", t("vo.need")));
     var want = pick || (LANG === "el" ? "base" : "tiny");
-    ["tiny", "base"].forEach(function (m) {
+    var list = el("div");
+    dlg.appendChild(list);
+    // DICT-3: "small" only where WebGPU works
+    Promise.resolve(ASR.gpuOk ? ASR.gpuOk() : false).then(function (gpu) {
+      if (!dlg.open && dlg.isConnected === false) return;
+      if (want === "small" && !gpu) want = "base";
+      if (!pick && gpu) want = "small";   // the default where WebGPU works
+      (gpu ? ["tiny", "base", "small"] : ["tiny", "base"]).forEach(function (m) {
       var l = el("label", "dlg-check check");
       var r = el("input");
       r.type = "radio"; r.name = "as-vo-m"; r.value = m; r.checked = m === want;
       r.addEventListener("change", function () { if (r.checked) want = m; });
       l.appendChild(r);
-      l.appendChild(document.createTextNode(" " + t("vo." + m, { mb: ASR.mbOf(m) + ASR.RUNTIME_MB })));
-      dlg.appendChild(l);
+      l.appendChild(document.createTextNode(" " + t("vo." + m, { mb: ASR.mbOf(m) + (ASR.rtMbOf ? ASR.rtMbOf(m) : ASR.RUNTIME_MB) })));
+      list.appendChild(l);
+      });
     });
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("btn.cancel"), "", function () { dlg.close(); }));
@@ -10801,6 +10818,7 @@
       dlg.close();
       prefs.voice = want;
       savePrefs();
+      if (ASR.setPreferred) ASR.setPreferred(want);   // Notes Dictate uses the same model
       voFetch(ASR, want);
     }));
     dlg.appendChild(acts);
@@ -10965,6 +10983,9 @@
       });
     });
     sec.appendChild(rm);
+    sec.appendChild(button(t("set.voiceChange"), "small", function () {
+      voAsr().then(function (ASR) { var d = document.querySelector("dialog[open]"); if (d) d.close(); voAsk(ASR, prefs.voice); });
+    }));
     sec.appendChild(el("p", "dlg-hint", t("set.voiceHint")));
     function draw() {
       rm.hidden = true;
@@ -10973,7 +10994,7 @@
       voAsr().then(function (ASR) {
         return Promise.resolve(ASR.ready(prefs.voice)).then(function (yes) {
           if (!yes) return;
-          st.textContent = t("set.voiceHas", { name: t("vo." + prefs.voice, { mb: ASR.mbOf(prefs.voice) + ASR.RUNTIME_MB }) });
+          st.textContent = t("set.voiceHas", { name: t("vo." + prefs.voice, { mb: ASR.mbOf(prefs.voice) + (ASR.rtMbOf ? ASR.rtMbOf(prefs.voice) : ASR.RUNTIME_MB) }) });
           rm.hidden = false;
         });
       }).catch(function () {});

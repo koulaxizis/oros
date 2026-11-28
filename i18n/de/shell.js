@@ -451,6 +451,7 @@ orosPack("de", "shell", {
  "cr.webllm": "Offene Modelle, die im Browser laufen (Assistent); Gewichte von huggingface.co/mlc-ai unter der Lizenz des jeweiligen Modells",
  "cr.wger": "Übungsbilder (Training)",
  "cr.whisper-tiny": "Sprache zu Untertiteln auf dem Gerät, wird bei Bedarf heruntergeladen (Montage, Liedtext-Sync)",
+ "cr.whisper-small": "Bessere Sprache zu Text auf dem Gerät mit der Grafikkarte, wird bei Bedarf heruntergeladen (Notizen: Diktieren, Assistent: Spracheingabe)",
  "cr.wikidata": "Urheber und Werke (Gemeinfreiheits-Rechner); Bücher, Filme, Serien und Spiele (Medienregal); Online aktualisieren (Kontakte, CRM); Artikel und Fotos von Künstlern (Musik)",
  "cr.wikimedia-commons": "Fotos, Zeichnungen, Klänge, Videos (Atelier); Cover (Medienregal)",
  "cr.wikipedia": "Artikel in deiner Nähe in „Entdecken“ (Karten); Mit Wikipedia beginnen (Wiki); Websuche (Assistent); Künstlerbiografien (Musik)",

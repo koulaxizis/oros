@@ -36,3 +36,15 @@ test("loopAt: a stuck decoder is cut after the first copy", () => {
   assert.equal(A.loopAt([1, 2, 3, 4, 2, 3, 4, 2, 3, 4]), 4);
   assert.equal(A.loopAt([1, 2, 3, 4, 2, 3, 4]), -1);
 });
+
+test("Whisper small (DICT-3): own keys, the WebGPU runtime, parts from the large mirror", () => {
+  const sm = A.fileList("small");
+  assert.deepEqual(sm.map((f) => f.key), ["g.js", "g.mjs", "g.wasm", "small.enc", "small.dec", "small.vocab", "small.gen"]);
+  assert.deepEqual(sm.slice(0, 3).map((f) => f.url), ["../vendor/ort/ort.webgpu.min.js", "../vendor/ort/ort-wasm-simd-threaded.jsep.mjs", "../vendor/ort/ort-wasm-simd-threaded.jsep.wasm"]);
+  sm.slice(3).forEach((f) => assert.match(f.url, /^https:\/\/koulaxizis\.github\.io\/oros-models-large\/whisper-small\//));
+  assert.equal(sm[3].url.endsWith("onnx/encoder_model_q4.onnx"), true);
+  assert.equal(sm[4].url.endsWith("onnx/decoder_model_merged_q4.onnx"), true);
+  assert.equal(A.MODELS.small.layers, 12);
+  assert.equal(A.MODELS.small.heads, 12);
+  assert.equal(A.MODELS.small.gpu, true);
+});

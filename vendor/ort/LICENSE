@@ -21,5 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-vendor/ort/: ort.wasm.min.js, ort-wasm-simd-threaded.mjs, ort-wasm-simd-threaded.wasm
+vendor/ort/: ort.wasm.min.js, ort-wasm-simd-threaded.mjs, ort-wasm-simd-threaded.wasm,
+ort.webgpu.min.js, ort-wasm-simd-threaded.jsep.mjs, ort-wasm-simd-threaded.jsep.wasm
 from the npm package onnxruntime-web 1.22.0 (dist/), unmodified.

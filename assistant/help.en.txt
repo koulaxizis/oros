@@ -373,9 +373,9 @@ In `Settings` → `Internet`, `Let the assistant search the internet when an ans
 
 ## Speaking instead of typing
 The microphone next to `Send` turns what you say into text on this device, with the Whisper speech model. The sound never leaves the device, and the text waits in the message box: check it, change it if needed, then press `Send` yourself.
-- The first time it asks which model to download: `Small and quick` (about 53 MB, the one Montage, Lyric Sync and Notes use too) or `More accurate, better for Greek` (about 88 MB). It downloads once and then works offline.
+- The first time it asks which model to download: `Small and quick` (about 53 MB, the one Montage, Lyric Sync and Notes use too) or `More accurate, better for Greek` (about 88 MB). Where the browser can use the graphics card (WebGPU), there is a third: `Best, much better Greek` (Whisper small, about 310 MB with its runtime), and it is the one already picked. It downloads once and then works offline.
 - Tap the microphone and speak. Each phrase is written into the box at your pauses, and it stops by itself 2 seconds after you stop talking (or tap the microphone again; at most two minutes). A small speech detector (Silero VAD, 2.3 MB, downloaded the first time) finds the pauses; where it cannot run, the microphone records until you tap it again, as before.
-- `Settings` → `Voice input` shows the model on this device and removes it.
+- `Settings` → `Voice input` shows the model on this device, changes it (`Change the model`) and removes it. Notes' `Dictate` uses the same model.
 - There is no speech recognition through the browser or Google: nothing you say goes to any service.
 
 ## Briefing

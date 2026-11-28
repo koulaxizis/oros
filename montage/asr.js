@@ -45,20 +45,53 @@
   // and version it always had, so a model already downloaded stays
   // valid; base gets keys of its own ("base.enc" …). The runtime files
   // (js, mjs, wasm) are shared and keep the tiny version string.
+  // size + SHA-256 of each file (and of each part) from
+  // oros-models-large/index.json; never edited by hand.
+  var SMALL_SUMS = {
+    enc: { size: 66182104, sha: "9f088ad0fe15ba2cf094c9fb22ac7fe1111fc9ef317c1e4d1f6a3bca38a931ba" },
+    dec: { size: 233149327, sha: "795c61b344576719c2b249cc9911c78b4cc552c8c6a5407be21a3380a0791b13", parts: [
+      { size: 95000000, sha: "1d52bbafed63af5fa915a36b81a9f9a80d9fd288034af53c2d007f77b0b79b9c" },
+      { size: 95000000, sha: "757f26f9186e9b768f6e4c5b82d552b6c2c417e75af8d9a1ecff8ae6a07a3ff5" },
+      { size: 43149327, sha: "aa2f1b0c35467b2dcea8a712ffa28faf53ef7061676677da03bb30e86bfad2e4" } ] },
+    vocab: { size: 1036584, sha: "50d6a919f0a0601d56a04eb583c780d18553aa388254ba3158eb6a00f13e2c1a" },
+    gen: { size: 3893, sha: "f538b28220c6a6d6f1af1458d4141cacb4ef4963df3de98a19490440c412ddf0" }
+  };
   var MODELS = {
     tiny: { hf: HF, layers: LAYERS, heads: HEADS, mb: MODEL_MB, ver: FILES_VER, pre: "" },
     base: { hf: "https://huggingface.co/Xenova/whisper-base/resolve/main/", layers: 6, heads: 8, mb: 77,
             ver: "ort1.22.0-whisper-base-q8", pre: "base." }
   };
+  // DICT-3: Whisper small (onnx-community q4 export, ~300 MB) from our
+  // copy in koulaxizis/oros-models-large; the decoder is cut in parts
+  // there (modelfetch.js joins and checks them). Offered only where
+  // WebGPU works (gpuOk); it runs there with ONNX Runtime's WebGPU
+  // build (vendor/ort, the same version), the CPU part of that build
+  // where an operator has no GPU kernel.
+  var LARGE = "https://koulaxizis.github.io/oros-models-large/";
+  MODELS.small = { hf: LARGE + "whisper-small/", layers: 12, heads: 12, mb: 286, gpu: true,
+                   ver: "ort1.22.0-whisper-small-q4", pre: "small.",
+                   enc: "onnx/encoder_model_q4.onnx", dec: "onnx/decoder_model_merged_q4.onnx", sums: SMALL_SUMS };
   var RUNTIME = ["js", "mjs", "wasm"];
+  var GPU_FILES = { js: "../vendor/ort/ort.webgpu.min.js", mjs: "../vendor/ort/ort-wasm-simd-threaded.jsep.mjs",
+                    wasm: "../vendor/ort/ort-wasm-simd-threaded.jsep.wasm" };
+  var GPU_VER = "ort1.22.0-webgpu", GPU_MB = 22;
   function modelOf(id) { return MODELS[id] ? id : "tiny"; }
   // → [{ key, url, ver }] of one model (runtime first)
+  // The runtime's files: the plain build (keys js, mjs, wasm) or the
+  // WebGPU build (keys g.js, g.mjs, g.wasm).
+  function rtList(gpu) {
+    return RUNTIME.map(function (k) {
+      return gpu ? { key: "g." + k, url: GPU_FILES[k], ver: GPU_VER, name: k } : { key: k, url: FILES[k], ver: FILES_VER, name: k };
+    });
+  }
   function fileList(id) {
     var md = MODELS[modelOf(id)];
-    return RUNTIME.map(function (k) { return { key: k, url: FILES[k], ver: FILES_VER }; }).concat(
-      [["enc", "onnx/encoder_model_quantized.onnx"], ["dec", "onnx/decoder_model_merged_quantized.onnx"],
+    return rtList(!!md.gpu).concat(
+      [["enc", md.enc || "onnx/encoder_model_quantized.onnx"], ["dec", md.dec || "onnx/decoder_model_merged_quantized.onnx"],
        ["vocab", "vocab.json"], ["gen", "generation_config.json"]].map(function (x) {
-        return { key: md.pre + x[0], url: md.hf + x[1], ver: md.ver, name: x[0] };
+        var f = { key: md.pre + x[0], url: md.hf + x[1], ver: md.ver, name: x[0] }, c = md.sums && md.sums[x[0]];
+        if (c) { f.size = c.size; f.sha = c.sha; if (c.parts) f.parts = c.parts; }
+        return f;
       }));
   }
 
@@ -309,11 +342,12 @@
       if (peak < 0.003) { seek += winLen; continue; }
       await pause();
       var mel = logMel(win);
-      var encOut = await m.enc.run({ input_features: new T("float32", mel, [1, N_MELS, N_FRAMES]) });
+      var encOut = await exclusive(() => m.enc.run({ input_features: new T("float32", mel, [1, N_MELS, N_FRAMES]) }));
       var hidden = encOut.last_hidden_state;
       // the language: given, or the likeliest language token after SOT
       if (!lang) {
-        var lo = await m.dec.run(decFeeds(T, [SOT], hidden, null, emptyPast, layers));
+        var lo = await exclusive(() => m.dec.run(decFeeds(T, [SOT], hidden, null, emptyPast, layers)));
+        drop(m, lo, null);
         var lg = lo.logits.data, best = -Infinity;
         Object.keys(langIds).forEach(function (k) { var id = langIds[k]; if (lg[id] > best) { best = lg[id]; lang = k.replace(/[<|>]/g, ""); } });
         lang = lang || "en";
@@ -322,22 +356,27 @@
       var prompt = [SOT, langTok, TRANSCRIBE], seq = [], past = null, input = prompt;
       while (seq.length < MAX_TOKENS) {
         if (cancelled()) throw new Error("cancelled");
-        var out = await m.dec.run(decFeeds(T, input, hidden, past, emptyPast, layers));
+        var out = await exclusive(() => m.dec.run(decFeeds(T, input, hidden, past, emptyPast, layers)));
         var V = out.logits.dims[2], n = out.logits.dims[1];
         var logits = Float32Array.from(out.logits.data.subarray((n - 1) * V, n * V));
         applyTimestampRules(logits, seq, suppress, beginSuppress);
         var tok = 0, bv = -Infinity;
         for (var i = 0; i < V; i++) if (logits[i] > bv) { bv = logits[i]; tok = i; }
-        if (tok === EOT || bv === -Infinity) break;
+        if (tok === EOT || bv === -Infinity) { drop(m, out, null); break; }
         seq.push(tok);
         // DICT-2: greedy decoding can get stuck repeating itself
         // ("πως πως πως …"): keep the first time, stop there.
         var lp = loopAt(seq);
-        if (lp >= 0) { seq.length = lp; break; }
-        past = presents(out, past, layers);
+        if (lp >= 0) { seq.length = lp; drop(m, out, null); break; }
+        var nextPast = presents(out, past, layers);
+        drop(m, out, nextPast);
+        drop(m, past, nextPast);
+        past = nextPast;
         input = [tok];
         if (seq.length % 8 === 0) progress(Math.min(0.99, (seek + Math.min(winLen, lastStamp(seq))) / total), "write");
       }
+      drop(m, past, null);
+      drop(m, { h: hidden }, null);
       var r = segmentsFrom(seq, winLen);
       r.segs.forEach(function (s) {
         var text = decodeText(s.ids, m.vocabInv);
@@ -364,6 +403,17 @@
       if (same) return n - (times - 1) * k;
     }
     return -1;
+  }
+  // DICT-3: on the GPU, tensors are freed by hand: every GPU tensor of
+  // `from` that `keep` does not hold any more.
+  function drop(m, from, keep) {
+    if (!m.gpu || !from) return;
+    var kept = [];
+    if (keep) Object.keys(keep).forEach(function (k) { kept.push(keep[k]); });
+    Object.keys(from).forEach(function (k) {
+      var x = from[k];
+      if (x && x.location === "gpu-buffer" && kept.indexOf(x) < 0 && typeof x.dispose === "function") { try { x.dispose(); } catch (e) {} }
+    });
   }
   function lastStamp(seq) { for (var i = seq.length - 1; i >= 0; i--) if (seq[i] >= TS0) return (seq[i] - TS0) * TS_STEP; return 0; }
   function pause() { return new Promise(function (r) { setTimeout(r, 0); }); }
@@ -454,13 +504,13 @@
   }
   // → { js, mjs, wasm, enc, dec, vocab, gen } blobs of one model
   function files(model, onProgress, signal) {
-    var list = fileList(model), got = {}, done = 0, total = (MODELS[modelOf(model)].mb + RUNTIME_MB) * 1024 * 1024;
+    var md = MODELS[modelOf(model)], list = fileList(model), got = {}, done = 0, total = (md.mb + (md.gpu ? GPU_MB : RUNTIME_MB)) * 1024 * 1024;
     return list.reduce(function (p, f) {
       var name = f.name || f.key;
       return p.then(function () {
         return stored(f).then(function (b) {
           if (b) { got[name] = b; return; }
-          return fetchFile(f.url, function (n) { done += n; if (onProgress) onProgress(Math.min(0.99, done / total)); }, signal).then(function (blob) {
+          return (f.sha ? fetchChecked : function (g, b, sg) { return fetchFile(g.url, b, sg); })(f, function (n) { done += n; if (onProgress) onProgress(Math.min(0.99, done / total)); }, signal).then(function (blob) {
             got[name] = blob;
             return tx("readwrite", function (s) { s.put({ v: f.ver, blob: blob }, f.key); }).catch(function () {});
           });
@@ -475,7 +525,7 @@
     var id = modelOf(model);
     delete modelsP[id];
     return tx("readwrite", function (s) {
-      fileList(id).forEach(function (f) { if (RUNTIME.indexOf(f.key) < 0) s.delete(f.key); });
+      fileList(id).forEach(function (f) { if (RUNTIME.indexOf(f.name) < 0) s.delete(f.key); });
     }).catch(function () {});
   }
 
@@ -494,25 +544,29 @@
     var id = modelOf(model), md = MODELS[id];
     if (modelsP[id]) return modelsP[id];
     var mp = modelsP[id] = files(id, onProgress, signal).then(function (f) {
-      return loadScript(f.js).then(function () {
-        var ort = root.ort;
-        if (!ort || !ort.InferenceSession) throw new Error("runtime");
-        ort.env.wasm.numThreads = 1;
-        ort.env.wasm.proxy = false;
-        ort.env.wasm.wasmPaths = {
-          mjs: URL.createObjectURL(new Blob([f.mjs], { type: "text/javascript" })),
-          wasm: URL.createObjectURL(new Blob([f.wasm], { type: "application/wasm" }))
+      return useRuntime(f, !!md.gpu).then(function (ort) {
+        var gpu = !!md.gpu && rtKind === "gpu";
+        if (md.gpu && !gpu) throw new Error("gpu");
+        var mk = function (b, outs) {
+          return b.arrayBuffer().then(function (buf) {
+            var o = { executionProviders: gpu ? ["webgpu", "wasm"] : ["wasm"] };
+            // on the GPU the caches stay there between decoder steps
+            if (gpu && outs) o.preferredOutputLocation = outs;
+            return ort.InferenceSession.create(new Uint8Array(buf), o);
+          });
         };
-        var mk = function (b) { return b.arrayBuffer().then(function (buf) { return ort.InferenceSession.create(new Uint8Array(buf), { executionProviders: ["wasm"] }); }); };
-        return Promise.all([mk(f.enc), mk(f.dec), f.vocab.text(), f.gen.text()]).then(function (r) {
+        var keep = {};
+        if (gpu) for (var l = 0; l < md.layers; l++) ["decoder.key", "decoder.value", "encoder.key", "encoder.value"].forEach(function (k) { keep["present." + l + "." + k] = "gpu-buffer"; });
+        return Promise.all([mk(f.enc, gpu ? { last_hidden_state: "gpu-buffer" } : null), mk(f.dec, gpu ? keep : null), f.vocab.text(), f.gen.text()]).then(function (r) {
           return { ort: ort, enc: r[0], dec: r[1], vocabInv: invertVocab(JSON.parse(r[2])), gen: JSON.parse(r[3]),
-                   layers: md.layers, heads: md.heads };
+                   layers: md.layers, heads: md.heads, gpu: gpu };
         });
       });
     });
     mp.catch(function () { if (modelsP[id] === mp) delete modelsP[id]; });
     return mp;
   }
+
 
   // samples: Float32Array at 16 kHz (decimate3 a 48 kHz mix first)
   function run(samples, opts) {
@@ -527,39 +581,77 @@
   // (Silero VAD, montage/vad.js): the same runtime and IndexedDB.
   // file(f) = { key, ver, url, size, sha }: kept only when it is exactly
   // that copy (size and SHA-256).
-  var rtP = null;
+  var rtP = null, rtKind = "";
+  // Loads one runtime build into the page (only one can be there):
+  // blobs = { js, mjs, wasm } of the plain or the WebGPU build.
+  function useRuntime(blobs, gpu) {
+    if (root.ort && root.ort.InferenceSession && rtKind) return Promise.resolve(root.ort);
+    return loadScript(blobs.js).then(function () {
+      var ort = root.ort;
+      if (!ort || !ort.InferenceSession) throw new Error("runtime");
+      if (!rtKind) {
+        rtKind = gpu ? "gpu" : "wasm";
+        ort.env.wasm.numThreads = 1;
+        ort.env.wasm.proxy = false;
+        ort.env.wasm.wasmPaths = {
+          mjs: URL.createObjectURL(new Blob([blobs.mjs], { type: "text/javascript" })),
+          wasm: URL.createObjectURL(new Blob([blobs.wasm], { type: "application/wasm" }))
+        };
+      }
+      return ort;
+    });
+  }
+  // runtime(): the runtime for another model (Silero VAD): the one
+  // already loaded, else the WebGPU build when this device dictates
+  // with Whisper small on WebGPU (so both can live in one page).
   function runtime(onProgress, signal) {
     if (rtP) return rtP;
-    var got = {}, done = 0, total = RUNTIME_MB * 1024 * 1024;
-    var p = rtP = RUNTIME.reduce(function (q, k) {
-      var f = { key: k, url: FILES[k], ver: FILES_VER };
+    if (root.ort && root.ort.InferenceSession && rtKind) return (rtP = Promise.resolve(root.ort));
+    var gpu = preferred() === "small" && !!(root.navigator && navigator.gpu);
+    var got = {}, done = 0, total = (gpu ? GPU_MB : RUNTIME_MB) * 1024 * 1024;
+    var p = rtP = rtList(gpu).reduce(function (q, f) {
       return q.then(function () {
         return stored(f).then(function (b) {
-          if (b) { got[k] = b; return; }
+          if (b) { got[f.name] = b; return; }
           return fetchFile(f.url, function (n) { done += n; if (onProgress) onProgress(Math.min(0.99, done / total)); }, signal).then(function (blob) {
-            got[k] = blob;
+            got[f.name] = blob;
             return tx("readwrite", function (s) { s.put({ v: f.ver, blob: blob }, f.key); }).catch(function () {});
           });
         });
       });
     }, Promise.resolve()).then(function () {
-      return loadScript(got.js);
-    }).then(function () {
-      var ort = root.ort;
-      if (!ort || !ort.InferenceSession) throw new Error("runtime");
-      if (!ort.env.wasm.wasmPaths) {
-        ort.env.wasm.numThreads = 1;
-        ort.env.wasm.proxy = false;
-        ort.env.wasm.wasmPaths = {
-          mjs: URL.createObjectURL(new Blob([got.mjs], { type: "text/javascript" })),
-          wasm: URL.createObjectURL(new Blob([got.wasm], { type: "application/wasm" }))
-        };
-      }
-      if (onProgress) onProgress(1);
-      return ort;
-    });
+      return useRuntime(got, gpu);
+    }).then(function (ort) { if (onProgress) onProgress(1); return ort; });
     p.catch(function () { if (rtP === p) rtP = null; });
     return p;
+  }
+  // A file with a SHA-256 (and maybe parts): modelfetch.js (next to
+  // shell.js) downloads and checks it.
+  var mfP = null;
+  function fetchChecked(f, onBytes, signal) {
+    if (!mfP) {
+      mfP = root.OrosModelFetch ? Promise.resolve(root.OrosModelFetch) : new Promise(function (resolve, reject) {
+        var sc = document.createElement("script"), me = document.querySelector('script[src*="asr.js"]');
+        var src = me ? me.src : "", m = src.match(/[?&]v=([^&#]+)/);
+        sc.src = (src ? src.replace(/[^/]*$/, "") : "../montage/") + "../modelfetch.js" + (m ? "?v=" + m[1] : "");
+        sc.onload = function () { root.OrosModelFetch ? resolve(root.OrosModelFetch) : reject(new Error("load")); };
+        sc.onerror = function () { sc.remove(); reject(new Error("load")); };
+        document.head.appendChild(sc);
+      });
+      mfP.catch(function () { mfP = null; });
+    }
+    return mfP.then(function (MF) {
+      return MF.get({ url: f.url, size: f.size, sha: f.sha, parts: f.parts }, {
+        onBytes: onBytes, cancelled: function () { return !!(signal && signal.aborted); }
+      });
+    });
+  }
+  // Whisper small is offered only where WebGPU gives an adapter.
+  function gpuOk() {
+    try {
+      if (!root.navigator || !navigator.gpu || !MODELS.small.sums) return Promise.resolve(false);
+      return navigator.gpu.requestAdapter().then(function (a) { return !!a; }, function () { return false; });
+    } catch (e) { return Promise.resolve(false); }
   }
   function hexOf(buf) {
     var b = new Uint8Array(buf), out = "";
@@ -583,16 +675,35 @@
   // Assistant): device-local, "base" until the person picks another.
   var PREF_KEY = "oros-asr-model";
   function preferred() {
-    try { var v = localStorage.getItem(PREF_KEY); if (v && MODELS[v]) return v; } catch (e) {}
+    try { var v = localStorage.getItem(PREF_KEY); if (v && MODELS[v] && (v !== "small" || MODELS.small.sums)) return v; } catch (e) {}
     return "base";
   }
+  // One model run at a time for every session on this page (Whisper and
+  // Silero VAD): ONNX Runtime's WebGPU build throws "Session already
+  // started" when two runs overlap; for the WASM build it costs nothing.
+  var gate = null;   // set on first use: in node this line never runs, yet transcribe calls exclusive
+  function exclusive(fn) {
+    var p = (gate || Promise.resolve()).then(fn);
+    gate = p.catch(function () {});
+    return p;
+  }
   function setPreferred(v) { try { if (MODELS[v]) localStorage.setItem(PREF_KEY, v); } catch (e) {} }
+  // The model to use: the one chosen on this device, else small where
+  // WebGPU works and base elsewhere (DICT-3).
+  function pick() {
+    var v = null;
+    try { v = localStorage.getItem(PREF_KEY); } catch (e) {}
+    if (v && MODELS[v]) return Promise.resolve(preferred());
+    return gpuOk().then(function (g) { return g ? "small" : "base"; }, function () { return "base"; });
+  }
 
   root.MontageASR = {
     ready: ready, run: run, forget: forget, decimate3: decimate3, MODEL_MB: MODEL_MB, RUNTIME_MB: RUNTIME_MB,
     melFilters: melFilters, logMel: logMel, splitCue: splitCue,
-    runtime: runtime, file: oneFile, has: hasFile, preferred: preferred, setPreferred: setPreferred,
+    runtime: runtime, file: oneFile, has: hasFile, preferred: preferred, setPreferred: setPreferred, gpuOk: gpuOk, pick: pick, exclusive: exclusive,
     mbOf: function (model) { return MODELS[modelOf(model)].mb; },
+    // the runtime a model needs: the WebGPU build for small, else the WASM one
+    rtMbOf: function (model) { return MODELS[modelOf(model)].gpu ? GPU_MB : RUNTIME_MB; },
     // download (if needed) and load a model ahead of the first run
     prepare: function (model, onProgress, signal) { return models(model, onProgress, signal).then(function () { return true; }); }
   };

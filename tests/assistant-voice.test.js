@@ -11,7 +11,7 @@ const A = require(path.join(ROOT, "montage/asr.js"));
 const S = require(path.join(ROOT, "solo.js"));
 
 test("asr models: tiny keeps its keys and version, base has its own, runtime is shared", () => {
-  assert.deepEqual(Object.keys(A.MODELS), ["tiny", "base"]);
+  assert.deepEqual(Object.keys(A.MODELS), ["tiny", "base", "small"]);   // small: DICT-3
   assert.equal(A.modelOf(undefined), "tiny");
   assert.equal(A.modelOf("large"), "tiny");
   assert.equal(A.modelOf("base"), "base");
@@ -39,7 +39,7 @@ test("asr: transcribe feeds as many decoder layers as the model has", () => {
   // forget(model) keeps the shared runtime, forget() clears everything (Montage)
   const fg = src.slice(src.indexOf("function forget("), src.indexOf("var modelsP"));
   assert.match(fg, /if \(!model\) \{ modelsP = \{\}; return tx\("readwrite", function \(s\) \{ s\.clear\(\); \}\)/);
-  assert.match(fg, /RUNTIME\.indexOf\(f\.key\) < 0\) s\.delete\(f\.key\)/);
+  assert.match(fg, /RUNTIME\.indexOf\(f\.name\) < 0\) s\.delete\(f\.key\)/);   // both runtime builds stay
   assert.match(src, /prepare: function \(model, onProgress, signal\)/);
 });
 

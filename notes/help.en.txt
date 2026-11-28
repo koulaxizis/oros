@@ -52,7 +52,7 @@ Templates are pages under a page named `Templates` (in any notebook). The templa
 The `Dictate` button (the microphone with lines, first in the formatting bar) writes what you say straight into the page, at your cursor (or at the end). Speak normally: at each pause the phrase you just said is written while you go on talking.
 - It stops when you tap it again, 3 seconds after your last phrase, or after 8 seconds if you say nothing at the start.
 - When it ends, a notice with `Undo` takes the whole dictation out again; Ctrl+Z takes it out phrase by phrase.
-- It listens in the orOS language. Everything happens on this device with the Whisper speech model and a small speech detector (Silero VAD); nothing you say is recorded or sent anywhere. The first time it asks before downloading them (the size is shown), then it works offline.
+- It listens in the orOS language. Everything happens on this device with the Whisper speech model and a small speech detector (Silero VAD); nothing you say is recorded or sent anywhere. Where the browser can use the graphics card (WebGPU) it uses Whisper small, which writes Greek much better; elsewhere Whisper base (or the model you chose for the Assistant's voice input). The first time it asks before downloading them (the size is shown), then it works offline.
 - Names and numbers can come out wrong: read it over.
 
 ## Voice notes

@@ -373,9 +373,9 @@ Unter `Einstellungen` → `Internet` lässt `Den Assistenten im Internet suchen 
 
 ## Sprechen statt tippen
 Das Mikrofon neben `Senden` macht auf diesem Gerät mit dem Sprachmodell Whisper Text aus dem, was du sagst. Der Ton verlässt das Gerät nie, und der Text wartet im Nachrichtenfeld: Prüf ihn, änder ihn bei Bedarf und tippe dann selbst auf `Senden`.
-- Beim ersten Mal fragt es, welches Modell geladen werden soll: `Klein und schnell` (etwa 53 MB, das auch Montage, Lyric Sync und Notizen nutzen) oder `Genauer, besser für Griechisch` (etwa 88 MB). Es wird einmal geladen und funktioniert danach offline.
+- Beim ersten Mal fragt es, welches Modell geladen werden soll: `Klein und schnell` (etwa 53 MB, das auch Montage, Lyric Sync und Notizen nutzen) oder `Genauer, besser für Griechisch` (etwa 88 MB). Wo der Browser die Grafikkarte nutzen kann (WebGPU), gibt es ein drittes: `Am besten, viel besseres Griechisch` (Whisper small, etwa 310 MB mit seiner Laufzeit), und es ist schon ausgewählt. Es wird einmal geladen und funktioniert danach offline.
 - Tippe auf das Mikrofon und sprich. Jeder Satz wird bei deinen Pausen ins Feld geschrieben, und es stoppt von selbst 2 Sekunden, nachdem du aufhörst zu sprechen (oder tippe noch einmal aufs Mikrofon; höchstens zwei Minuten). Ein kleiner Spracherkenner (Silero VAD, 2,3 MB, beim ersten Mal heruntergeladen) findet die Pausen; wo er nicht laufen kann, nimmt das Mikrofon auf, bis du es wieder antippst, wie bisher.
-- `Einstellungen` → `Spracheingabe` zeigt das Modell auf diesem Gerät und entfernt es.
+- `Einstellungen` → `Spracheingabe` zeigt das Modell auf diesem Gerät, wechselt es (`Modell wechseln`) und entfernt es. `Diktieren` in Notizen nutzt dasselbe Modell.
 - Es gibt keine Spracherkennung über den Browser oder Google: Nichts, was du sagst, geht an einen Dienst.
 
 ## Briefing

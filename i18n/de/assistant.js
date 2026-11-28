@@ -2477,6 +2477,8 @@ orosPack("de", "assistant", {
  "vo.need": "Was du sagst, wird auf diesem Gerät vom Sprachmodell Whisper zu Text; der Ton verlässt das Gerät nie und nichts wird gesendet, bevor du auf Senden tippst. Das Modell wird einmal geladen und funktioniert danach offline.",
  "vo.tiny": "Klein und schnell ({mb} MB)",
  "vo.base": "Genauer, besser für Griechisch ({mb} MB)",
+ "vo.small": "Am besten, viel besseres Griechisch, auf der Grafikkarte ({mb} MB)",
+ "set.voiceChange": "Modell wechseln",
  "vo.go": "Laden und starten",
  "vo.none": "Es war nichts zu hören. Versuch es noch einmal etwas näher am Mikrofon.",
  "vo.fail": "Die Sprache konnte auf diesem Gerät nicht zu Text werden.",
