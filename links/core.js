@@ -320,6 +320,18 @@
       apps: ["timesheet"],
       probe: "/version"
     },
+    // AS-PF (Assistant wave 6, AH-5): Printful, read only, for the
+    // Assistant (products synced to the shop, orders by number and
+    // status, the catalogue). A store-level private token (Bearer).
+    printful: {
+      name: "Printful",
+      site: false,
+      host: "api.printful.com",
+      root: "",
+      keys: [{ k: "key", re: /^[A-Za-z0-9]{30,100}$/ }],
+      apps: ["assistant"],
+      probe: "/stores"
+    },
     // Newsletter wave E4: products from a Shopify shop through its
     // Storefront API (GraphQL, the public Storefront access token the
     // shop owner makes in a Headless or custom app). Read-only by
@@ -577,6 +589,9 @@
       IN_ACTIVE = /^active$/;
   // Todoist (wave 6A): opaque page cursors (base64; "+", "/", "=" escaped)
   var LIM200 = /^([1-9]|[1-9][0-9]|1[0-9]{2}|200)$/, PER50 = /^([1-9]|[1-4][0-9]|50)$/;
+  // AS-PF (Printful): sync status, order status, a plain search word
+  var PF_SYNC = /^(synced|unsynced|all)$/, PF_SEARCH = /^[A-Za-z0-9._+-]{1,60}$/,
+      PF_ORDER = /^(draft|pending|failed|canceled|inprocess|onhold|partial|fulfilled|archived)$/;
   // Time trackers (Timesheet T5): days, timestamps, ids
   var TT_ISOZ = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, TT_LDT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$/,
       TT_HEX24 = "[0-9a-f]{24}", TT_TRUE = /^true$/, TT_PER2000 = /^([1-9][0-9]{0,2}|1[0-9]{3}|2000)$/;
@@ -1022,6 +1037,16 @@
       ["GET", /^\/version$/, null, null],
       ["GET", /^\/timesheets$/, { begin: TT_LDT, end: TT_LDT, size: LIM500, page: NUM, full: TT_TRUE }, null]
     ],
+    // AS-PF: GET only; numeric ids only (no @external_id: "@" is never in a path)
+    printful: [
+      ["GET", /^\/stores$/, null, null],
+      ["GET", /^\/sync\/products$/, { offset: NUM, limit: PER, status: PF_SYNC, search: PF_SEARCH }, null],
+      ["GET", /^\/sync\/products\/[0-9]{1,12}$/, null, null],
+      ["GET", /^\/orders$/, { offset: NUM, limit: PER, status: PF_ORDER }, null],
+      ["GET", /^\/orders\/[0-9]{1,12}$/, null, null],
+      ["GET", /^\/products$/, { category_id: NUM }, null],
+      ["GET", /^\/products\/[0-9]{1,9}$/, null, null]
+    ],
     shopify: [
       ["POST", /^\/graphql\.json$/, null, { query: "=sf_shop|sf_products|sf_nodes", variables: "sfvars" }, "sfq"]
     ],
@@ -1190,6 +1215,7 @@
     if (p === "todoist") return ["Authorization", "Bearer " + keys.key];
     if (p === "trello") return ["Authorization", 'OAuth oauth_consumer_key="' + keys.key + '", oauth_token="' + keys.token + '"'];
     if (p === "github") return ["Authorization", "Bearer " + keys.key];
+    if (p === "printful") return ["Authorization", "Bearer " + keys.key];
     if (p === "raindrop") return ["Authorization", "Bearer " + keys.key];
     if (p === "notion") return ["Authorization", "Bearer " + keys.key];
     if (p === "shopify") return ["X-Shopify-Storefront-Access-Token", keys.key];

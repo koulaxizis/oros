@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.22.00
+- **The Assistant reads your Printful store.** Add Printful in `Settings › Connected services` (a token for one store that may only read) and ask "which products are not synced yet?", "how many orders are on hold?" or "what does this tee cost in the catalogue?". Orders come by number and status only, never with the customer's name or address. A routine reads Printful only when you tick `May read Printful`.
+
 ## Version 9.21.00
 - **Proton Mail in orOS Mail, through Proton Mail Bridge.** In installed orOS, orOS Portable and orOS USB, Mail now talks to every provider from your own computer, without the orOS relay. That includes Proton Mail Bridge (127.0.0.1, ports 1143 and 1025): add your Proton address, use the password Bridge shows, and trust Bridge's certificate once when Mail asks. In orOS in the browser and on the phone Mail works as before.
 

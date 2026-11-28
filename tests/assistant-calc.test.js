@@ -29,8 +29,8 @@ test("calc and file_hash are offered, routines may use them, nothing else runs",
   assert.deepEqual(C.toolsFor({ calc: true }).map((x) => x.name), ["calc"]);
   assert.ok(C.toolsFor({ files: true }).some((x) => x.name === "file_hash"));
   const as = fs.readFileSync(path.join(__dirname, "../assistant/assistant.js"), "utf8");
-  assert.match(as, /github: ghOn, calc: true(, check: !builtin && !!wmode)? \}\);/);
-  assert.match(as, /github_read: 1, calc: 1, file_hash: 1,/);
+  assert.match(as, /github: ghOn(, printful: pfOn)?, calc: true(, check: !builtin && !!wmode)? \}\);/);
+  assert.match(as, /github_read: 1,( printful_read: 1,)? calc: 1, file_hash: 1,/);
   assert.match(as, /loadOnce\("\.\.\/spreadsheet\/functions\.js"\)/);
   assert.match(as, /crypto\.subtle\.digest\("SHA-256", bytes\)/);
   assert.match(as, /function fileHash\(a, apps\) \{[\s\S]*?CF\.reach\(p, x\.folders\)/);

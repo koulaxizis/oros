@@ -16,7 +16,7 @@
 //             1.14.2 contracts and 1.18.0 profile-requests / production routes only,
 //             RS_ROUTE: the contracts key, never ck/cs)
 //           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
-//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "raindrop" | "notion" | "ebank", key, reqs: [...] }
+//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "printful" | "raindrop" | "notion" | "ebank", key, reqs: [...] }
 //           POST /v1 { op: "ext", p: "trello" | "paypal", key, token, reqs: [...] }
 //           POST /v1 { op: "ext", p: "toggl" | "clockify", key, reqs: [...] }, { p: "harvest", key, token (the account id), reqs }
 //   Toggl https://api.track.toggl.com/api/v9<path> (Basic key:api_token), Clockify
@@ -159,6 +159,8 @@ const LIM1000 = /^([1-9][0-9]{0,2}|1000)$/, LIM500 = /^([1-9][0-9]?|[1-4][0-9]{2
 const LIM100 = /^([1-9]|[1-9][0-9]|100)$/, AFTER = /^[A-Za-z0-9_-]{1,200}$/,
       PD_CURSOR = /^([A-Za-z0-9._=-]|%2B|%2F|%3D){1,800}$/, LIM200 = /^([1-9]|[1-9][0-9]|1[0-9]{2}|200)$/, PER50 = /^([1-9]|[1-4][0-9]|50)$/,
       TR_CARD_F = /^name,desc,due,idList,idLabels,closed,pos$/, TR_LIST_F = /^name,closed,pos$/,
+      PF_SYNC = /^(synced|unsynced|all)$/, PF_SEARCH = /^[A-Za-z0-9._+-]{1,60}$/,
+      PF_ORDER = /^(draft|pending|failed|canceled|inprocess|onhold|partial|fulfilled|archived)$/,
       HS_CO_F = /^name,domain,phone,address,city,zip,country,industry$/,
       HS_CT_F = /^firstname,lastname,email,phone,jobtitle$/,
       HS_DL_F = /^dealname,amount,dealstage,pipeline,closedate,deal_currency_code,closed_lost_reason$/,
@@ -677,6 +679,22 @@ export const PLATFORMS = {
     allow: [
       ["GET", /^\/users\/me$/, null, null],
       ["GET", /^\/time_entries$/, { from: DAY, to: DAY, page: NUM, per_page: TT_PER2000 }, null]
+    ]
+  },
+  // AS-PF (Assistant wave 6, AH-5): Printful, read only, the same rows as links/core.js
+  printful: {
+    root: "",
+    host: "api.printful.com",
+    keys: { key: /^[A-Za-z0-9]{30,100}$/ },
+    auth: (b) => ["Authorization", "Bearer " + b.key],
+    allow: [
+      ["GET", /^\/stores$/, null, null],
+      ["GET", /^\/sync\/products$/, { offset: NUM, limit: PER, status: PF_SYNC, search: PF_SEARCH }, null],
+      ["GET", /^\/sync\/products\/[0-9]{1,12}$/, null, null],
+      ["GET", /^\/orders$/, { offset: NUM, limit: PER, status: PF_ORDER }, null],
+      ["GET", /^\/orders\/[0-9]{1,12}$/, null, null],
+      ["GET", /^\/products$/, { category_id: NUM }, null],
+      ["GET", /^\/products\/[0-9]{1,9}$/, null, null]
     ]
   },
   // Kimai 2: the person's own install (or kimai.cloud), host checked like WooCommerce's

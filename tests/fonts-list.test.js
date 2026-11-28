@@ -89,7 +89,7 @@ test("list_fonts: read only, offered with fonts, wired in the Assistant", () => 
   assert.ok(t);
   assert.equal(t.params.required, undefined, "no argument is needed");
   const src2 = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
-  assert.match(src2, /kbCols: kbColsOn\(chgApps\),.*fonts: !data\.set\.chat( && !ro)?(, github: ghOn)?(, calc: true)?(, check: !builtin && !!wmode)? \}\)/);
+  assert.match(src2, /kbCols: kbColsOn\(chgApps\),.*fonts: !data\.set\.chat( && !ro)?(, github: ghOn)?(, printful: pfOn)?(, calc: true)?(, check: !builtin && !!wmode)? \}\)/);
   assert.match(src2, /F\.overview\(\{ disk: got\[0\], cols: cols, catalog: got\[1\]/);
   assert.match(src2, /\["\.\.\/designkit\/text\.js", "\.\.\/designkit\/fonts\.js"\]/);
 });
