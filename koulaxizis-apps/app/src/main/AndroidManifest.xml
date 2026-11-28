@@ -5,6 +5,14 @@
     <!-- Installs and updates our apps through Android's PackageInstaller;
          Android asks the person before each first install. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- APPS-M6: without it Android ignores USER_ACTION_NOT_REQUIRED and asks
+         before every update (Android 12+). Updates of apps this manager
+         installed then go through without a question. -->
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+    <!-- APPS-M6: Android 14+, a first install names this manager as the one
+         that updates the app, so another store cannot take its updates over
+         without a question. -->
+    <uses-permission android:name="android.permission.ENFORCE_UPDATE_OWNERSHIP" />
 
     <!-- The daily check (APPS-M2): one quiet notice when updates are ready,
          and the check stays in place after a restart. -->
@@ -56,6 +64,16 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <!-- Optional Shizuku (APPS-M6, off by default): Shizuku hands its
+             helper's binder to this provider; only Shizuku may call it. -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:enabled="true"
+            android:exported="true"
+            android:multiprocess="false"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
         <service
             android:name=".UpdateJob"

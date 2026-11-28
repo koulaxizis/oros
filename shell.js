@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "9.10.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "9.10.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -10729,7 +10729,10 @@
           k: "cr.appimage" },
         { name: "Android Browser Helper 2.7.4", url: "https://github.com/GoogleChrome/android-browser-helper",
           by: "Google LLC", lic: "Apache-2.0",
-          k: "cr.android-browser-helper" }
+          k: "cr.android-browser-helper" },
+        { name: "Shizuku API 13.1.5", url: "https://github.com/RikkaApps/Shizuku-API",
+          by: "RikkaW & contributors", lic: "Apache-2.0",
+          k: "cr.shizuku" }
       ]
     },
     {

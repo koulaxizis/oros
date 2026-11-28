@@ -10,6 +10,9 @@ import android.content.pm.PackageInstaller;
  * shows the question itself once it is in front (APPS-M2 fix 1.2.2: an
  * OEM overlay such as Xiaomi's security scan can cover or close it), and
  * shows it again when it was lost; without a screen it is shown at once.
+ * An install of the daily check (automatic updates, APPS-M6) never shows a
+ * question: Android wanted a yes after all, so the session is dropped and
+ * the update waits in the notice like any other.
  */
 public final class InstallReceiver extends BroadcastReceiver {
     interface Listener {
@@ -29,6 +32,10 @@ public final class InstallReceiver extends BroadcastReceiver {
         int session = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1);
         int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
         if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
+            if (intent.getBooleanExtra(Installer.EXTRA_AUTO, false)) {
+                Installer.abandon(ctx, session);
+                return;
+            }
             Intent confirm = intent.getParcelableExtra(Intent.EXTRA_INTENT);
             if (confirm == null) return;
             confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

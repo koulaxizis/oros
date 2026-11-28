@@ -74,8 +74,11 @@ Inside a single app, the button at the top left carries the app's name. It opens
 
 ## Koulaxizis Apps (Android)
 **Koulaxizis Apps** is a small Android app that installs and updates the orOS Android apps (orOS, the single apps, orOS Drive) and those of NULL JSFX, Noxpress and Glarolykoi, one section per project. Get it from [useoros.online/download](https://useoros.online/download/#koulaxizis-apps). It is the one place to get and update our Android apps.
-- **Install and update:** press `Install` or `Update` next to an app, or `Update all` to update every app one after the other. Android asks you to confirm each one.
-- **Daily check:** once a day, with a network and enough battery, it looks for updates and shows one quiet notification. It never installs anything by itself. Turn it off with `Check daily` in its menu.
+- **Install and update:** press `Install` or `Update` next to an app, or `Update all` to update every app one after the other with one tap. Android asks once before each first install. From Android 12, apps that Koulaxizis Apps installed update without a question; an app installed elsewhere (browser, F-Droid) asks once more on its first update there, then no more. Android 11 and older ask for every update, and some phones (Xiaomi, Redmi) add their own question.
+- **Daily check:** once a day, with a network and enough battery, it looks for updates and shows one quiet notification. Turn it off with `Check daily` in its menu.
+- **Automatic updates** (menu, off at first): on Wi-Fi the daily check installs by itself the updates that need no question; the others wait in the notification.
+- **Install without questions (Shizuku)** (menu, off at first): with the free [Shizuku](https://shizuku.rikka.app) app running (started through Wireless debugging, no root), first installs go without a question too. Every app is still checked first.
+- **Google Play Protect:** Koulaxizis Apps never bypasses or hides it. If you want, you can turn its scan off yourself in Play Store › your profile picture › Play Protect › ⚙ › `Scan apps with Play Protect`; Google then checks no app on the phone until you turn it back on. Its `Help` menu explains all of this.
 - **Checked:** each list comes from the project's own signed repository, and each APK is checked for its size, checksum and signer before Android installs it.
 - **Quiet orOS:** while Koulaxizis Apps is installed, the orOS APKs no longer show their own `A new version of the … app is out` bar; Koulaxizis Apps tells you instead.
 
