@@ -846,6 +846,17 @@
       if (st.fit === "fit" || st.fit === "fill") { it.fit = st.fit; it.ix = 0; it.iy = 0; it.isc = 1; }
       else if (st.fit === "frame" && it.iw && it.ih) { it.h = r3(it.w * it.ih / it.iw); it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1; }
       if (it.ext && it.ext.iscy !== undefined && st.fit) { delete it.ext.iscy; if (!Object.keys(it.ext).length) delete it.ext; }
+      // half (AS-SEE wave, Chris 2026-11-27: the ebook's covers and
+      // endpapers from the cover spreads): the picture fills the frame
+      // and shows that side of it; the file stays whole
+      if (st.half && it.iw > 0 && it.ih > 0) {
+        var hs = Math.max(it.w / it.iw, it.h / it.ih), hw = it.iw * hs, hh = it.ih * hs;
+        hs = Math.max(0.001, Math.ceil(hs * 1000) / 1000); hw = it.iw * hs; hh = it.ih * hs;   // the model keeps 3 decimals: up, so it still fills
+        it.fit = "custom"; it.isc = hs;
+        it.ix = r3(st.half === "left" ? 0 : st.half === "right" ? it.w - hw : (it.w - hw) / 2);
+        it.iy = r3(st.half === "top" ? 0 : st.half === "bottom" ? it.h - hh : (it.h - hh) / 2);
+        if (it.ext && it.ext.iscy !== undefined) { delete it.ext.iscy; if (!Object.keys(it.ext).length) delete it.ext; }
+      }
       if (JSON.stringify([it.ext && it.ext.fl, it.ext && it.ext.adj, it.r, it.fit, it.w, it.h, it.isc, it.ix, it.iy]) === before) return;
       M.touch(it, now);
       n++;

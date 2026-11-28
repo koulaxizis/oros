@@ -108,7 +108,7 @@ test("wiring: shell stand-in, Dock, Send sheet, selection menu, Settings", () =>
   const L = read("launcher.js");
   assert.match(L, /host\.dockExtra \? host\.dockExtra\(\) : null/);
   assert.match(L, /refreshDock: function \(\) \{ paintDock\(\); \}/);
-  assert.match(L, /!b\.hasAttribute\("data-app"\)\) return;/, "the Pocket button is never dragged");
+  assert.match(L, /!\(b\.hasAttribute\("data-app"\) \|\| b\.hasAttribute\("data-group"\)\)\) return;/, "the Pocket button is never dragged");
   assert.match(read("send/sheet.js"), /typeof env\.pocket === "function"/);
   assert.match(read("quickmenu.js"), /root\.orosPocket\.keep\("text", \{ text: c\.text \}/);
   assert.match(read("settings/settings.js"), /act\("pocket\.clear"\)/);

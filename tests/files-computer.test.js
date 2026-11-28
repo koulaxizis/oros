@@ -215,6 +215,50 @@ test("client: trash rows come back as /computer paths", async () => {
   assert.equal(t[1].dir, true);
 });
 
+// DRIVE-OPEN (Chris 2026-11-27): a folder orOS Drive mirrors is already
+// in orOS; its files open from /internal/Drive/<device>/<name>, no copy.
+test("drive mirrors: only clean /internal/Drive targets; deepest first", () => {
+  const m = C.driveMirrors([
+    { path: "/home/Documents", remote: "/internal/Drive/PC/Documents" },
+    { path: "/home/Documents/Books", remote: "/internal/Drive/PC/Books/", paused: true },
+    { path: "/disks/D/Photos", remote: "/internal/Drive/PC/Photos" },
+    { path: "/home/Mail", remote: "/internal/Mail" },
+    { path: "/home/x", remote: "/internal/Drive/PC" },
+    { path: "/home/y", remote: "/internal/Drive/PC/../Mail" },
+    { path: "/home/../z", remote: "/internal/Drive/PC/Z" },
+    { path: "/disks", remote: "/internal/Drive/PC/All" },
+    null, { path: "/home/n" }
+  ]);
+  assert.deepEqual(m.map((x) => x.path), ["/computer/home/Documents/Books", "/computer/home/Documents", "/computer/disks/D/Photos"]);
+  assert.equal(m[0].remote, "/internal/Drive/PC/Books");
+  assert.equal(m[0].paused, true);
+  assert.deepEqual(C.driveMirrors(undefined), []);
+});
+
+test("drive mirrors: a path maps into its mirror; Windows ignores case", () => {
+  const m = C.driveMirrors([
+    { path: "/home/Documents", remote: "/internal/Drive/PC/Documents" },
+    { path: "/home/Documents/Books", remote: "/internal/Drive/PC/Books" }
+  ]);
+  assert.equal(C.mirrorOf(m, "/computer/home/Documents/Books/ch 1/a.docx", false).path, "/internal/Drive/PC/Books/ch 1/a.docx");
+  assert.equal(C.mirrorOf(m, "/computer/home/Documents/b.pdf", false).path, "/internal/Drive/PC/Documents/b.pdf");
+  assert.equal(C.mirrorOf(m, "/computer/home/Documents", false).path, "/internal/Drive/PC/Documents");
+  assert.equal(C.mirrorOf(m, "/computer/home/DocumentsX/a", false), null);
+  assert.equal(C.mirrorOf(m, "/computer/home/documents/b.pdf", false), null);
+  assert.equal(C.mirrorOf(m, "/computer/home/documents/b.pdf", true).path, "/internal/Drive/PC/Documents/b.pdf");
+  assert.equal(C.mirrorOf([], "/computer/home/a", true), null);
+});
+
+test("client: drive() reads the launcher's mirrors; an older launcher means none", async () => {
+  const f = fakeFetch((url) => url === "/__oros/fs/drive"
+    ? { status: 200, headers: JSONH, json: { folders: [{ path: "/home/Music", remote: "/internal/Drive/PC/Music" }] } }
+    : { status: 404, headers: JSONH, json: { error: "notfound" } });
+  assert.deepEqual(await C.client(f).drive(), [{ path: "/computer/home/Music", remote: "/internal/Drive/PC/Music", paused: false }]);
+  assert.equal(f.calls[0].init.headers["X-Oros-FS"], "1");
+  const old = C.client(fakeFetch(() => ({ status: 404, headers: JSONH, json: { error: "notfound", message: "unknown call" } })));
+  assert.deepEqual(await old.drive(), []);
+});
+
 test("probe: needs a home answer", async () => {
   assert.equal(await C.probe(C.client(fakeFetch(() => ({ status: 200, headers: JSONH, json: { home: { path: "/home" }, disks: [] } })))), true);
   assert.equal(await C.probe(C.client(fakeFetch(() => ({ status: 200, headers: JSONH, json: {} })))), false);

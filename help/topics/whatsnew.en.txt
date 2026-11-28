@@ -3,6 +3,46 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.06.00
+- **Screen time in the top bar.** A new Screen time card shows how long you used orOS today; tap it for today's apps, longest first. Names stay hidden during Sensitive work.
+
+## Version 9.05.00
+- **The Light show follows the beat.** The [Light show](app:wallpaper) wallpaper and Music's Light show now answer each beat of the music: the glow swells, a ring starts, the bars jump, the wave grows. Songs that stream move it too when their server lets orOS listen; when it does not, Settings › Appearance › Wallpaper says so and the light moves calmly on its own.
+
+## Version 9.04.00
+- **Dock groups.** Drag an app onto another app in the Dock, or choose Put in a group with… in its menu, and both go into a named group (apps of one category get its name). Tap the group to open, rename, take apps out or ungroup. Groups sync with the Dock order.
+
+## Version 9.03.01
+- **Claude no longer offers local folders.** Claude and the apps' exports work with Claude's folders on the orOS disk, where orOS Drive brings your computer's folders (Drive › your computer › the folder).
+
+## Version 9.03.00
+- **Game mode.** While a game from the Games category runs full screen, notifications stay silent and the top bar and the Dock step aside; move the pointer to the top edge to see the bar. Off at first, this device only: Settings › Notifications › Game mode.
+
+## Version 9.02.00
+- **Folders orOS Drive mirrors open straight in orOS.** In Files › This computer, a folder that orOS Drive mirrors shows an orOS Drive badge, and its files open from the orOS copy, with nothing to copy (needs orOS for Windows/Linux 0.9.9+).
+- **Local folders for Claude are gone, and so is their bar.** orOS Drive brings your computer's folders into orOS, where Claude works with them as Claude's folders.
+
+## Version 9.01.00
+- **Choose the menu button's icon.** Settings › Appearance › Menu button icon: four squares, nine dots, a ring, a spark, a leaf, three lines or no icon. This device only.
+
+## Version 9.00.03
+- **The same private apps are off-limits to Claude and to the Assistant.** orOS Gate no longer offers Mail to Claude, the same as the Assistant. In the Assistant, Diary, Fitness, Health, Mood, Cycle and Baby start at `Never`, the same as in orOS Gate. You can still let either one read them.
+
+## Version 9.00.02
+- **Claude sees your pictures through orOS Gate.** When Claude reads a picture or a page image of yours through orOS Gate, it now gets the picture itself, not only the text in it. Pictures from Mail and Passwords never go.
+
+## Version 9.00.01
+- **Sync keeps going when a phone runs out of room.** The copies orOS keeps for your other devices (apps you never opened on this one) now take about a quarter of the space, so a full phone syncs again by itself, without you exporting or deleting anything. If space still runs out, the notice opens Settings › Device, where Space per app shows which apps take the room.
+
+## Version 9.00.00
+- **The Assistant pages books better.** After you press Apply on a Layout card, the Assistant now always hears what changed, even from another window. It can make words into links that keep their look, show one half of a picture in a frame, look at page images with a service that sees pictures, and read Word, OpenDocument and PDF files from a local folder you allowed. A replacement that empties a line removes it, two documents with the same name are asked about, and a conversation can be downloaded as Markdown from the list. Saved conversations now show again after the Assistant is reopened.
+
+## Version 8.99.00
+- **Your computer's own local AI answers when the synced address can't.** If the [Assistant](app:assistant)'s Local / OpenAI-compatible service points at a server on another device (for example your laptop's address on the home network) and that address does not answer here, the local AI that is ready on this computer (System › Local AI) answers in its place. Nothing is saved: your other devices keep their setting, and the synced address is used again as soon as it answers. Settings › Connected services shows "this computer's local AI answers" while this happens.
+
+## Version 8.98.03
+- **One colour picker.** Make it yours takes you to System colour instead of showing the colours a second time.
+
 ## Version 8.98.02
 - **The Daily mix stays put.** Liking a song in Music no longer reshuffles your Daily mix: it keeps the same songs in the same order all day and changes once a day.
 

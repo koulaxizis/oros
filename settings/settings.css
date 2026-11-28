@@ -964,5 +964,4 @@ html[data-oros-motion="reduce"] .my-win.my-play { animation: none; }
 .my-dock-left, .my-dock-right { top: 50%; transform: translateY(-50%); flex-direction: column; }
 .my-dock-left { left: 2%; }
 .my-dock-right { right: 2%; }
-.my-swatches { margin-top: 2px; }
 .ab-val { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
