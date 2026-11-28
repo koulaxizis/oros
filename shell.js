@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "9.06.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "9.07.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -5213,6 +5213,84 @@
       v.addEventListener("loadeddata", function () { setTimeout(draw, 350); });
       setTimeout(draw, 4000);
       try { v.play().catch(function () {}); } catch (e) {}
+    }, function () {});
+  }
+  // QS-REC-1: a screen recording from Quick settings. As above, the
+  // browser's picker opens on the tap (the gesture is the shell's); then
+  // screenrec.js (a shell component, loaded on demand with Screen
+  // Capture's pure helpers capture/core.js) records it HERE, so the
+  // recording goes on while apps open and close, and saves the clip in
+  // Files › Videos. Screen Capture's options apply (quality, frame rate;
+  // the screen's sound as ticked in the picker; the microphone only
+  // when on there). One recording at a time (Screen Capture's own too).
+  function recOk() {
+    var md = navigator.mediaDevices;
+    return !!(md && typeof md.getDisplayMedia === "function" && window.MediaRecorder && hasApp("capture")) || recPhone();
+  }
+  // QS-REC-1 Android: Chrome on a phone cannot share the screen with a
+  // page; the orOS app records it (phone.js rec(): its own consent screen,
+  // a notification with Stop, the video in the phone's Movies › orOS).
+  function recPhone() {
+    var md = navigator.mediaDevices;
+    if (md && typeof md.getDisplayMedia === "function") return false;
+    try { return !!(window.orosPhone && typeof window.orosPhone.canRec === "function" && window.orosPhone.canRec()); }
+    catch (e) { return false; }
+  }
+  function recLive() {
+    try { return window.orosSmartBar && typeof window.orosSmartBar.recNow === "function" ? window.orosSmartBar.recNow() : null; }
+    catch (e) { return null; }
+  }
+  function recPrefs() {
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem("oros-capture-prefs") || "null"); } catch (e) { p = null; }
+    return p && typeof p === "object" ? p : {};
+  }
+  var recLoading = null;
+  function recScript(src) {
+    return new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.src = src + "?v=" + encodeURIComponent(APP_VERSION);
+      sc.onload = res;
+      sc.onerror = function () { sc.remove(); rej(new Error(src)); };
+      document.head.appendChild(sc);
+    });
+  }
+  function recLoad() {
+    if (window.orosScreenRec && window.CaptureCore) return Promise.resolve(window.orosScreenRec);
+    if (!recLoading) recLoading = Promise.all([
+      window.CaptureCore ? null : recScript("capture/core.js"),
+      window.orosScreenRec ? null : recScript("screenrec.js")
+    ]).then(function () {
+      var api = window.orosScreenRec;
+      if (!api || !window.CaptureCore) throw new Error("screenrec");
+      api.attach({
+        t: function (k) { return window.t(k); },
+        toast: function (kind, text, onClick) { scToast(kind, text, onClick); },
+        fs: function () { return window.orosFS || null; },
+        bar: function (h) { if (window.orosSmartBar && typeof window.orosSmartBar.live === "function") window.orosSmartBar.live("rec", h); },
+        calm: function () { window.__orosCalmScreen(); },
+        openFile: function (path) { window.__orosOpenAt("files", /\/$/.test(path) ? { path: path.slice(0, -1), dir: true } : { path: path }); },
+        busy: function () { return !!recLive(); }
+      });
+      return api;
+    }, function (e) { recLoading = null; throw e; });
+    return recLoading;
+  }
+  function recTake() {
+    if (recPhone()) { window.orosPhone.rec(recPrefs().mic === true); return; }   // the app starts or stops it
+    if (!recOk() || recLive() || (window.orosScreenRec && window.orosScreenRec.running())) return;
+    var raw = recPrefs(), sys = raw.sys !== false, fps = raw.fps === 60 ? 60 : 30;
+    var v = { cursor: raw.cursor === false ? "never" : "always", frameRate: { ideal: fps, max: fps } };
+    if (raw.res === "1080" || raw.res === "720" || raw.res === "480") v.height = { max: Number(raw.res) };
+    var o = { video: v, audio: sys, selfBrowserSurface: "include", surfaceSwitching: "include" };
+    if (sys) o.systemAudio = "include";
+    var p;
+    try { p = navigator.mediaDevices.getDisplayMedia(o); } catch (e) { p = Promise.reject(e); }
+    p.then(function (st) {
+      recLoad().then(function (api) { api.start(st, raw); }, function () {
+        st.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} });
+        scToast("err", window.t("qs.rec.fail"));
+      });
     }, function () {});
   }
   window.__orosTakeShot = function () {
@@ -18869,7 +18947,16 @@
       media: qsMedia,
       // QS-SHOT-1: the menu search and a screenshot (not in a single app).
       search: SOLO ? null : function (text) { ovToMenu(String(text || "").slice(0, 200)); },
-      shot: SOLO ? null : function (kind) { if (hasApp("capture")) shotTake(kind === "region" ? "region" : "screen"); }
+      shot: SOLO ? null : function (kind) { if (hasApp("capture")) shotTake(kind === "region" ? "region" : "screen"); },
+      // QS-REC-1: Screen recording (screenrec.js). state/stop: the smart bar's
+      // recording handle, this one or Screen Capture's own.
+      rec: SOLO ? null : {
+        can: recOk,
+        state: function () { var h = recLive(); return h ? h.state() : null; },
+        start: recTake,
+        stop: function () { var h = recLive(); if (h) h.stop(); },
+        settings: function () { window.__orosOpenAt("capture", { rec: "settings" }); }
+      }
     });
   }
   // Clipboard history (cliphist.js, CLIP-1): what is copied inside orOS

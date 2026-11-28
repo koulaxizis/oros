@@ -1129,6 +1129,8 @@
       if (!host) return;
       save(list(), undefined, !!on);
     },
+    // QS-REC-1: the running recording's handle for Quick settings, or null
+    recNow: function () { return recLive; },
     // Screen Capture's recording { state() → { ms, paused }, stop() } | null, in memory
     live: function (kind, h) {
       if (kind !== "rec") return;
