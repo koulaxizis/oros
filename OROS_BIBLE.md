@@ -3908,6 +3908,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+- **2026-11-28 · Mail card (MAILCARD-1):** Chris (thread «💡 Ιδέες από νέο βίντεο για το orOS», cards 00:32Z–02:30Z, video ideas 2026-11-23 #19). Smart-bar kind `mail` opens IndexedDB `oros-mail` without a version (an upgrade is aborted), readonly transactions only: folder counts for the number, `heads` of `acct|INBOX` for the peek (Unread / Starred tabs). Only what Mail already loaded on this device; never a key or a body. Hidden under Sensitive work or the Mail app lock; the peek closes when the card goes. Test `tests/mailcard.test.js`.
 - **2026-11-28 · Exchange rate card (RATES-1):** Chris (thread «💡 Ιδέες από νέο βίντεο για το orOS», cards 00:32Z–02:30Z, video ideas 2026-11-23 #18). Smart-bar kind `rates` (money: hidden under Sensitive work) reads `oros-units-rates` and `oros-units-prefs` (default EUR→USD); nothing is fetched. Tap opens Calculator › Convert with the pair. units/core.js: `CURRENCY_REGIONS` (ISO codes per ECB currency) with names from `Intl.DisplayNames` in English, Greek and the language in use, so a country finds its currency. Test `tests/ratescard.test.js`.
 - **2026-11-28 · Storage card (STORE-1):** Chris (thread «💡 Ιδέες από νέο βίντεο για το orOS», cards 00:32Z–02:30Z, video ideas 2026-11-23 #17). Smart-bar kind `storage`: `<html data-oros-sys-disk="free total">` from the system part (oros-usb #41, `diskSpace(home)`), else `navigator.storage.estimate()` (cached 10 minutes); low under 10 %. Tap opens Settings › System › About this device. Test `tests/storagecard.test.js`.
 - **2026-11-28 · Screen time card (STC-1):** Chris (thread «💡 Ιδέες από νέο βίντεο για το orOS», cards 00:32Z–02:30Z, video ideas 2026-11-23 #16). Smart-bar kind `screen` (smartbar-apps OWN), shown only while Screen time is on; reads `device/screentime.js` `todayUse()` (read-only, pending time included). The peek lists today's apps, longest first; names hidden under Sensitive work, a locked app never listed. smartbar 1.11.0, smartbar-apps 1.1.0. Test `tests/screencard.test.js`.
@@ -14362,3 +14363,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** spreadsheet/sheetimport.js, cycle/core.js, cycle/cycle.js, automations/host.js, .github/workflows, .github/qa/package.json, whatsnew EN/EL, OROS_BIBLE.md, tests (convert-spreadsheet, shelf-import, today-wave4, smartbar-auto).
 - **Tests:** full suite in UTC and in TZ=Europe/Athens; quality gate on CI.
 - **Not tested:** Safari, Firefox.
+
+### 2026-11-28 — 9.10.00 — Mail card (MAILCARD-1)
+- **Why:** video ideas 2026-11-23 #19 (Chris, approved on cards).
+- **What:** A new Mail card shows how many emails are unread in your Inboxes; tap it for the unread messages and Starred, and a message opens in Mail. Never a sender or subject in the bar, hidden during Sensitive work or while Mail is locked. Rules in Part IX MAILCARD-1.
+- **Files:** smartbar.js, smartbar-apps.js, translations.js, i18n/de (shell, help/topics/appearance), help/topics/appearance.en/el.txt, whatsnew EN/EL, OROS_BIBLE.md, tests/mailcard.test.js.
+- **Tests:** tests/mailcard.test.js; full suite; Playwright Chromium at 360 px and 1280 px: the count, the peek tabs, opening a message, no page errors.
+- **Not tested:** a real IMAP account, Safari, Firefox.

@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.10.00
+- **Mail in the top bar, with a peek.** A new Mail card shows how many emails are unread in your Inboxes; tap it for the unread messages and Starred, and a message opens in Mail. Never a sender or subject in the bar, hidden during Sensitive work or while Mail is locked.
+
 ## Version 9.09.01
 - **Dates in spreadsheets and Cycle.** Spreadsheet: dates from Excel and Calc files no longer gain an hour. Cycle: the expected start stays on the right day across the October clock change.
 
