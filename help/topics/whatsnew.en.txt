@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.09.00
+- **Exchange rate in the top bar, and countries in the currency search.** A new Exchange rate card shows your currency pair from the Calculator's stored ECB rates (nothing new is fetched); tap it to convert. In the currency list you can type a country, such as Greece or Japan, and its currency shows with the country beside it.
+
 ## Version 9.08.01
 - **Studio effects from NULL JSFX 4.2.** 6 new plugins: Band Spin, Bass Presence, Hit Layer and Step Filter in the effects, Music Box as an instrument, and Beat Gen for instrument tracks. The other effects have the 4.1 and 4.2 improvements. See [Studio](help:a/studio).
 
