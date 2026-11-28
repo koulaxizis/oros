@@ -146,5 +146,30 @@
     }
   }
 
-  root.MontageDenoise = { clean: clean, Stream: Stream, FRAME: FRAME, RATE: RATE };
+  // Sound already cleaned elsewhere (../voiceclean.js: DeepFilterNet3,
+  // wave K3) → a File in the same formats as clean() writes.
+  // planes: Float32Array per channel at `rate`.
+  async function encode(planes, rate, opts) {
+    opts = opts || {};
+    var M = root.Mediabunny;
+    if (!M) throw new Error("decode");
+    var chans = planes.length, n = planes[0].length;
+    var fmt = await soundFormat(M), target = new M.BufferTarget();
+    var output = new M.Output({ format: fmt.fmt, target: target });
+    var src = new M.AudioSampleSource({ codec: fmt.ac, bitrate: 128e3 });
+    output.addAudioTrack(src);
+    await output.start();
+    for (var at = 0; at < n; at += rate) {
+      var len = Math.min(rate, n - at), data = new Float32Array(len * chans);
+      for (var c = 0; c < chans; c++) data.set(planes[c].subarray(at, at + len), c * len);
+      await src.add(new M.AudioSample({ data: data, format: "f32-planar", numberOfChannels: chans, sampleRate: rate, timestamp: at / rate }));
+      if (opts.progress) opts.progress(at / n);
+    }
+    src.close();
+    await output.finalize();
+    var name = String(opts.name || "sound").replace(/\.[^.]+$/, "").slice(0, 60) + " (clean)." + fmt.ext;
+    return new File([target.buffer], name, { type: fmt.mime });
+  }
+
+  root.MontageDenoise = { clean: clean, encode: encode, Stream: Stream, FRAME: FRAME, RATE: RATE };
 })(typeof window !== "undefined" ? window : this);

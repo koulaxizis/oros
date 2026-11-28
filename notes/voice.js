@@ -532,6 +532,7 @@
     }
     if (!row.missing) {
       item(t("vc.transcribe"), function () { transcribe(row); });
+      item(t("vc.clean"), function () { cleanAsk(row); });
       item(t("vc.trim"), function () { trimDialog(row); });
       if (studioOk()) item(t("vc.studio"), function () { toStudio(row); });
       item(t("vc.download"), function () { download(row); });
@@ -847,6 +848,66 @@
       if (stop) return;
       b.close();
       host.toast(e && /^http|fetch|network|load/i.test(String(e.message || e)) ? t("vc.asrNet") : t("vc.asrFail"));
+    });
+  }
+
+  // ---------- K3: clean the voice (../voiceclean.js, DeepFilterNet3) ----------
+  // The cleaned recording is a NEW file whose line goes right under the
+  // original's: the original stays, and the person deletes the one they
+  // do not need.
+  function cleanAsk(row) {
+    loadScript("../voiceclean.js").then(function () {
+      var VC = window.OrosVoiceClean;
+      if (!VC || !VC.WASM.sha) throw new Error("no-vc");
+      return VC.ready().then(function (yes) {
+        if (yes) { runClean(row, VC); return; }
+        host.ask(t("vc.cleanT"), tf("vc.cleanNeed", { mb: VC.APPROX_MB }), [
+          { label: t("dlg.cancel") },
+          { label: t("vc.cleanGo"), primary: true, fn: function () { runClean(row, VC); } }
+        ]);
+      });
+    }).catch(function () { host.toast(t("vc.cleanFail")); });
+  }
+  function encode48(s) {
+    return loadScript("../studio/encode.js").then(function () {
+      var E = window.StudioEncode;
+      return E && E.opusSupported ? E.opusSupported() : false;
+    }, function () { return false; }).then(function (opus) {
+      if (opus) return window.StudioEncode.encodeOpus([s], 32, {}).then(function (bytes) { return { blob: new Blob([bytes], { type: "audio/ogg" }), ext: "ogg" }; });
+      return { blob: new Blob([V.wav16(s, 48000)], { type: "audio/wav" }), ext: "wav" };
+    });
+  }
+  function runClean(row, VC) {
+    var ctl = typeof AbortController === "function" ? new AbortController() : null, stop = false;
+    var b = busyDlg(t("vc.cleanT"), function () { stop = true; if (ctl) ctl.abort(); });
+    b.say(t("vc.reading"), 0);
+    var old = row.name, pageId = row.pageId, ms = 0;
+    decode(old).then(function (buf) {
+      if (stop) throw new Error("stop");
+      ms = Math.round(buf.duration * 1000);
+      return monoAt(buf, 0, ms, VC.RATE);
+    }).then(function (s) {
+      return VC.clean([s], {
+        strength: "medium", signal: ctl ? ctl.signal : undefined,
+        onDownload: function (q) { if (!stop) b.say(tf("vc.cleanDl", { p: Math.round(q * 100) }), q); },
+        onProgress: function (q) { if (!stop) b.say(tf("vc.cleanRun", { p: Math.round(q * 100) }), q); }
+      });
+    }).then(function (out) {
+      if (stop) throw new Error("stop");
+      b.say(t("vc.saving"), 1);
+      return encode48(out[0]);
+    }).then(function (enc) {
+      return writeFile(enc.blob, Date.now(), enc.ext);
+    }).then(function (name) {
+      b.close();
+      var p = host.page(pageId), next = p ? V.insertAfter(p.text || "", old, V.lineFor(name, ms)) : null;
+      if (next === null) { host.toast(t("vc.savedNoPage")); return; }
+      host.setText(p.id, next, null);
+      host.toast(t("vc.cleaned"));
+    }, function () {
+      if (stop) return;
+      b.close();
+      host.toast(t("vc.cleanFail"));
     });
   }
 

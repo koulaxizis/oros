@@ -130,6 +130,20 @@ A small multitrack studio: put audio clips on tracks, write notes for built-in i
 - It is heavy: on a computer about one minute of work per minute of music, longer on older computers and much longer on phones. If Studio closes, the next separation of the same sound goes on where it stopped. A sound can be up to 15 minutes long, and the project needs a free track for each part.
 >! Parts of someone else's song are for your own use (practice, karaoke, study) unless its licence allows more.
 
+## Clean the voice
+- Select an audio clip with speech (a podcast, an interview, a voice-over) and press `Clean voice…`. Choose how much noise to remove (`Gentle`, `Medium` or `Full`), listen to 10 seconds with `Before` and `After`, then `Clean`.
+- It takes background noise out of speech: hum, hiss, fans, traffic, the sound of the room. It is made for voices; on music it can harm the sound.
+- The cleaned sound is a new FLAC file on the orOS disk, and every clip that played the old sound now plays it. The original stays on the disk and `Undo` brings it back.
+- `Every voice of this project` cleans every spoken sound of a podcast or audiobook in one go.
+- It runs on this device with DeepFilterNet3 (MIT). The first time about 14 MB is downloaded once and kept on this device; `Remove the cleaner` deletes it. Nothing is uploaded. On a computer it takes a few seconds per minute of sound, longer on phones.
+
+## To MIDI
+- Select an audio clip and press `To MIDI…` to turn what plays into notes: a melody (a voice, a whistle, one instrument line) or chords (piano, guitar). `How many notes` hears fewer or more of the quiet notes, `Snap to the grid` puts them on eighths or sixteenths (off by default), and `Instrument` picks the sound of the new track.
+- The notes go into a MIDI clip on a new instrument track, at the clip's place; the sound itself does not change and `Undo` takes the step back. `Export MIDI` in the new clip's piano roll saves a .mid file.
+- Drums do not become notes, and one instrument at a time works best.
+- `Hum or whistle to MIDI…` in the `Keyboard` panel records you from the microphone (up to 60 seconds): hum, whistle or sing a melody, and the notes go to the playhead on a new instrument track.
+- It runs on this device with Basic Pitch (Spotify, Apache-2.0). The first time 0.2 MB is downloaded once. Nothing is uploaded.
+
 ## Remote control
 Control Studio's mixer and transport from a tablet or phone while the sound plays on the PC.
 1. On the PC, open the settings (the three dots at the top) and press `Connect a tablet or phone`, then `Show a code`. Studio shows a 6-digit code and a QR code.

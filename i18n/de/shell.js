@@ -379,6 +379,8 @@ orosPack("de", "shell", {
  "cr.mediabunny": "Videodateien lesen und schreiben (Montage)",
  "cr.meteoalarm": "Amtliche Wetterwarnungen (Wetter)",
  "cr.demucs": "Ein Lied in Gesang, Schlagzeug, Bass und Rest trennen (Studio)",
+ "cr.deepfilter": "Hintergrundrauschen aus Sprache entfernen (Studio, Montage, Notizen)",
+ "cr.basicpitch": "Klang, Summen und Pfeifen in MIDI-Noten verwandeln (Studio)",
  "cr.mi-gan": "Einen Teil eines Bildes füllen: Magischer Radierer und Magischer Griff (Atelier)",
  "cr.musicbrainz": "Albumdetails (Medienregal, Cover in Musik); Künstlerseiten, Diskografie und Titellisten (Musik)",
  "cr.nasa-gibs": "Satelliten-Regenkarte (Wetter)",

@@ -209,6 +209,76 @@
       "stm.k.bass": "Bass",
       "stm.k.other": "Other",
       "stm.k.inst": "Instrumental",
+      "vc.btn": "Clean voice…",
+      "vc.title": "Clean the voice",
+      "vc.strength": "How much noise to remove",
+      "vc.k.gentle": "Gentle",
+      "vc.k.medium": "Medium",
+      "vc.k.full": "Full",
+      "vc.all": "Every voice of this project ({n} sounds)",
+      "vc.preview": "Listen to 10 seconds:",
+      "vc.before": "Before",
+      "vc.after": "After",
+      "vc.previewing": "Cleaning 10 seconds…",
+      "vc.how": "Takes background noise (hum, hiss, fans, traffic, the room) out of speech. It is made for voices: on music it can harm the sound. The cleaned sound is a new file and the clips play it; the original stays on the disk and Undo brings it back. It runs on this device with DeepFilterNet3 (MIT); nothing is uploaded.",
+      "vc.download": "The first time, about {mb} MB is downloaded once and kept on this device.",
+      "vc.time": "On this device it takes about {t}.",
+      "vc.sec": "{n} s", "vc.timeLt": "On this device it takes less than a minute.",
+      "vc.min": "{n} min",
+      "vc.go": "Clean",
+      "vc.prep": "Preparing the sound…",
+      "vc.dl": "Downloading the cleaner… {n}%",
+      "vc.working": "Cleaning… {n}%",
+      "vc.left": "Cleaning… {n}% (about {t} left)",
+      "vc.save": "Saving {name}…",
+      "vc.done": "Voice cleaned ({n}). Undo brings the original back.",
+      "vc.stopped": "Cleaning stopped",
+      "vc.forget": "Remove the cleaner",
+      "vc.forgotten": "The voice cleaner was removed from this device",
+      "vc.name": "{name} (clean)",
+      "vc.keepOpen": "Keep Studio open until it is done.",
+      "vc.err.download": "The cleaner could not be downloaded. Check the connection and try again.",
+      "vc.err.hash": "The download was damaged. Try again.",
+      "vc.err.quota": "There is not enough room on this device.",
+      "vc.err.memory": "This device ran out of memory. Close other apps or clean a shorter sound.",
+      "vc.err.unavailable": "The voice cleaner is not available yet.",
+      "vc.err.missing": "The sound file is not on this device.",
+      "vc.err.moved": "Another project was opened, so nothing was changed.",
+      "vc.err.long": "A sound over 3 hours cannot be cleaned.",
+      "vc.err.engine": "This did not work on this device.",
+      "vc.err.cancelled": "Stopped",
+      "vc.err.empty": "There is nothing to work on.",
+      "tm.btn": "To MIDI…",
+      "tm.hum": "Hum or whistle to MIDI…",
+      "tm.title": "Turn sound into MIDI notes",
+      "tm.humHint": "Press Record and hum, whistle or sing a melody (up to 60 seconds). The notes go to the playhead.",
+      "tm.rec": "Record",
+      "tm.stop": "Stop",
+      "tm.again": "Record again",
+      "tm.kind": "What is playing",
+      "tm.k.melody": "A melody (voice, whistle, one line)",
+      "tm.k.poly": "Chords (piano, guitar)",
+      "tm.sens": "How many notes",
+      "tm.s2": "Fewer",
+      "tm.s3": "Normal",
+      "tm.s4": "More",
+      "tm.quant": "Snap to the grid",
+      "tm.q0": "Off",
+      "tm.q8": "Eighths",
+      "tm.q16": "Sixteenths",
+      "tm.inst": "Instrument",
+      "tm.how": "The notes go on a new instrument track; the sound itself does not change. Drums do not become notes, and one instrument at a time works best. Export MIDI on the new clip saves a .mid file. It runs on this device with Basic Pitch (Spotify, Apache-2.0); nothing is uploaded.",
+      "tm.download": "The first time, 0.2 MB is downloaded once and kept on this device.",
+      "tm.go": "Make notes",
+      "tm.working": "Listening… {n}%",
+      "tm.done": "{n} notes on a new instrument track",
+      "tm.doneCut": "The first {max} notes are on a new instrument track (a clip holds up to {max})",
+      "tm.track": "{name} (MIDI)",
+      "tm.humName": "Hummed melody",
+      "tm.tracks": "A new track is needed and the project has {max}. Delete a track first.",
+      "tm.long": "A clip over {n} minutes cannot be turned into notes. Split it first.",
+      "tm.err.empty": "No notes were heard. Try More, or a clearer recording.",
+      "tm.err.mic": "The microphone could not be used. Allow it for orOS and try again.",
       "stm.err.download": "The model could not be downloaded. Check the connection and try again.",
       "stm.err.hash": "The downloaded model was not the right file, so it was not kept. Try again later.",
       "stm.err.quota": "There is not enough space on this device for the model or the parts.",
@@ -487,6 +557,76 @@
       "stm.k.bass": "Μπάσο",
       "stm.k.other": "Υπόλοιπα",
       "stm.k.inst": "Ορχηστρικό",
+      "vc.btn": "Καθαρισμός φωνής…",
+      "vc.title": "Καθαρισμός φωνής",
+      "vc.strength": "Πόσος θόρυβος να φύγει",
+      "vc.k.gentle": "Ήπιο",
+      "vc.k.medium": "Μέτριο",
+      "vc.k.full": "Πλήρες",
+      "vc.all": "Όλες οι φωνές του έργου ({n} ήχοι)",
+      "vc.preview": "Άκου 10 δευτερόλεπτα:",
+      "vc.before": "Πριν",
+      "vc.after": "Μετά",
+      "vc.previewing": "Καθαρίζω 10 δευτερόλεπτα…",
+      "vc.how": "Βγάζει τον θόρυβο του φόντου (βουητό, σφύριγμα, ανεμιστήρες, κίνηση, τον χώρο) από την ομιλία. Είναι φτιαγμένο για φωνές: σε μουσική μπορεί να χαλάσει τον ήχο. Ο καθαρός ήχος γίνεται νέο αρχείο και τον παίζουν τα κλιπ· το αρχικό μένει στον δίσκο και η Αναίρεση το φέρνει πίσω. Τρέχει σε αυτή τη συσκευή με το DeepFilterNet3 (MIT)· τίποτα δεν ανεβαίνει.",
+      "vc.download": "Την πρώτη φορά κατεβαίνουν μία φορά περίπου {mb} MB και μένουν σε αυτή τη συσκευή.",
+      "vc.time": "Σε αυτή τη συσκευή θέλει περίπου {t}.",
+      "vc.sec": "{n} δευτ.", "vc.timeLt": "Σε αυτή τη συσκευή θέλει λιγότερο από ένα λεπτό.",
+      "vc.min": "{n} λεπτά",
+      "vc.go": "Καθαρισμός",
+      "vc.prep": "Ετοιμάζω τον ήχο…",
+      "vc.dl": "Κατεβάζω τον καθαριστή… {n}%",
+      "vc.working": "Καθαρίζω… {n}%",
+      "vc.left": "Καθαρίζω… {n}% (μένουν περίπου {t})",
+      "vc.save": "Αποθηκεύω το {name}…",
+      "vc.done": "Η φωνή καθάρισε ({n}). Η Αναίρεση φέρνει πίσω το αρχικό.",
+      "vc.stopped": "Ο καθαρισμός σταμάτησε",
+      "vc.forget": "Αφαίρεση του καθαριστή",
+      "vc.forgotten": "Ο καθαριστής φωνής αφαιρέθηκε από αυτή τη συσκευή",
+      "vc.name": "{name} (καθαρό)",
+      "vc.keepOpen": "Κράτα το Studio ανοιχτό μέχρι να τελειώσει.",
+      "vc.err.download": "Ο καθαριστής δεν κατέβηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
+      "vc.err.hash": "Η λήψη χάλασε. Δοκίμασε ξανά.",
+      "vc.err.quota": "Δεν υπάρχει αρκετός χώρος σε αυτή τη συσκευή.",
+      "vc.err.memory": "Τελείωσε η μνήμη της συσκευής. Κλείσε άλλες εφαρμογές ή καθάρισε μικρότερο ήχο.",
+      "vc.err.unavailable": "Ο καθαριστής φωνής δεν είναι ακόμα διαθέσιμος.",
+      "vc.err.missing": "Το αρχείο ήχου δεν είναι σε αυτή τη συσκευή.",
+      "vc.err.moved": "Άνοιξε άλλο έργο, οπότε δεν άλλαξε τίποτα.",
+      "vc.err.long": "Ήχος πάνω από 3 ώρες δεν καθαρίζεται.",
+      "vc.err.engine": "Αυτό δεν δούλεψε σε αυτή τη συσκευή.",
+      "vc.err.cancelled": "Σταμάτησε",
+      "vc.err.empty": "Δεν υπάρχει κάτι για επεξεργασία.",
+      "tm.btn": "Σε MIDI…",
+      "tm.hum": "Σφύρα ή τραγούδα σε MIDI…",
+      "tm.title": "Ήχος σε νότες MIDI",
+      "tm.humHint": "Πάτα Ηχογράφηση και σιγοτραγούδα, σφύρα ή τραγούδα μια μελωδία (έως 60 δευτερόλεπτα). Οι νότες μπαίνουν στη θέση αναπαραγωγής.",
+      "tm.rec": "Ηχογράφηση",
+      "tm.stop": "Στοπ",
+      "tm.again": "Ξανά ηχογράφηση",
+      "tm.kind": "Τι παίζει",
+      "tm.k.melody": "Μελωδία (φωνή, σφύριγμα, μία γραμμή)",
+      "tm.k.poly": "Συγχορδίες (πιάνο, κιθάρα)",
+      "tm.sens": "Πόσες νότες",
+      "tm.s2": "Λιγότερες",
+      "tm.s3": "Κανονικά",
+      "tm.s4": "Περισσότερες",
+      "tm.quant": "Ευθυγράμμιση στο πλέγμα",
+      "tm.q0": "Όχι",
+      "tm.q8": "Όγδοα",
+      "tm.q16": "Δέκατα έκτα",
+      "tm.inst": "Όργανο",
+      "tm.how": "Οι νότες μπαίνουν σε νέο κανάλι οργάνου· ο ίδιος ο ήχος δεν αλλάζει. Τα τύμπανα δεν γίνονται νότες, και ένα όργανο τη φορά δουλεύει καλύτερα. Η Εξαγωγή MIDI στο νέο κλιπ αποθηκεύει αρχείο .mid. Τρέχει σε αυτή τη συσκευή με το Basic Pitch (Spotify, Apache-2.0)· τίποτα δεν ανεβαίνει.",
+      "tm.download": "Την πρώτη φορά κατεβαίνουν μία φορά 0,2 MB και μένουν σε αυτή τη συσκευή.",
+      "tm.go": "Φτιάξε νότες",
+      "tm.working": "Ακούω… {n}%",
+      "tm.done": "{n} νότες σε νέο κανάλι οργάνου",
+      "tm.doneCut": "Οι πρώτες {max} νότες είναι σε νέο κανάλι οργάνου (ένα κλιπ χωράει έως {max})",
+      "tm.track": "{name} (MIDI)",
+      "tm.humName": "Μελωδία από φωνή",
+      "tm.tracks": "Χρειάζεται νέο κανάλι και το έργο έχει ήδη {max}. Σβήσε πρώτα ένα κανάλι.",
+      "tm.long": "Κλιπ πάνω από {n} λεπτά δεν γίνεται νότες. Χώρισέ το πρώτα.",
+      "tm.err.empty": "Δεν ακούστηκαν νότες. Δοκίμασε «Περισσότερες» ή πιο καθαρή ηχογράφηση.",
+      "tm.err.mic": "Το μικρόφωνο δεν άνοιξε. Επίτρεψέ το στο orOS και δοκίμασε ξανά.",
       "stm.err.download": "Το μοντέλο δεν κατέβηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "stm.err.hash": "Το αρχείο που κατέβηκε δεν ήταν το σωστό, οπότε δεν κρατήθηκε. Δοκίμασε αργότερα.",
       "stm.err.quota": "Δεν υπάρχει αρκετός χώρος σε αυτή τη συσκευή για το μοντέλο ή τα μέρη.",
@@ -1531,6 +1671,8 @@
     $("notes-btn").hidden = !midi;
     $("lic-btn").hidden = midi;
     $("stems-btn").hidden = midi || !fsApi();
+    $("vc-btn").hidden = midi || !fsApi();
+    $("tm-btn").hidden = midi;
     $("fi-field").hidden = midi;
     $("fo-field").hidden = midi;
     var gi = $("gain-in"), fi = $("fi-in"), fo = $("fo-in");
@@ -4981,6 +5123,355 @@
     });
   }
 
+  // ---------- 9b2. Clean the voice (../voiceclean.js, wave K2) ----------
+  // DeepFilterNet3 on this device takes background noise out of speech.
+  // The cleaned sound is a 24-bit FLAC on the disk, a source with
+  // st: { of, k: "voice" }, and every clip of this project that played
+  // the original plays the cleaned one; the original stays on the disk
+  // and the whole step is one Undo. "Every voice of this project" (on by
+  // default in a book chapter) cleans all its recorded sounds at once.
+  var vc = { src: "", clip: "", level: "medium", all: false, ctrl: null, prev: {}, audio: null };
+  var lazyP = {};
+  function lazyScript(src, name) {
+    if (window[name]) return Promise.resolve(window[name]);
+    if (!lazyP[src]) {
+      lazyP[src] = new Promise(function (ok, fail) {
+        var s = document.createElement("script");
+        s.src = src + "?v=" + VER;
+        s.onload = function () { if (window[name]) ok(window[name]); else fail(new Error(name)); };
+        s.onerror = function () { fail(new Error(src)); };
+        document.head.appendChild(s);
+      });
+      lazyP[src].catch(function () { delete lazyP[src]; });
+    }
+    return lazyP[src];
+  }
+  function vcLoad() { return lazyScript("../voiceclean.js", "OrosVoiceClean"); }
+  function fmtDur(sec) { return sec < 60 ? t("vc.sec", { n: Math.max(5, Math.ceil(sec / 5) * 5) }) : t("vc.min", { n: Math.round(sec / 60) }); }
+  // the recorded sounds of this project a "clean every voice" takes
+  function vcVoices() {
+    var seen = {}, out = [];
+    projClips().forEach(function (c) {
+      if (C.isMidi(c) || seen[c.s]) return;
+      seen[c.s] = true;
+      var s = sourceOf(c.s);
+      if (s && !(s.st && s.st.k === "voice")) out.push(s);
+    });
+    return out;
+  }
+  function vcTargets() {
+    var src = sourceOf(vc.src);
+    if (!src) return [];
+    if (!vc.all) return [src];
+    var list = vcVoices();
+    if (!list.some(function (s) { return s.id === src.id; })) list.unshift(src);
+    return list;
+  }
+  function openVoice() {
+    var c = selClip ? C.find(data, "clips", selClip) : null, src = c && !C.isMidi(c) ? sourceOf(c.s) : null;
+    if (!src) return;
+    if (!fsApi()) { showToast(t("toast.noDisk")); return; }
+    vc.src = src.id; vc.clip = c.id; vc.prev = {};
+    vc.level = ["gentle", "medium", "full"].indexOf(prefs.vcLevel) >= 0 ? prefs.vcLevel : "medium";
+    vc.all = !!(proj && proj.bk) && vcVoices().length > 1;
+    $("vc-src").textContent = t("stm.of", { name: src.name.replace(/\.[a-z0-9]{1,5}$/i, ""), t: C.fmtTime(src.dur).replace(/\.\d+$/, "") });
+    $("vc-opts").hidden = false; $("vc-run").hidden = true; $("vc-go").hidden = false;
+    $("vc-go").disabled = true; $("vc-warn").hidden = true;
+    showDlg("vc-dlg");
+    vcLoad().then(renderVoice, function () { $("vc-info").textContent = t("vc.err.engine"); });
+  }
+  function renderVoice(V) {
+    var src = sourceOf(vc.src);
+    if (!src || !$("vc-dlg").open) return;
+    radioChips($("vc-level"), ["gentle", "medium", "full"], vc.level, function (v) { return t("vc.k." + v); }, function (v) {
+      vc.level = v; prefs.vcLevel = v; savePrefs(); renderVoice(V);
+    });
+    var n = vcVoices().length;
+    $("vc-all-row").hidden = n < 2;
+    $("vc-all-lbl").textContent = t("vc.all", { n: n });
+    $("vc-all").checked = vc.all;
+    var list = vcTargets(), sec = 0, warn = [];
+    list.forEach(function (s) { sec += s.dur || 0; });
+    if (list.some(function (s) { return s.dur > V.MAX_SEC; })) warn.push(t("vc.err.long"));
+    if (!V.WASM.sha) warn.push(t("vc.err.unavailable"));
+    $("vc-go").disabled = !!warn.length;
+    $("vc-before").disabled = $("vc-after").disabled = !V.WASM.sha;
+    V.ready().then(function (have) {
+      if (!$("vc-dlg").open || vc.ctrl) return;
+      var lines = [];
+      if (!have) lines.push(t("vc.download", { mb: V.APPROX_MB }));
+      var need = V.seconds(sec, 1);
+      lines.push(need < 60 ? t("vc.timeLt") : t("vc.time", { t: fmtDur(need) }));
+      $("vc-info").textContent = lines.join(" ");
+      $("vc-warn").textContent = warn.join(" ");
+      $("vc-warn").hidden = !warn.length;
+      $("vc-forget").hidden = !have;
+    });
+  }
+  function vcBusy(on) {
+    $("vc-opts").hidden = on; $("vc-run").hidden = !on;
+    $("vc-go").hidden = on; $("vc-forget").hidden = true;
+  }
+  function vcBuffer(src) {
+    if (state[src.id] === "ok" && buffers[src.id]) return Promise.resolve(buffers[src.id]);
+    return loadSource(src).then(function () {
+      if (!buffers[src.id]) throw Object.assign(new Error("missing"), { code: "missing" });
+      return buffers[src.id];
+    });
+  }
+  // 10 seconds of the selected clip at 48 kHz
+  function vcSnippet(V) {
+    var src = sourceOf(vc.src), clip = C.find(data, "clips", vc.clip);
+    return vcBuffer(src).then(function (buf) {
+      var off = clip ? Math.min(clip.off, Math.max(0, buf.duration - 10)) : 0, len = Math.min(10, buf.duration - off);
+      var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      var oc = new OAC(1, Math.max(1, Math.round(len * V.RATE)), V.RATE), node = oc.createBufferSource();
+      node.buffer = buf; node.connect(oc.destination); node.start(0, off, len);
+      return oc.startRendering().then(function (r) { return [r.getChannelData(0)]; });
+    });
+  }
+  function vcPlay(blob) {
+    if (vc.audio) { vc.audio.pause(); URL.revokeObjectURL(vc.audio.src); }
+    vc.audio = new Audio(URL.createObjectURL(blob));
+    vc.audio.play().catch(function () {});
+  }
+  function vcPreview(after) {
+    var V = window.OrosVoiceClean;
+    if (!V || vc.ctrl) return;
+    var key = after ? vc.level : "before";
+    if (vc.prev[key]) { vcPlay(vc.prev[key]); return; }
+    $("vc-info").textContent = after ? t("vc.previewing") : "";
+    var ctrl = new AbortController();
+    vcSnippet(V).then(function (pl) {
+      if (!after) return pl;
+      return V.clean(pl, { strength: vc.level, signal: ctrl.signal, onDownload: function (f) { $("vc-info").textContent = t("vc.dl", { n: Math.round(f * 100) }); } });
+    }).then(function (pl) {
+      vc.prev[key] = V.wav(pl, V.RATE);
+      if ($("vc-dlg").open) { vcPlay(vc.prev[key]); renderVoice(V); }
+    }, function (e) {
+      $("vc-warn").textContent = t("vc.err." + vcCode(e)); $("vc-warn").hidden = false;
+    });
+  }
+  function vcCode(e) {
+    var code = e && e.code, known = ["cancelled", "download", "hash", "quota", "long", "memory", "unavailable", "missing", "moved", "empty"];
+    return known.indexOf(code) >= 0 ? code : "engine";
+  }
+  function startVoice() {
+    var list = vcTargets();
+    if (!list.length || vc.ctrl) return;
+    if (vc.audio) vc.audio.pause();
+    var V = window.OrosVoiceClean, ctrl = vc.ctrl = new AbortController(), pid = proj.id, level = vc.level, count = list.length;
+    vcBusy(true);
+    var status = function (txt, f) { $("vc-status").textContent = txt; if (f != null) $("vc-bar").value = f; };
+    status(t("vc.prep"), 0);
+    var made = [];
+    list.reduce(function (p, src, i) {
+      return p.then(function () {
+        var part = function (f) { return (i + f) / count; };
+        var name = src.name.replace(/\.[a-z0-9]{1,5}$/i, "");
+        status(t("vc.prep"), part(0));
+        return vcBuffer(src).then(V.at48k).then(function (planes) {
+          return V.clean(planes, {
+            strength: level, signal: ctrl.signal,
+            onDownload: function (f) { status(t("vc.dl", { n: Math.round(f * 100) }), part(0)); },
+            onProgress: function (f, rest) {
+              var pct = Math.round(part(f) * 100);
+              status(rest == null ? t("vc.working", { n: pct }) : t("vc.left", { n: pct, t: fmtDur(rest) }), part(f));
+            }
+          });
+        }).then(function (out) {
+          if (ctrl.signal.aborted) throw Object.assign(new Error("cancelled"), { code: "cancelled" });
+          status(t("vc.save", { name: name }), part(1));
+          return flacLoad().then(function (FL) { return flacBlob(FL, out, V.RATE); });
+        }).then(function (blob) {
+          return blob.arrayBuffer().then(decode).then(function (buf) { made.push({ src: src, blob: blob, buf: buf }); });
+        });
+      });
+    }, Promise.resolve()).then(function () {
+      if (!proj || proj.id !== pid) throw Object.assign(new Error("moved"), { code: "moved" });
+      var before = snapshot(), fs = fsApi();
+      return made.reduce(function (p, m) {
+        return p.then(function () {
+          var base = m.src.name.replace(/\.[a-z0-9]{1,5}$/i, "");
+          var name = C.clipLine(t("vc.name", { name: base }), 76) + ".flac";
+          var id = C.newId("s", Math.random), path = C.sourcePath(id, name, "flac");
+          return Promise.resolve(fs.writeBlob(path, m.blob)).then(function () {
+            put("sources", C.normSource({ id: id, m: 0, p: pid, name: name, path: path, dur: m.buf.duration, ch: m.buf.numberOfChannels,
+                                           lic: m.src.lic, st: { of: m.src.id, k: "voice" } }));
+            keepBuffer(id, m.buf);
+            projClips().forEach(function (c) { if (c.s === m.src.id) put("clips", Object.assign({}, c, { s: id })); });
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        undoStack.push(before); redoStack = [];
+        changed();
+        vc.ctrl = null;
+        hideDlg("vc-dlg");
+        showToast(t("vc.done", { n: made.length }));
+      });
+    }).catch(function (e) {
+      vc.ctrl = null;
+      var code = vcCode(e);
+      if (code === "cancelled") { hideDlg("vc-dlg"); showToast(t("vc.stopped")); return; }
+      vcBusy(false);
+      $("vc-warn").textContent = t("vc.err." + code);
+      $("vc-warn").hidden = false;
+      $("vc-go").disabled = false;
+    });
+  }
+  function forgetVoice() {
+    vcLoad().then(function (V) { return V.forget(); }).then(function () {
+      showToast(t("vc.forgotten"));
+      if (window.OrosVoiceClean) renderVoice(window.OrosVoiceClean);
+    });
+  }
+
+  // ---------- 9b3. Sound to MIDI (tomidi.js, wave K4) ----------
+  // Basic Pitch on this device writes the notes it hears in the selected
+  // clip (or in a recording made right here: hum, whistle, sing) as a MIDI
+  // clip on a new instrument track, at the clip's place (or the
+  // playhead). One Undo; Export MIDI on the new clip saves a .mid file.
+  var tm = { mode: "clip", clip: "", kind: "melody", sens: 3, quant: 0, inst: "piano", ctrl: null, rec: null, blob: null, recT: 0 };
+  var TM_INSTS = ["piano", "epiano", "organ", "strings", "lead", "bass"];
+  function tmLoad() { return lazyScript("tomidi.js", "StudioToMidi"); }
+  function openToMidi(mode) {
+    if (!ensureProject()) return;
+    tm.mode = mode; tm.blob = null;
+    var c = selClip ? C.find(data, "clips", selClip) : null, src = c && !C.isMidi(c) ? sourceOf(c.s) : null;
+    if (mode === "clip" && !src) return;
+    tm.clip = c ? c.id : "";
+    tm.kind = prefs.tmKind === "poly" ? "poly" : (mode === "hum" ? "melody" : prefs.tmKind === "melody" ? "melody" : "poly");
+    tm.sens = [2, 3, 4].indexOf(prefs.tmSens) >= 0 ? prefs.tmSens : 3;
+    tm.quant = [0, 8, 16].indexOf(prefs.tmQuant) >= 0 ? prefs.tmQuant : 0;
+    tm.inst = TM_INSTS.indexOf(prefs.tmInst) >= 0 ? prefs.tmInst : "piano";
+    $("tm-src").textContent = mode === "hum" ? t("tm.humHint") : t("stm.of", { name: src.name.replace(/\.[a-z0-9]{1,5}$/i, ""), t: C.fmtTime(c.len).replace(/\.\d+$/, "") });
+    $("tm-rec-row").hidden = mode !== "hum";
+    $("tm-rec").textContent = t("tm.rec"); $("tm-rec-time").textContent = "";
+    $("tm-opts").hidden = false; $("tm-run").hidden = true; $("tm-go").hidden = false; $("tm-warn").hidden = true;
+    var sel = $("tm-inst");
+    sel.textContent = "";
+    TM_INSTS.forEach(function (id) { var o = document.createElement("option"); o.value = id; o.textContent = t("snd." + id); sel.appendChild(o); });
+    sel.value = tm.inst;
+    showDlg("tm-dlg");
+    tmLoad().then(renderToMidi, function () { $("tm-info").textContent = t("vc.err.engine"); });
+  }
+  function renderToMidi(TM) {
+    if (!$("tm-dlg").open) return;
+    radioChips($("tm-kind"), ["melody", "poly"], tm.kind, function (v) { return t("tm.k." + v); }, function (v) { tm.kind = v; prefs.tmKind = v; savePrefs(); renderToMidi(TM); });
+    radioChips($("tm-sens"), [2, 3, 4], tm.sens, function (v) { return t("tm.s" + v); }, function (v) { tm.sens = v; prefs.tmSens = v; savePrefs(); renderToMidi(TM); });
+    radioChips($("tm-quant"), [0, 8, 16], tm.quant, function (v) { return t("tm.q" + v); }, function (v) { tm.quant = v; prefs.tmQuant = v; savePrefs(); renderToMidi(TM); });
+    var free = C.MAX_TRACKS - tracks().length > 0, warn = [];
+    if (!free) warn.push(t("tm.tracks", { max: C.MAX_TRACKS }));
+    var c = C.find(data, "clips", tm.clip);
+    if (tm.mode === "clip" && c && c.len > TM.MAX_SEC) warn.push(t("tm.long", { n: Math.round(TM.MAX_SEC / 60) }));
+    $("tm-go").disabled = !!warn.length || (tm.mode === "hum" && !tm.blob) || !!tm.rec;
+    $("tm-warn").textContent = warn.join(" "); $("tm-warn").hidden = !warn.length;
+    TM.ready().then(function (have) { if ($("tm-dlg").open) $("tm-info").textContent = have ? "" : t("tm.download"); });
+  }
+  // records through the Studio recorder worklet, like any take; mono
+  function tmRecord() {
+    if (tm.rec) { tm.rec.stop(); return; }
+    var a = audio();
+    if (!a || !navigator.mediaDevices || !window.AudioWorkletNode) { showToast(t("tm.err.mic")); return; }
+    var stream = null;
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } }).then(function (st) {
+      stream = st;
+      recWorklet = recWorklet || a.audioWorklet.addModule("rec.worklet.js");
+      return recWorklet;
+    }).then(function () {
+      var srcNode = a.createMediaStreamSource(stream);
+      var node = new AudioWorkletNode(a, "studio-recorder", { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] });
+      var mute = a.createGain(); mute.gain.value = 0;
+      srcNode.connect(node); node.connect(mute); mute.connect(a.destination);
+      var chunks = [], frames = 0, tick = null, stopped = false;
+      function end() {
+        if (stopped) return;
+        stopped = true;
+        clearInterval(tick);
+        try { srcNode.disconnect(); node.disconnect(); mute.disconnect(); } catch (e) {}
+        stream.getTracks().forEach(function (x) { x.stop(); });
+        tm.rec = null;
+        if (frames) {
+          var buf = a.createBuffer(1, frames, a.sampleRate), d = buf.getChannelData(0), at = 0;
+          chunks.forEach(function (c) { d.set(c[0], at); at += c[0].length; });
+          tm.blob = buf;
+        }
+        $("tm-rec").textContent = t("tm.again");
+        if (window.StudioToMidi) renderToMidi(window.StudioToMidi);
+      }
+      node.port.onmessage = function (e) {
+        var m = e.data || {};
+        if (m.chunk) { chunks.push(m.chunk); frames += m.chunk[0].length; }
+        if (m.done) end();
+      };
+      tm.rec = { stop: function () { node.port.postMessage("stop"); setTimeout(end, 500); } };
+      tm.recT = Date.now();
+      $("tm-rec").textContent = t("tm.stop");
+      tick = setInterval(function () {
+        var sec = (Date.now() - tm.recT) / 1000;
+        $("tm-rec-time").textContent = C.fmtTime(sec).replace(/\.\d+$/, "");
+        if (sec >= 60 && tm.rec) tm.rec.stop();
+      }, 250);
+      if (window.StudioToMidi) renderToMidi(window.StudioToMidi);
+    }).catch(function () {
+      if (stream) stream.getTracks().forEach(function (x) { x.stop(); });
+      showToast(t("tm.err.mic"));
+    });
+  }
+  function tmInput(TM) {
+    if (tm.mode === "hum") {
+      if (!tm.blob) return Promise.reject(Object.assign(new Error("empty"), { code: "empty" }));
+      var at = playhead;
+      return TM.at22k(tm.blob).then(function (x) { return { x: x, at: at, name: t("tm.humName") }; });
+    }
+    var c = C.find(data, "clips", tm.clip), src = c && sourceOf(c.s);
+    if (!src) return Promise.reject(Object.assign(new Error("missing"), { code: "missing" }));
+    return vcBuffer(src).then(function (buf) {
+      var off = Math.min(c.off, buf.duration), len = Math.max(0.05, Math.min(c.len, buf.duration - off));
+      var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      var oc = new OAC(1, Math.max(1, Math.round(len * TM.SR)), TM.SR), node = oc.createBufferSource();
+      node.buffer = buf; node.connect(oc.destination); node.start(0, off, len);
+      return oc.startRendering().then(function (r) { return { x: r.getChannelData(0), at: c.at, name: src.name.replace(/\.[a-z0-9]{1,5}$/i, "") }; });
+    });
+  }
+  function startToMidi() {
+    var TM = window.StudioToMidi;
+    if (!TM || tm.ctrl || tm.rec) return;
+    tm.inst = $("tm-inst").value; prefs.tmInst = tm.inst; savePrefs();
+    var ctrl = tm.ctrl = new AbortController(), pid = proj.id;
+    $("tm-opts").hidden = true; $("tm-run").hidden = false; $("tm-go").hidden = true;
+    var status = function (txt, f) { $("tm-status").textContent = txt; if (f != null) $("tm-bar").value = f; };
+    status(t("vc.prep"), 0);
+    var input;
+    tmInput(TM).then(function (r) {
+      input = r;
+      return TM.convert(r.x, { kind: tm.kind, sens: tm.sens, quant: tm.quant, bpm: proj.bpm, signal: ctrl.signal,
+                               onProgress: function (f) { status(t("tm.working", { n: Math.round(f * 100) }), f); } });
+    }).then(function (notes) {
+      if (!proj || proj.id !== pid) throw Object.assign(new Error("moved"), { code: "moved" });
+      var cut = notes.length > C.MAX_NOTES;
+      notes = C.normNotes(notes.slice(0, C.MAX_NOTES));
+      var before = snapshot();
+      var tr = addTrack(C.clipLine(t("tm.track", { name: input.name }), C.MAX_NAME), tm.inst);
+      if (!tr) throw Object.assign(new Error("tracks"), { code: "tracks" });
+      var end = notes.reduce(function (m, n) { return Math.max(m, n[1] + n[2]); }, 0);
+      put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: pid, t: tr.id, at: input.at, off: 0,
+                                len: Math.max(C.MIN_LEN, barCeil(input.at + end) - input.at), name: input.name, n: notes }));
+      undoStack.push(before); redoStack = [];
+      changed();
+      tm.ctrl = null;
+      hideDlg("tm-dlg");
+      showToast(t(cut ? "tm.doneCut" : "tm.done", { n: notes.length, max: C.MAX_NOTES }));
+    }).catch(function (e) {
+      tm.ctrl = null;
+      var code = e && e.code === "tracks" ? "tracks" : vcCode(e);
+      if (code === "cancelled") { hideDlg("tm-dlg"); return; }
+      $("tm-opts").hidden = false; $("tm-run").hidden = true; $("tm-go").hidden = false;
+      $("tm-warn").textContent = code === "empty" ? t("tm.err.empty") : code === "tracks" ? t("tm.tracks", { max: C.MAX_TRACKS }) : t("vc.err." + code);
+      $("tm-warn").hidden = false;
+    });
+  }
+
   // ---------- 9c. Books (Studio wave A2) ----------
   // A book is chapters, each an ordinary project (bk + kind), with opening
   // and closing credits. Its takes are stored as 24-bit FLAC (flac.js),
@@ -6284,6 +6775,22 @@
     $("stems-cancel").addEventListener("click", function () { if (stm.ctrl) stm.ctrl.abort(); else hideDlg("stems-dlg"); });
     $("stems-go").addEventListener("click", startStems);
     $("stems-forget").addEventListener("click", forgetStems);
+    $("vc-btn").addEventListener("click", openVoice);
+    $("vc-cancel").addEventListener("click", function () { if (vc.ctrl) vc.ctrl.abort(); else { if (vc.audio) vc.audio.pause(); hideDlg("vc-dlg"); } });
+    $("vc-go").addEventListener("click", startVoice);
+    $("vc-forget").addEventListener("click", forgetVoice);
+    $("vc-before").addEventListener("click", function () { vcPreview(false); });
+    $("vc-after").addEventListener("click", function () { vcPreview(true); });
+    $("vc-all").addEventListener("change", function () { vc.all = $("vc-all").checked; if (window.OrosVoiceClean) renderVoice(window.OrosVoiceClean); });
+    $("vc-dlg").addEventListener("cancel", function (e) { if (vc.ctrl) e.preventDefault(); });
+    $("vc-dlg").addEventListener("close", function () { if (vc.audio) vc.audio.pause(); });
+    $("tm-btn").addEventListener("click", function () { openToMidi("clip"); });
+    $("kb-hum").addEventListener("click", function () { openToMidi("hum"); });
+    $("tm-rec").addEventListener("click", tmRecord);
+    $("tm-cancel").addEventListener("click", function () { if (tm.rec) tm.rec.stop(); if (tm.ctrl) tm.ctrl.abort(); else hideDlg("tm-dlg"); });
+    $("tm-go").addEventListener("click", startToMidi);
+    $("tm-dlg").addEventListener("cancel", function (e) { if (tm.ctrl) e.preventDefault(); });
+    $("tm-dlg").addEventListener("close", function () { if (tm.rec) tm.rec.stop(); });
     $("stems-dlg").addEventListener("cancel", function (e) { if (stm.ctrl) e.preventDefault(); });
     $("lic-cancel").addEventListener("click", function () { hideDlg("lic-dlg"); });
     $("lic-form").addEventListener("submit", function (e) { e.preventDefault(); saveLic(); });

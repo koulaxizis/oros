@@ -61,6 +61,8 @@ Löschen nimmt die Zeile aus der Seite und legt die Datei für 30 Tage in den Pa
 
 `Transkribieren` macht die Sprache auf diesem Gerät zu Text, mit demselben Whisper-Modell, das Montage und Lyric Sync nutzen. Beim ersten Mal fragt es, bevor das Modell geladen wird (etwa 53 MB, einmal für alle drei Apps); der Ton selbst verlässt das Gerät nie. Der Text kommt direkt unter die Zeile der Aufnahme in die Seite, sodass du ihn bearbeiten, durchsuchen und synchronisieren kannst wie jeden anderen Text. Es hört in der orOS-Sprache; bei langen Aufnahmen werden nur die ersten 30 Minuten transkribiert. `Abbrechen` stoppt es jederzeit.
 
+`Stimme säubern` im Menü `⋯` eines Players nimmt Hintergrundgeräusche (Brummen, Rauschen, Lüfter, den Raum) auf diesem Gerät mit DeepFilterNet3 aus der Aufnahme. Beim ersten Mal werden einmalig etwa 14 MB geladen und behalten. Die saubere Kopie ist eine neue Aufnahme direkt unter der Zeile des Originals; lösch die, die du nicht brauchst.
+
 `An Studio senden` öffnet die Aufnahme in Studio, auf einer Audiospur des offenen Projekts (oder eines neuen).
 
 ## Links zwischen Seiten

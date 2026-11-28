@@ -42,7 +42,9 @@
 // (cc0, by, by-sa, pd, own, other), by = author, url = its page (http or
 // https only). Kept with the source so a song can list its credits.
 // st (optional, on sources, wave S2): a part separated from another source
-// of the project (stems.js): { of: source id, k: vocals|drums|bass|other|inst }.
+// of the project (stems.js): { of: source id, k: vocals|drums|bass|other|inst },
+// or the same sound with the noise cleaned out of the voice (wave K2,
+// ../voiceclean.js): k = voice.
 // New fields (sc, auto, inst, MIDI clips, lic, st) are written only when set, so
 // projects made before them keep the very same bytes.
 // Forward safe (wave A0): fields, lists and top-level records this version
@@ -471,7 +473,7 @@
   // separated from another source of the project (stems.js):
   // { of: source id, k: one of STEMS }. Kept so the Studio can tell
   // where a stem came from; written only when set.
-  var STEMS = ["vocals", "drums", "bass", "other", "inst"];
+  var STEMS = ["vocals", "drums", "bass", "other", "inst", "voice"];
   function normSt(x) {
     if (!x || typeof x !== "object" || !okId(x.of, "s") || STEMS.indexOf(x.k) < 0) return null;
     return { of: x.of, k: x.k };

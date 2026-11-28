@@ -916,3 +916,9 @@ dialog input[type="email"], dialog input[type="number"], dialog input[type="date
 .stems-bar { display: block; width: 100%; height: 10px; accent-color: var(--accent); margin: 8px 0 4px; }
 #stems-warn { color: var(--danger); }
 #stems-parts { margin: 4px 0 8px; }
+
+/* Clean voice and sound to MIDI (waves K2, K4) */
+#vc-warn, #tm-warn { color: var(--danger); }
+#vc-level, #tm-kind, #tm-sens, #tm-quant { margin: 4px 0 8px; }
+.vc-preview { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0; }
+#tm-inst { max-width: 100%; }

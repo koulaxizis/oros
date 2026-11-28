@@ -61,6 +61,8 @@ Deleting a recording takes its line out of the page and moves the file to the Tr
 
 `Transcribe` turns the speech into text on this device with the same Whisper model that Montage and Lyric Sync use. The first time it asks before downloading the model (about 53 MB, once for all three apps); the sound itself never leaves the device. The text goes into the page right under the recording's line, so you can edit it, search it and sync it like any other text. It listens in the orOS language; for long recordings only the first 30 minutes are transcribed. `Cancel` stops it at any time.
 
+`Clean the voice` in a player's `⋯` menu takes background noise (hum, hiss, fans, the room) out of the recording on this device with DeepFilterNet3. The first time about 14 MB is downloaded once and kept. The clean copy is a new recording right under the original's line; delete the one you don't need.
+
 `Send to Studio` opens the recording in Studio, on an audio track of the open project (or a new one).
 
 ## Links between pages

@@ -201,6 +201,9 @@
       "nr.hint": "Takes steady background noise (fans, traffic, hum, wind) out of this clip's sound, on this device. Montage makes a cleaned copy of the sound and keeps it like your other media; the original stays as it is.",
       "nr.go": "Reduce noise", "nr.on": "Noise is reduced on this clip.", "nr.off": "Back to the original sound",
       "nr.working": "Cleaning the sound… {p}%", "nr.done": "Noise reduced", "nr.fail": "Could not clean this sound.",
+      "nr.ai": "Clean the voice", "nr.fast": "Quick (steady noise)", "nr.dl": "Downloading the voice cleaner… {p}%",
+      "nr.aiHint": "Clean the voice takes out the most noise and is made for speech (DeepFilterNet3); the first time, about {mb} MB is downloaded once. Quick works at once and handles steady noise (RNNoise).",
+      "nr.memory": "This device ran out of memory. Close other apps or try a shorter clip.",
       "rel.today": "today", "rel.yesterday": "yesterday",
       "as.done": "The Assistant changed {n} things in {d} projects.", "as.done1": "The Assistant changed {n} things in the project.",
       "as.done0": "Nothing needed changing.", "as.made1": "The Assistant opened a file as the new project {name}.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
@@ -351,6 +354,9 @@
       "nr.hint": "Βγάζει τον σταθερό θόρυβο του φόντου (ανεμιστήρες, κίνηση, βουητό, αέρα) από τον ήχο του clip, σε αυτή τη συσκευή. Το Μοντάζ φτιάχνει ένα καθαρό αντίγραφο του ήχου και το κρατά όπως τα άλλα πολυμέσα σου· το πρωτότυπο μένει όπως είναι.",
       "nr.go": "Μείωση θορύβου", "nr.on": "Ο θόρυβος έχει μειωθεί σε αυτό το clip.", "nr.off": "Πίσω στον αρχικό ήχο",
       "nr.working": "Καθαρίζω τον ήχο… {p}%", "nr.done": "Ο θόρυβος μειώθηκε", "nr.fail": "Δεν καθάρισε αυτός ο ήχος.",
+      "nr.ai": "Καθαρισμός φωνής", "nr.fast": "Γρήγορο (σταθερός θόρυβος)", "nr.dl": "Κατεβάζω τον καθαριστή φωνής… {p}%",
+      "nr.aiHint": "Ο Καθαρισμός φωνής βγάζει τον περισσότερο θόρυβο και είναι φτιαγμένος για ομιλία (DeepFilterNet3)· την πρώτη φορά κατεβαίνουν μία φορά περίπου {mb} MB. Το Γρήγορο δουλεύει αμέσως και πιάνει τον σταθερό θόρυβο (RNNoise).",
+      "nr.memory": "Τελείωσε η μνήμη της συσκευής. Κλείσε άλλες εφαρμογές ή δοκίμασε μικρότερο clip.",
       "rel.today": "σήμερα", "rel.yesterday": "χθες",
       "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} έργα.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στο έργο.",
       "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.made1": "Ο Βοηθός άνοιξε ένα αρχείο ως νέο έργο: {name}.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
@@ -1345,8 +1351,61 @@
       body.appendChild(el("p", "hint", t("nr.on")));
       actions(body, [[t("nr.off"), "", function () { live({ na: null }); closeDialog(); }]]);
     } else {
-      actions(body, [[t("nr.go"), "primary", function () { var id = sel; closeDialog(); cleanSound(id); }]]);
+      body.appendChild(el("p", "hint small", t("nr.aiHint", { mb: 14 })));
+      actions(body, [[t("nr.fast"), "", function () { var id = sel; closeDialog(); cleanSound(id); }],
+                     [t("nr.ai"), "primary", function () { var id = sel; closeDialog(); cleanVoice(id); }]]);
     }
+  }
+  // Clean the voice (wave K3): DeepFilterNet3 (../voiceclean.js, loaded
+  // when asked), the same model Studio uses; the cleaned sound is kept
+  // like the RNNoise copy (na) and the original stays as it is.
+  var vcP = null;
+  function vcLoad() {
+    if (window.OrosVoiceClean) return Promise.resolve(window.OrosVoiceClean);
+    if (!vcP) {
+      vcP = new Promise(function (ok, fail) {
+        var s = document.createElement("script");
+        s.src = "../voiceclean.js?v=" + encodeURIComponent((document.querySelector('script[src^="montage.js"]') || { src: "" }).src.split("v=")[1] || "");
+        s.onload = function () { if (window.OrosVoiceClean) ok(window.OrosVoiceClean); else fail(new Error("voiceclean")); };
+        s.onerror = function () { fail(new Error("voiceclean.js")); };
+        document.head.appendChild(s);
+      });
+      vcP.catch(function () { vcP = null; });
+    }
+    return vcP;
+  }
+  function cleanVoice(id) {
+    var p = cur(), it = p && p.items[id];
+    if (!it || !window.MontageDenoise) return;
+    if (player && player.playing()) player.pause();
+    var ctrl = new AbortController(), cancel = function () { ctrl.abort(); };
+    busy(t("nr.working", { p: 0 }), 0, cancel);
+    var V;
+    vcLoad().then(function (v) { V = v; return MM.get(it.src); }).then(function (blob) {
+      if (!blob) throw new Error("missing");
+      return V.decode(blob).catch(function () { throw Object.assign(new Error("nosound"), { code: "nosound" }); });
+    }).then(function (buf) { return V.at48k(buf); }).then(function (planes) {
+      return V.clean(planes, {
+        strength: "medium", signal: ctrl.signal,
+        onDownload: function (f) { busy(t("nr.dl", { p: Math.round(f * 100) }), f, cancel); },
+        onProgress: function (f) { busy(t("nr.working", { p: Math.round(f * 90) }), f * 0.9, cancel); }
+      });
+    }).then(function (out) {
+      return MontageDenoise.encode(out, V.RATE, { name: p.name, progress: function (f) { busy(t("nr.working", { p: 90 + Math.round(f * 10) }), 0.9 + f * 0.1, cancel); } });
+    }).then(function (file) {
+      busy(null);
+      pushUndo();
+      importMany([file], function (info) {
+        if (!cur() || !cur().items[id] || !C.isSound(info.id)) return;
+        sel = id;
+        commit(C.setItem(data, pid, id, { na: info.id }, Date.now()), { undo: false });
+        showToast(t("nr.done"));
+      });
+    }, function (e) {
+      busy(null);
+      if (ctrl.signal.aborted) return;
+      showToast(e && e.code === "nosound" ? t("toast.noSound") : e && e.code === "memory" ? t("nr.memory") : t("nr.fail"));
+    });
   }
   function cleanSound(id) {
     var p = cur(), it = p && p.items[id];

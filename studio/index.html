@@ -88,6 +88,8 @@
     <button type="button" id="notes-btn" class="chip primary" aria-haspopup="dialog" data-i18n="mi.editNotes" hidden>Edit notes</button>
     <button type="button" id="lic-btn" class="chip" aria-haspopup="dialog" data-i18n="lic.btn" hidden>Sound info</button>
     <button type="button" id="stems-btn" class="chip" aria-haspopup="dialog" data-i18n="stm.btn" hidden>Separate…</button>
+    <button type="button" id="vc-btn" class="chip" aria-haspopup="dialog" data-i18n="vc.btn" hidden>Clean voice…</button>
+    <button type="button" id="tm-btn" class="chip" aria-haspopup="dialog" data-i18n="tm.btn" hidden>To MIDI…</button>
     <label class="cb-field"><span data-i18n="f.gain">Gain</span>
       <input type="range" id="gain-in" min="-24" max="12" step="0.5"><output id="gain-out"></output></label>
     <label class="cb-field" id="fi-field"><span data-i18n="f.fadeIn">Fade in</span>
@@ -101,6 +103,7 @@
   <section id="keys" hidden aria-labelledby="keys-btn">
     <div class="kb-bar">
       <button type="button" id="kb-connect" class="chip" data-i18n="kb.connect">Connect MIDI keyboard</button>
+      <button type="button" id="kb-hum" class="chip" aria-haspopup="dialog" data-i18n="tm.hum">Hum or whistle to MIDI…</button>
       <span id="kb-status" class="hint small" role="status"></span>
       <span id="kb-target" class="kb-target" hidden></span>
       <label class="kb-field"><span data-i18n="kb.sound">Sound</span><select id="kb-snd"></select></label>
@@ -279,6 +282,64 @@
       <button type="button" id="stems-forget" class="chip" data-i18n="stm.forget" hidden>Remove the model</button>
       <button type="button" id="stems-cancel" class="chip" data-i18n="btn.cancel">Cancel</button>
       <button type="button" id="stems-go" class="chip primary" data-i18n="stm.go">Separate</button>
+    </div>
+  </dialog>
+
+  <dialog id="vc-dlg" aria-labelledby="vc-title">
+    <h2 id="vc-title" data-i18n="vc.title">Clean the voice</h2>
+    <p id="vc-src" class="hint"></p>
+    <div id="vc-opts">
+      <p class="field" data-i18n="vc.strength">How much noise to remove</p>
+      <div id="vc-level" class="chips" role="radiogroup" data-i18n-aria="vc.strength"></div>
+      <label class="cb-line" id="vc-all-row" hidden><input type="checkbox" id="vc-all"> <span id="vc-all-lbl"></span></label>
+      <div class="vc-preview">
+        <span class="hint small" data-i18n="vc.preview">Listen to 10 seconds:</span>
+        <button type="button" id="vc-before" class="chip" data-i18n="vc.before">Before</button>
+        <button type="button" id="vc-after" class="chip" data-i18n="vc.after">After</button>
+      </div>
+      <p id="vc-info" class="hint small" aria-live="polite"></p>
+      <p class="hint small" data-i18n="vc.how"></p>
+    </div>
+    <div id="vc-run" hidden>
+      <progress id="vc-bar" class="stems-bar" max="1" value="0"></progress>
+      <p id="vc-status" class="hint small" aria-live="polite"></p>
+      <p class="hint small" data-i18n="vc.keepOpen"></p>
+    </div>
+    <p id="vc-warn" class="hint small warn" aria-live="polite" hidden></p>
+    <div class="dlg-actions">
+      <button type="button" id="vc-forget" class="chip" data-i18n="vc.forget" hidden>Remove the cleaner</button>
+      <button type="button" id="vc-cancel" class="chip" data-i18n="btn.cancel">Cancel</button>
+      <button type="button" id="vc-go" class="chip primary" data-i18n="vc.go">Clean</button>
+    </div>
+  </dialog>
+
+  <dialog id="tm-dlg" aria-labelledby="tm-title">
+    <h2 id="tm-title" data-i18n="tm.title">Turn sound into MIDI notes</h2>
+    <p id="tm-src" class="hint"></p>
+    <div id="tm-opts">
+      <div id="tm-rec-row" class="vc-preview" hidden>
+        <button type="button" id="tm-rec" class="chip primary" data-i18n="tm.rec">Record</button>
+        <span id="tm-rec-time" class="hint small" aria-live="polite"></span>
+      </div>
+      <p class="field" data-i18n="tm.kind">What is playing</p>
+      <div id="tm-kind" class="chips" role="radiogroup" data-i18n-aria="tm.kind"></div>
+      <p class="field" data-i18n="tm.sens">How many notes</p>
+      <div id="tm-sens" class="chips" role="radiogroup" data-i18n-aria="tm.sens"></div>
+      <p class="field" data-i18n="tm.quant">Snap to the grid</p>
+      <div id="tm-quant" class="chips" role="radiogroup" data-i18n-aria="tm.quant"></div>
+      <label class="field" for="tm-inst" data-i18n="tm.inst">Instrument</label>
+      <select id="tm-inst"></select>
+      <p id="tm-info" class="hint small" aria-live="polite"></p>
+      <p class="hint small" data-i18n="tm.how"></p>
+    </div>
+    <div id="tm-run" hidden>
+      <progress id="tm-bar" class="stems-bar" max="1" value="0"></progress>
+      <p id="tm-status" class="hint small" aria-live="polite"></p>
+    </div>
+    <p id="tm-warn" class="hint small warn" aria-live="polite" hidden></p>
+    <div class="dlg-actions">
+      <button type="button" id="tm-cancel" class="chip" data-i18n="btn.cancel">Cancel</button>
+      <button type="button" id="tm-go" class="chip primary" data-i18n="tm.go">Make notes</button>
     </div>
   </dialog>
 
