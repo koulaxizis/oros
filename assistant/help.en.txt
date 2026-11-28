@@ -11,6 +11,12 @@ Every answer is written by an AI model, not by a person, and orOS says so: the l
 5. Press `Test the connection`. It sends one short message and tells you if the service answers here. If it says the service does not accept calls from a web browser, pick another one: that can't be fixed from orOS.
 6. Press `Close`, type your question and press `Send`.
 
+## Keep it open, or side by side
+On a computer with multitasking on, the Assistant stays open when you go to the desktop or open another app: it waits with the open apps and comes back with your conversation, and an answer it is writing goes on.
+- `Side by side` in the Assistant's bar (from 1024 px wide) puts the Assistant on the right and the app you used last on the left. With no other app open, pick one in the menu. Drag the divider to share the width. Press it again for the whole screen.
+- The small Assistant window has `Minimise` (it becomes a round button in the corner; tap it to bring it back) and `Beside the app`, which moves the conversation to the full Assistant next to the app you are in.
+- When it hides, a recording stops and what you said is written into the box.
+
 ## Free services
 These need only a free account and a free key, with daily limits. Nothing is charged unless you add a way to pay on their site:
 - `Groq`, `Cerebras` and `SambaNova`: fast open models such as Llama and Qwen.

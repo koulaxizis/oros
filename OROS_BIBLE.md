@@ -14406,3 +14406,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** shell.js, smartbar.js, smartbar-island.js, widgets.js (1.7.0), help/topics/appearance.en/el.txt, i18n/de/help/topics/appearance.txt, whatsnew EN/EL, OROS_BIBLE.md, tests/cover-tint.test.js, tests/focus-widget.test.js, tests/vizwall.test.js.
 - **Tests:** tests/cover-tint.test.js; full suite; Playwright Chromium at 1280 px (island and widget take #153c70 from a blue cover) and 360 px (peek and widget tinted).
 - **Not tested:** real covers from Music, Podcasts and Radio, Safari, Firefox.
+
+### 2026-11-28 — 9.14.00 — The Assistant stays alive when you leave it, and works side by side (AS-KEEP, #1317)
+- **Why:** Chris 2026-11-28 «Ο βοηθός κρύβεται όταν ελαχιστοποιείται ή πατιέται το μενού…»: the Assistant closed on leave and the session was lost; he asked for two modes, minimised or side by side.
+- **What:** the Assistant leaves `MT_CLOSE_ON_LEAVE` (`MT_SELF_MERGE`, `__orosAppPause` stops the microphone, `__orosAppBusy` keeps a working app from being closed for room); toolbar side-by-side button (`__orosMtState` / `__orosMtBeside`, `mtAsSide`, menu pick "swap"); quickmenu.js 1.5.0 mini window Minimise and Beside (`host.beside` → `mtOpenBeside`). Rules in Part II (M2 AS-KEEP, AS-MINI) and Part IX.
+- **Files:** shell.js, quickmenu.js, assistant/assistant.js, assistant/index.html, assistant/help.en/el.txt, i18n/de/help/assistant.txt, i18n/de/assistant.js, i18n/de/shell.js, translations.js, whatsnew EN/EL, OROS_BIBLE.md, tests/multitask.test.js.
+- **Tests:** full `node --test tests/*.test.js`; Playwright Chromium (LANG=C.UTF-8) at 1400 px: the Assistant kept hidden with the same document, side by side with Notes and To-Do without reloads, whole screen again, home keeps it; mini window minimise/restore keeps the document, Beside opens the full Assistant as the side app; 360 px: no button, no overflow, no page errors.
+- **Not tested:** a real phone, Safari, a real microphone recording while switching away, a provider answer streaming while hidden.

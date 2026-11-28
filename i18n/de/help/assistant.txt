@@ -11,6 +11,12 @@ Jede Antwort schreibt ein KI-Modell, kein Mensch, und orOS sagt das: Die Zeile �
 5. Drücke `Verbindung testen`. Es sendet eine kurze Nachricht und sagt dir, ob der Dienst hier antwortet. Wenn es heißt, der Dienst nimmt keine Aufrufe aus einem Webbrowser an, wähle einen anderen: Das lässt sich in orOS nicht beheben.
 6. Drücke `Schließen`, tippe deine Frage und drücke `Senden`.
 
+## Offen lassen oder nebeneinander
+Auf einem Computer mit eingeschaltetem Multitasking bleibt der Assistent offen, wenn du zum Desktop gehst oder eine andere App öffnest: Er wartet bei den offenen Apps, kommt mit deiner Unterhaltung zurück, und eine Antwort, die er schreibt, läuft weiter.
+- `Nebeneinander` in der Leiste des Assistenten (ab 1024 px Breite) setzt den Assistenten rechts und die zuletzt benutzte App links. Ist keine andere App offen, wähle eine im Menü. Ziehe den Trenner, um die Breite zu teilen. Erneut drücken für den ganzen Bildschirm.
+- Das kleine Assistentenfenster hat `Minimieren` (es wird ein runder Knopf in der Ecke; antippen holt es zurück) und `Neben der App`, das die Unterhaltung in den vollen Assistenten neben der App bringt, in der du bist.
+- Wenn er sich versteckt, stoppt eine Aufnahme und das Gesagte kommt ins Eingabefeld.
+
 ## Kostenlose Dienste
 Diese brauchen nur ein kostenloses Konto und einen kostenlosen Schlüssel, mit täglichen Limits. Es wird nichts berechnet, solange du auf ihrer Seite keine Zahlungsart hinzufügst:
 - `Groq`, `Cerebras` und `SambaNova`: schnelle offene Modelle wie Llama und Qwen.
