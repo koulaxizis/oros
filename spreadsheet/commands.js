@@ -85,7 +85,7 @@
     "unmerge: split the merged cells in range",
     "freeze: keep the rows above and the columns left of `cell` in view while scrolling (B2 freezes row 1 and column A; A1 unfreezes)",
     "rename: the sheet's name becomes `title`",
-    "export: saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Sheets with Files at «may change»; never over a file): fmt xlsx | ods (the whole workbook, once) | csv (each sheet named); changes nothing"
+    "export: saved into `out` (a folder of Claude's on the orOS disk such as Drive/Sheets with Files at «may change»; never over a file): fmt xlsx | ods (the whole workbook, once) | csv (each sheet named); changes nothing"
   ].join("\n");
 
   // ---------- 1. Checking ----------

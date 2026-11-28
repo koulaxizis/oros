@@ -5505,7 +5505,15 @@ function wfHas(id) {
   if (!id) return false;
   const k = '"writer:' + id + '"';
   return WF_KEYS.some(name => {
-    try { const raw = localStorage.getItem(name); return !!raw && raw.indexOf(k) >= 0; } catch (e) { return false; }
+    try {
+      let raw = localStorage.getItem(name);
+      // SY-Z: the mailbox may be packed; ask the shell's engine for the slice.
+      if (name === 'oros-remote-carry' && raw) {
+        const os = window.parent && window.parent.orosSync;
+        if (os && typeof os.carryPeek === 'function') { const f = os.carryPeek('fonts'); raw = f ? JSON.stringify(f) : ''; }
+      }
+      return !!raw && raw.indexOf(k) >= 0;
+    } catch (e) { return false; }
   });
 }
 function wfAfterRender() {

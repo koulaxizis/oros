@@ -369,40 +369,20 @@
     c.id = "my-card";
     c.appendChild(el("p", "hint", t("my.hint")));
     c.appendChild(yoursPreview(s));
-    // Wallpaper: one picker only, the Wallpaper card below (YOURS-2,
-    // Chris 2026-11-23: the strip here showed the same wallpapers twice).
-    // This button takes you there, to the one that is on.
-    if (s.wallpapers) {
-      c.appendChild(row(t("a.wallpaper"), button(t("my.wall"), "y-wall-go", function () {
-        var g = $("wall-card");
-        if (!g) return;
-        if (typeof g.scrollIntoView === "function") g.scrollIntoView({ block: "start" });
-        var f = g.querySelector(".wall.on") || $("f-wall-find");
-        if (f) { try { f.focus({ preventScroll: true }); } catch (e) { f.focus(); } }
-      })));
-    }
-    // Colour: the skins, and Accent from wallpaper
-    if (s.skins) {
-      var sw = el("div", "swatches my-swatches");
-      sw.setAttribute("role", "radiogroup");
-      sw.setAttribute("aria-label", t("a.skin"));
-      s.skins.forEach(function (k) {
-        var on = k.id === s.skin;
-        var b = el("button", "swatch" + (on ? " on" : ""));
-        b.type = "button";
-        b.setAttribute("role", "radio");
-        b.setAttribute("aria-checked", on ? "true" : "false");
-        b.setAttribute("data-k", "y-skin:" + k.id);
-        b.title = k.name;
-        b.setAttribute("aria-label", k.name);
-        b.style.background = k.color;
-        b.addEventListener("click", function () { set("skin", k.id); });
-        sw.appendChild(b);
-      });
-      var cr = row(t("my.colour"), null, { stack: true });
-      cr.appendChild(sw);
-      c.appendChild(cr);
-      if (s.wpaccent) c.appendChild(row(t("a.wpacc"), switchBtn(!!s.wpaccent.on, "y-wpaccent", function (v) { set("wpaccent:on", v); }, t("a.wpacc"))));
+    // Wallpaper and colour: one picker each, their own cards below
+    // (YOURS-2, Chris 2026-11-23: the strip and the swatches here showed
+    // the same choices twice). These buttons take you there, to the
+    // choice that is on.
+    if (s.wallpapers) c.appendChild(row(t("a.wallpaper"), button(t("my.wall"), "y-wall-go", function () {
+      yoursGo("wall-card", ".wall.on", "f-wall-find");
+    })));
+    if (s.skins) c.appendChild(row(t("my.colour"), button(t("my.skin"), "y-skin-go", function () {
+      yoursGo("skin-card", ".swatch.on", null);
+    })));
+    if (s.menuIcon) {
+      var ymi = select(s.menuIcon.choices.map(function (v) { return { value: v, label: t("a.menuicon." + v) }; }), s.menuIcon.now, "y-menuicon",
+        function (v) { set("menuicon", v); });
+      c.appendChild(row(t("a.menuicon"), ymi, { forId: ymi.id }));
     }
     // The top bar's look
     if (s.smartbar && s.smartbar.looks) {
@@ -445,6 +425,15 @@
       c.appendChild(actions(button(t("my.lock"), "y-lock", function () { current = "lock"; saveUi(); render(); $("page").scrollTop = 0; })));
     }
     host.appendChild(c);
+  }
+  // YOURS-2: scroll to a card of this page and focus its chosen item
+  // (else the field `alt`, else the card's first button).
+  function yoursGo(cardId, onSel, alt) {
+    var g = $(cardId);
+    if (!g) return;
+    if (typeof g.scrollIntoView === "function") g.scrollIntoView({ block: "start" });
+    var f = g.querySelector(onSel) || (alt && $(alt)) || g.querySelector("button");
+    if (f) { try { f.focus({ preventScroll: true }); } catch (e) { f.focus(); } }
   }
   // A small desktop: the wallpaper, the top bar in its look, an app
   // window in the accent (it opens again when the motion feel changes)
@@ -496,6 +485,7 @@
     if (s.night) secNight(host, s.night);
 
     var c2 = card(t("a.skin"), "skin");
+    c2.id = "skin-card";                       // YOURS-2: "Make it yours" scrolls here
     var sw = el("div", "swatches");
     sw.setAttribute("role", "radiogroup");
     sw.setAttribute("aria-label", t("a.skin"));
@@ -512,6 +502,12 @@
       sw.appendChild(b);
     });
     c2.appendChild(sw);
+    // MENUICON-1: the menu button's icon (this device; the bar shows it at once)
+    if (s.menuIcon) {
+      var mi = select(s.menuIcon.choices.map(function (v) { return { value: v, label: t("a.menuicon." + v) }; }), s.menuIcon.now, "menuicon",
+        function (v) { set("menuicon", v); });
+      c2.appendChild(row(t("a.menuicon"), mi, { forId: mi.id, scope: "menuicon" }));
+    }
     if (s.wpaccent) secWpAccent(c2, s.wpaccent);
     host.appendChild(c2);
 
@@ -1129,6 +1125,7 @@
     if (s && s.uisounds) secUiSounds(host, s.uisounds);
 
     secFocus(host, N);
+    if (s && s.gamemode) secGameMode(host, s.gamemode);
 
     var known = (typeof N.getKnownApps === "function") ? N.getKnownApps() : [];
     if (known.length) {
@@ -1177,6 +1174,18 @@
       c.appendChild(row(t("us.vol"), wrap, { forId: "f-uisnd-vol" }));
       c.appendChild(actions(button(t("us.try"), "uisnd:try", function () { set("uisnd:try", true); })));
     }
+    host.appendChild(c);
+  }
+
+  // Game mode (GAMEMODE-1): off by default, this device only. While a
+  // game from the Games category runs full screen, notifications stay
+  // silent and the top bar and the Dock step aside.
+  function secGameMode(host, g) {
+    var c = card(t("gm.title"), "gamemode");
+    c.appendChild(el("p", "hint", t("gm.hint")));
+    var r = row(t("gm.on"), switchBtn(!!g.on, "gamemode", function (v) { set("gamemode", v); }, t("gm.on")));
+    if (g.on) r.appendChild(el("div", "hint", t(g.active ? "gm.now.on" : "gm.now.off")));
+    c.appendChild(r);
     host.appendChild(c);
   }
 
@@ -2061,88 +2070,14 @@
     if (m.childNodes.length) c.appendChild(mo.box);
   }
 
-  // LOCAL-1 (temporary, Chris 2026-11-18): folders of this device that
-  // Layout may read through orOS Gate (read roots) and write proofs and
-  // print PDFs to (write roots), picked with the browser's folder
-  // picker; localroots.js in the shell keeps them (this device only).
-  var locRoots = null, locBusy = false, locWired = false, locMsg = "", locPc = null, updMsg = "";
-  function localApi() { var p = parentWin(); try { return p && p.orosLocal ? p.orosLocal : null; } catch (e) { return null; } }
+  // LOCAL-GONE (Chris 2026-11-27): the local folders for Claude (LOCAL-1,
+  // TRAY-2: by the browser's folder picker or a computer path) are gone;
+  // orOS Drive mirrors the computer's folders into /internal/Drive, which
+  // Claude reaches as Claude's folders. What stays here: Layout's proofs
+  // and PDFs among Claude's folders.
+  var updMsg = "";
   function localSection(c, G) {
-    var L = localApi();
-    if (!L) return;
-    if (!locWired) { locWired = true; L.onChange(function () { locRoots = null; render(); }); }
-    if (locRoots === null && !locBusy) {
-      locBusy = true;
-      L.list().then(function (l) { locRoots = l; locBusy = false; render(); }, function () { locRoots = []; locBusy = false; render(); });
-    }
     var box = el("div", "gt-folders");
-    box.appendChild(el("div", "pair-label", t("gt.loc.title")));
-    box.appendChild(el("div", "hint", t("gt.loc.hint")));
-    if (locMsg) box.appendChild(el("div", "hint", locMsg));
-    // orOS Setup / Portable: real folders of the computer by their path
-    if (locPc === null && typeof L.pcOn === "function") { locPc = false; L.pcOn().then(function (v) { if (v) { locPc = true; render(); } }); }
-    var canPick = locPc || typeof window.showDirectoryPicker === "function" && L.supported();
-    if (!canPick) box.appendChild(el("div", "hint", t("gt.loc.unsupported")));
-    (locRoots || []).forEach(function (r) {
-      var ln = el("div", "gt-chg-row gt-loc-row");
-      var when = r.exp ? new Date(r.exp).toLocaleDateString(appLang()) : "";
-      ln.appendChild(el("span", "gt-loc-name", (r.mode === "w" ? t("gt.loc.write") : t("gt.loc.read")) + " · local:" + r.name + (r.label ? " (" + (/^[A-Za-z]:\//.test(r.label) ? r.label.replace(/\//g, "\\") : r.label) + ")" : "") +
-        " · " + (r.expired ? t("gt.loc.expired") : t("gt.loc.until", { when: when })) + (r.granted ? "" : " · " + t(r.elsewhere ? "gt.loc.elsewhere" : "gt.loc.needs")) + (r.by === "claude" ? " · " + t("gt.loc.byClaude") : "")));
-      ln.appendChild(button(t("gt.loc.extend"), "gt.loc.ext:" + r.id, function () { L.extend(r.id, 30); }, "btn-sm"));
-      if (r.mode === "r" && !r.elsewhere) ln.appendChild(button(t("gt.loc.copyIn"), "gt.loc.copy:" + r.id, function () {
-        var F = parentWin() && parentWin().orosFS, dest = "/internal/Local/" + r.name;
-        gateNote = "gt.loc.copying"; render();
-        L.copyIn(r.id, F, dest).then(function (res) {
-          return G.setFolders(G.folders().concat([dest])).then(function () { gateNote = ""; locMsg = t("gt.loc.copied", { n: res.files, path: "Local/" + r.name }); render(); });
-        }, function () { gateNote = "gt.fail"; render(); });
-      }, "btn-sm"));
-      ln.appendChild(button(t("gt.fold.rm"), "gt.loc.rm:" + r.id, function () { L.remove(r.id); }, "btn-sm"));
-      box.appendChild(ln);
-    });
-    // TRAY-2: a folder of the owner's computer by its path, from any device
-    // (the phone too): shared with the gate's other devices, used where
-    // orOS runs on that computer (also in the tray).
-    if (!locPc && typeof L.addPc === "function") {
-      var rp = el("input", "dav-input");
-      rp.id = "f-gt-loc-remote"; rp.type = "text"; rp.autocomplete = "off"; rp.spellcheck = false;
-      rp.placeholder = "C:\\Users\\…\\Final Images";   // i18n-inline-ok: an example path
-      box.appendChild(row(t("gt.loc.remote"), rp, { hint: t("gt.loc.remoteHint"), forId: "f-gt-loc-remote", stack: true }));
-      var addRemote = function (mode) {
-        if (!rp.value.trim()) { gateNote = "gt.loc.pcNeed"; render(); return; }
-        L.addPc(rp.value.trim(), { mode: mode, days: 30, anywhere: true }).then(function () { gateNote = ""; render(); }, function (e) {
-          gateNote = e && e.why === "tooMany" ? "gt.loc.tooMany" : e && e.why === "riskyPath" ? "gt.loc.risky" : e && /^(badPath|notFolder)$/.test(e.why) ? "gt.loc.pcBad" : "gt.fail"; render();
-        });
-      };
-      box.appendChild(actions(button(t("gt.loc.addRead"), "gt.loc.remR", function () { addRemote("r"); }), button(t("gt.loc.addWrite"), "gt.loc.remW", function () { addRemote("w"); })));
-    }
-    if (!canPick && !(locRoots || []).length) { c.appendChild(box); return; }
-    if (locRoots && !locRoots.length) box.appendChild(el("div", "hint", t("gt.fold.none")));
-    var lab = el("input", "dav-input");
-    lab.id = "f-gt-loc-label"; lab.type = "text"; lab.autocomplete = "off"; lab.spellcheck = false;
-    lab.placeholder = "C:\\Users\\…\\Final Images";   // i18n-inline-ok: an example path
-    if (canPick) box.appendChild(row(t(locPc ? "gt.loc.pcPath" : "gt.loc.label"), lab, { hint: t(locPc ? "gt.loc.pcHint" : "gt.loc.labelHint"), forId: "f-gt-loc-label", stack: true }));
-    function pick(mode) {
-      if (locPc) {
-        if (!lab.value.trim()) { gateNote = "gt.loc.pcNeed"; render(); return; }
-        L.addPc(lab.value.trim(), { mode: mode, days: 30 }).then(function () { gateNote = ""; render(); }, function (e) {
-          gateNote = e && e.why === "tooMany" ? "gt.loc.tooMany" : e && e.why === "riskyPath" ? "gt.loc.risky" : e && /^(badPath|notFolder|notThere|notAllowedRoot)$/.test(e.why) ? "gt.loc.pcBad" : "gt.fail"; render();
-        });
-        return;
-      }
-      window.showDirectoryPicker({ mode: mode === "w" ? "readwrite" : "read" }).then(function (h) {
-        return L.add(h, { mode: mode, label: lab.value.trim(), days: 30 });
-      }).then(function () { gateNote = ""; render(); }, function (e) {
-        if (e && e.name === "AbortError") return;
-        gateNote = e && e.why === "tooMany" ? "gt.loc.tooMany" : "gt.fail"; render();
-      });
-    }
-    var need = (locRoots || []).some(function (r) { return !r.granted && !r.expired; });
-    box.appendChild(actions(
-      canPick ? button(t("gt.loc.addRead"), "gt.loc.addR", function () { pick("r"); }) : null,
-      canPick ? button(t("gt.loc.addWrite"), "gt.loc.addW", function () { pick("w"); }) : null,
-      need ? button(t("loc.reconnect"), "gt.loc.re", function () { L.reconnect(); }) : null,
-      (locRoots || []).length ? button(L.paused() ? t("loc.resume") : t("loc.pause"), "gt.loc.pause", function () { L.setPaused(!L.paused()); render(); }) : null
-    ));
     // proofs and PDFs back to Claude (files_link reads Claude's folders)
     var fl = G.folders(), want = ["/internal/Layout/Proofs", "/internal/Layout/PDF"];
     if (!want.every(function (w) { return fl.some(function (f) { return f === w || w.indexOf(f + "/") === 0; }); })) {
@@ -2151,7 +2086,7 @@
         G.setFolders(fl.concat(want.filter(function (w) { return !fl.some(function (f) { return f === w || w.indexOf(f + "/") === 0; }); }))).then(function () { render(); }, function () { gateNote = "gt.fail"; render(); });
       })));
     }
-    c.appendChild(box);
+    if (box.childNodes.length) c.appendChild(box);
   }
 
   // CLAUDE-1: Claude in a window, and Claude desktop. On orOS USB and
@@ -5396,7 +5331,10 @@
     var wait = el("p", "hint", t("dv.loading"));
     host.appendChild(wait);
     loadDevice().then(function () {
-      if (current !== "device" || !host.isConnected) return;
+      // Drawn inside System too (both()): "current" is then "system", so
+      // only a host that left the page stops it (SY-Z: the storage notice
+      // opens settings/device; it stayed on "Reading this device…").
+      if (!host.isConnected) return;
       if (wait.parentNode) wait.parentNode.removeChild(wait);
       window.SettingsDevice.mount(host);
       if (lit && lit.row[1] === "device" && Date.now() < lit.until) lightUp(true);

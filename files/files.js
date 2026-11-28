@@ -1497,8 +1497,15 @@
       if (localStorage.getItem("oros-files-docs-inbox")) return true;      // Scanner & PDF left some
       // A fresh device: the sync has these slices waiting for Files
       // (sync.js carry mailbox, same origin) until the scripts register them.
-      var carry = localStorage.getItem("oros-remote-carry");
-      if (carry) { var co = JSON.parse(carry); if (co && (co["files-docs"] || co["files-tags"])) return true; }
+      // (SY-Z: the mailbox may be packed, so the shell's engine reads it.)
+      var os = null;
+      try { os = window.parent && window.parent.orosSync; } catch (e) { os = null; }
+      if (os && typeof os.carryPeek === "function") {
+        if (os.carryPeek("files-docs") || os.carryPeek("files-tags")) return true;
+      } else {
+        var carry = localStorage.getItem("oros-remote-carry");
+        if (carry && carry.charAt(0) === "{") { var co = JSON.parse(carry); if (co && (co["files-docs"] || co["files-tags"])) return true; }
+      }
       var tg = localStorage.getItem("oros-files-tags");                   // tags on files, smart folders
       if (tg) { var to = JSON.parse(tg); if (to && ((to.files && to.files.length) || (to.smart && to.smart.length))) return true; }
       var raw = localStorage.getItem("oros-files-docs");
@@ -1601,7 +1608,11 @@
       zipCreate: zipCreate,
       zipExtract: zipExtract,
       zipOpen: zipOpen,
-      findDupes: openDupes
+      findDupes: openDupes,
+      // DRIVE-OPEN: files of folders orOS Drive mirrors open from orOS
+      vault: vaultApi,
+      openFile: openFileAt,
+      openDrive: function (p) { var d = drv(); if (d) d.enter(p); }
     });
   }
 

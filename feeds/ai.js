@@ -66,10 +66,11 @@
     pid = pid || (d.set && d.set.prov);
     var p = pid && C.PROVIDERS[pid];
     if (!p) return null;
-    var pc = d.provs[pid] || {};
+    // This computer's own local AI may answer for a synced address (AS-SYSAI 2).
+    var pc = C.localUse ? C.localUse(pid, d.provs[pid] || {}) : (d.provs[pid] || {});
     var model = pc.model || p.model || "";
     if (!model) return null;
-    return { pid: pid, name: p.name, model: model, base: C.provBase(pid, pc), p: p };
+    return { pid: pid, name: p.name, model: model, base: C.provBase(pid, pc), p: p, sys: pc.sys ? 1 : 0 };
   }
   // The Assistant's AI: the first service in its order of use that is
   // there on this device (AS-CHAIN), or the chosen one and its online
@@ -178,7 +179,7 @@
     }
     return readKey(cf.pid).then(function (key) {
       if (cf.p.key === "yes" && !key) throw new C.ProviderError("nokey");
-      var req = C.buildRequest(cf.pid, { key: key, base: cf.base, model: cf.model }, msgs, { system: q.system });
+      var req = C.buildRequest(cf.pid, { key: cf.sys ? "" : key, base: cf.base, model: cf.model }, msgs, { system: q.system });
       return fetch(req.url, {
         method: "POST", headers: req.headers, body: JSON.stringify(req.body), signal: signal,
         credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"

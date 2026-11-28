@@ -227,8 +227,8 @@ button:disabled { cursor: default; opacity: 0.4; }
   text-overflow: ellipsis;
 }
 .chat-date { font-size: 11px; color: var(--text-dim); }
-.chat-del { opacity: 0.5; }
-.chat-row:hover .chat-del, .chat-del:focus-visible { opacity: 1; }
+.chat-del, .chat-exp { opacity: 0.5; }
+.chat-row:hover .chat-del, .chat-del:focus-visible, .chat-row:hover .chat-exp, .chat-exp:focus-visible { opacity: 1; }
 
 /* ---------- 5. Messages + Markdown ---------- */
 #msgs {

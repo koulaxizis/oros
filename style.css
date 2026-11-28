@@ -2387,3 +2387,9 @@ html[data-oros-transparency] .ld-tile { --gl-tint: rgba(16, 16, 20, 0.88) !impor
   max-width: calc(100vw - 32px); padding: 6px 10px; border-radius: 10px; background: var(--panel-bg, #1d1b16); color: var(--text, #eee); border: 1px solid var(--accent, #d4af37);
   font: 12px/1.35 system-ui, sans-serif; box-shadow: 0 4px 16px rgba(0,0,0,.35); }
 #oros-local-bar button { font: inherit; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--border, #555); background: transparent; color: inherit; cursor: pointer; }
+
+/* GAMEMODE-1: Game mode, a fullscreen game in front: no bar, no Dock
+   (a 2 px strip stays the shell's, so the pointer at the top edge brings the bar back for a moment) */
+html[data-oros-game="1"]:not([data-oros-game-peek]) #oros-bar { display: none; }
+html[data-oros-game="1"] #ld-dock { display: none; }
+html[data-oros-game="1"]:not([data-oros-game-peek]) #oros-running { top: 2px; left: 0; right: 0; bottom: 0; }

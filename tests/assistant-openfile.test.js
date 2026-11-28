@@ -61,7 +61,7 @@ test("propose_entry document: Markdown to Writer, the card shows words without m
 
 test("the files live in the shell's memory, never in storage; Writer reads Markdown and takes files", () => {
   const sh = read("shell.js");
-  assert.match(sh, /window\.orosAssistAtt = \{ mem: \{\}, text: \{\}, pages: \{\}, blob: \{\}, rb: \{\} \};/);
+  assert.match(sh, /window\.orosAssistAtt = \{ mem: \{\}, text: \{\}, pages: \{\}, blob: \{\}, rb: assistReports\(\) \};/);
   const as = read("assistant/assistant.js");
   assert.match(as, /var attMem = attStore\.mem;/);
   assert.match(as, /var attText = attStore\.text;/);

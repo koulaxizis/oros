@@ -78,6 +78,21 @@ test("sizeByOwner: UTF-16 bytes of key + value, grouped and sorted", () => {
   assert.deepEqual(C.sizeByOwner(null, IDS), []);
 });
 
+test("splitCarry (SY-Z): sync's mailbox counts under the apps it keeps data for", () => {
+  const entries = [{ key: "oros-todo-data", len: 100 }, { key: "oros-remote-carry", len: 1000 }];
+  const out = C.splitCarry(entries, { stored: 1000, apps: { notes: 300, maps: 100 } });
+  assert.equal(out.some((e) => e.key === "oros-remote-carry"), false);
+  const rows = C.sizeByOwner(out, IDS);
+  const by = Object.fromEntries(rows.map((r) => [r.owner, r]));
+  assert.ok(by.notes && by.maps && by.todo);
+  assert.equal(out.find((e) => e.key === "oros-notes-data").len, 750);
+  assert.equal(out.find((e) => e.key === "oros-maps-data").len, 250);
+  // nothing known → unchanged
+  assert.equal(C.splitCarry(entries, null), entries);
+  assert.equal(C.splitCarry(entries, { stored: 0, apps: {} }), entries);
+  assert.equal(C.splitCarry([{ key: "oros-todo-data", len: 1 }], { stored: 5, apps: { notes: 1 } }).length, 1);
+});
+
 test("sizeByOwner: equal sizes keep a stable order", () => {
   const a = C.sizeByOwner([{ key: "oros-dice-x", len: 1 }, { key: "oros-maps-x", len: 1 }], IDS);
   const b = C.sizeByOwner([{ key: "oros-maps-x", len: 1 }, { key: "oros-dice-x", len: 1 }], IDS);

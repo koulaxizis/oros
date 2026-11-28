@@ -83,7 +83,7 @@
       "s.lsWarn": "Local storage is almost full. When it fills up, apps cannot save. Delete what you no longer need (old games, map tiles) or export a backup.",
       "s.cache._offline": "orOS files for offline use", "s.cache._other": "Other",
       "s.entries": "{n} items",
-      "a.hint": "Local storage per app. Tap an app to open it.",
+      "a.hint": "Local storage per app. Tap an app to open it. An app you never opened here can still take room: sync keeps its data on this device for your other devices.",
       "a.showAll": "Show all ({n})", "a.showLess": "Show fewer",
       "a._shell": "orOS (desktop, settings, sync)", "a._pet": "Screen pet", "a._other": "Other (not orOS)",
       "b.level": "Level", "b.charging": "Charging", "b.full": "Full in", "b.empty": "Empty in",
@@ -171,7 +171,7 @@
       "s.lsWarn": "Το local storage σχεδόν γέμισε. Όταν γεμίσει, οι εφαρμογές δεν μπορούν να αποθηκεύσουν. Σβήσε ό,τι δεν χρειάζεσαι (παλιά παιχνίδια, πλακίδια χαρτών) ή κάνε εξαγωγή αντιγράφου.",
       "s.cache._offline": "Αρχεία orOS για offline χρήση", "s.cache._other": "Άλλα",
       "s.entries": "{n} στοιχεία",
-      "a.hint": "Local storage ανά εφαρμογή. Πάτα μια εφαρμογή για να ανοίξει.",
+      "a.hint": "Local storage ανά εφαρμογή. Πάτα μια εφαρμογή για να ανοίξει. Και μια εφαρμογή που δεν άνοιξες ποτέ εδώ μπορεί να πιάνει χώρο: ο συγχρονισμός κρατά τα δεδομένα της σε αυτή τη συσκευή για τις άλλες σου συσκευές.",
       "a.showAll": "Όλες ({n})", "a.showLess": "Λιγότερες",
       "a._shell": "orOS (επιφάνεια, ρυθμίσεις, sync)", "a._pet": "Κατοικίδιο οθόνης", "a._other": "Άλλα (όχι orOS)",
       "b.level": "Φόρτιση", "b.charging": "Φορτίζει", "b.full": "Γεμίζει σε", "b.empty": "Αδειάζει σε",
@@ -388,6 +388,14 @@
     } catch (e) { /* storage blocked */ }
     return out;
   }
+  // SY-Z: what sync's mailbox keeps for each app (the shell's engine).
+  function carrySizes() {
+    var p = parentWin();
+    try {
+      var os = (p && p.orosSync) || window.orosSync;
+      return os && typeof os.carrySizes === "function" ? os.carrySizes() : null;
+    } catch (e) { return null; }
+  }
   function sliceRegistry() {
     try {
       var r = JSON.parse(lsGet("oros-slices"));
@@ -418,7 +426,7 @@
 
       // App data first: it is what the apps save into, and the browser
       // limit that matters most. (Chromium's estimate() leaves it out.)
-      var lsRows = C.sizeByOwner(lsEntries(), appIds(), sliceRegistry());
+      var lsRows = C.sizeByOwner(C.splitCarry(lsEntries(), carrySizes()), appIds(), sliceRegistry());
       var lsBytes = C.totalBytes(lsRows);
       var lsPct = C.percent(lsBytes / 2, LS_LIMIT);
       var big = el("div", "big", bytes(lsBytes) + " ");
