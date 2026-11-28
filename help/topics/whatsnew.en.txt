@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.00.03
+- **The same private apps are off-limits to Claude and to the Assistant.** orOS Gate no longer offers Mail to Claude, the same as the Assistant. In the Assistant, Diary, Fitness, Health, Mood, Cycle and Baby start at `Never`, the same as in orOS Gate. You can still let either one read them.
+
 ## Version 9.00.02
 - **Claude sees your pictures through orOS Gate.** When Claude reads a picture or a page image of yours through orOS Gate, it now gets the picture itself, not only the text in it. Pictures from Mail and Passwords never go.
 
