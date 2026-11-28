@@ -274,7 +274,7 @@ Eine Routine ist eine Aufgabe, die der Assistent nach Plan selbst erledigt, wie 
 Mit eingeschalteter Websuche frag „Ist noxpress.tech erreichbar?“, „Welche MX-Einträge hat glarolykoi.net?“ oder „Wie viele Seiten nennt die Sitemap von useoros.online?“. Die Seite wird über das orOS-Relay geprüft, DNS über Cloudflare. Geprüft werden nur Websites, die du genannt hast (oder die eine Suche gefunden hat). Eine Routine prüft Websites, wenn sie im Web suchen darf.
 
 ## Genaue Rechnungen
-Für Summen, Mehrwertsteuer, Prozente, Daten und Kredite nutzt der Assistent die Formeln der [Tabelle](app:spreadsheet), statt im Kopf zu rechnen („Wie viel sind 24 % MwSt. auf diese 38 Zeilen?“, „Wie viele Arbeitstage hat der Dezember?“). Er nennt auch die SHA-256 einer Datei auf der orOS-Disk, um einen Download zu prüfen.
+Für Summen, Mehrwertsteuer, Prozente, Daten und Kredite nutzt der Assistent die Formeln der [Tabelle](app:spreadsheet), statt im Kopf zu rechnen („Wie viel sind 24 % MwSt. auf diese 38 Zeilen?“, „Wie viele Arbeitstage hat der Dezember?“). Er nennt auch die SHA-256 einer Datei auf der orOS-Disk, um einen Download zu prüfen; auch Claude kann sie über orOS Gate abfragen, in Claudes Ordnern, solange orOS offen ist.
 
 ## Text aus Bildern und Scans
 Der Assistent liest den Text eines Bildes oder eines gescannten PDFs auf der orOS-Disk auf deinem Gerät (Griechisch und Englisch), auch in einer Routine („Wie hoch ist die Summe auf dem Beleg in Drive/Scans?“). In einem PDF liest er die Seiten, die Scans sind, und lässt Seiten mit eigenem Text, wie sie sind: die ersten 5 solcher Seiten, oder bis zu 15, wenn du mehr verlangst. Bilder in den Ordnern von orOS Drive, die nur in der Cloud liegen, werden zuerst geladen (bis 60 MB). Dafür verlässt nichts dein Gerät.

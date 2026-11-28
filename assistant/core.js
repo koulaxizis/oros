@@ -4437,7 +4437,7 @@
   var GATE_TOOLS = ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                     "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
                     "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf",
-                    "files_list", "files_read", "files_write", "files_move", "files_delete", "mockup_render"];
+                    "files_list", "files_read", "file_hash", "files_write", "files_move", "files_delete", "mockup_render"];   // AS-GHASH: file_hash, the Gate twin (read only)
   // GATE-PAR P3 (2026-11-08): the Assistant's tools that hand work to an
   // app's own window. Through the gate the app opens on the owner's
   // screen with it at once (Layout does its work and reports; a form is
@@ -4506,7 +4506,7 @@
       if (x.name === "mockup_render") x.description = x.description.replace("The user presses a button on a card first; Mockups makes it on the device and its report (the saved path, size) comes back.",   // GATE-PL10
         "Through orOS Gate it needs Mockups allowed (read is enough) and, on the orOS disk, a folder of Claude's folders with Files at «may change» (Mockups/Claude is one by itself); nothing is ever replaced. Bring the picture in first with files_upload and files_write. It runs where orOS is on screen or on the owner's computer in the tray; with nobody there (or orOS closed) it waits, encrypted, after a check against the copy, and its report comes then (files_list shows the picture). The report gives the saved path and size.");
       walk(x.params);
-      var ro = /^(search_data|read_item|app_summary|list_fonts|read_in_app|change_history|files_list|files_read)$/.test(x.name);
+      var ro = /^(search_data|read_item|app_summary|list_fonts|read_in_app|change_history|files_list|files_read|file_hash)$/.test(x.name);
       return { name: x.name, description: x.description, inputSchema: x.params || { type: "object", properties: {} },
                annotations: { readOnlyHint: ro, destructiveHint: /^(change_item|undo_change|edit_in_app|files_write|files_move|files_delete)$/.test(x.name) } };
     });
