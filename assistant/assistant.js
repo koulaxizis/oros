@@ -93,6 +93,7 @@
     en: {
       "app": "Assistant",
       "btn.new": "New chat", "btn.settings": "Settings", "btn.chats": "Conversations",
+      "btn.beside": "Side by side with the app you used last", "btn.full": "Whole screen (the other app waits behind)",
       "btn.send": "Send", "btn.stop": "Stop", "btn.close": "Close", "btn.cancel": "Cancel",
       "btn.delete": "Delete", "btn.setup": "Set up the assistant",
       "wel.title": "Your AI assistant",
@@ -905,6 +906,7 @@
     el: {
       "app": "Βοηθός",
       "btn.new": "Νέα συζήτηση", "btn.settings": "Ρυθμίσεις", "btn.chats": "Συζητήσεις",
+      "btn.beside": "Δίπλα-δίπλα με την εφαρμογή που χρησιμοποίησες τελευταία", "btn.full": "Όλη η οθόνη (η άλλη εφαρμογή περιμένει από πίσω)",
       "btn.send": "Αποστολή", "btn.stop": "Διακοπή", "btn.close": "Κλείσιμο", "btn.cancel": "Άκυρο",
       "btn.delete": "Διαγραφή", "btn.setup": "Ρύθμιση του βοηθού",
       "wel.title": "Ο AI βοηθός σου",
@@ -1768,6 +1770,8 @@
     down: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     globe: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
+    split: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg>',
+    full: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/></svg>',
     mic: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
     clip: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg>',
     file: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4"/></svg>',
@@ -10590,17 +10594,19 @@
         if (api && typeof api.markDirty === "function") api.markDirty();
       }
     };
-    if (MINI || RTN) {
-      // Settings pulled or changed elsewhere while the mini window is
-      // open: take them from storage, never write back an older copy.
-      window.addEventListener("storage", function (e) {
-        if (e.key !== STORAGE_KEY) return;
-        var before = JSON.stringify(data);
-        load();
-        if (JSON.stringify(data) !== before) { syncKeys(); renderAll(); }
-      });
-      return;
-    }
+    // Settings pulled or changed elsewhere while this window is open
+    // (the mini window, the full app kept alive behind, AS-KEEP): take
+    // them from storage, never write back an older copy. Every change
+    // here is stored at once, so the stored copy is the newest.
+    window.addEventListener("storage", function (e) {
+      if (e.key !== STORAGE_KEY) return;
+      var before = JSON.stringify(data);
+      load();
+      if (JSON.stringify(data) === before) return;
+      syncKeys();
+      if (MINI || !busy) renderAll(); else renderChats();
+    });
+    if (MINI || RTN) return;
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("assistant", sliceGet, sliceSet, STORAGE_KEY, C.mergeAssist);
   }
@@ -10722,6 +10728,7 @@
     vo.st = "wait";
     navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(function (stream) {
       vo.stream = stream;
+      if (document.visibilityState === "hidden") { voEnd(); return; }   // AS-KEEP: left before the microphone answered
       vo.parts = [];
       var rec;
       try { rec = new MediaRecorder(stream); } catch (e) { voEnd(); showToast(t("vo.mic")); return; }
@@ -10821,6 +10828,46 @@
     draw();
   }
 
+  // ---------- 12z. Kept alive and side by side (AS-KEEP, Chris 2026-11-28) ----------
+  // With multitasking on (shell.js 10b) the Assistant stays live when
+  // you leave it: it is in the open apps and the Dock and comes back as
+  // it was; an answer goes on behind. Hidden, the microphone stops
+  // (__orosAppPause: what was said is written into the box) and the
+  // shell never closes it for room while it works (__orosAppBusy).
+  // The toolbar button (computers, 1024 px and wider) puts it beside
+  // the app used last, or the app picked in the menu, and back to the
+  // whole screen; the shell's divider shares the width.
+  function mtHost() {
+    if (MINI || GATE) return null;
+    try { var p = window.parent; return p && p !== window && typeof p.__orosMtState === "function" && typeof p.__orosMtBeside === "function" ? p : null; }
+    catch (e) { return null; }
+  }
+  function besideDraw() {
+    var b = $("beside-btn");
+    if (!b) return;
+    var p = mtHost(), st = null;
+    try { st = p ? p.__orosMtState("assistant") : null; } catch (e) { st = null; }
+    var show = !!(st && st.can && st.where);
+    b.hidden = !show;
+    if (!show) return;
+    var on = st.where === "side" || !!st.split;
+    var lbl = t(on ? "btn.full" : "btn.beside");
+    b.innerHTML = ICON[on ? "full" : "split"];
+    b.setAttribute("aria-label", lbl);
+    b.title = lbl;
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  }
+  function besideTap() {
+    var p = mtHost();
+    if (!p) return;
+    try { p.__orosMtBeside("assistant"); } catch (e) {}
+    besideDraw();
+  }
+  window.__orosMtNote = besideDraw;
+  window.addEventListener("resize", besideDraw);
+  window.__orosAppPause = function () { if (vo.st === "rec") voStop(); };
+  window.__orosAppBusy = function () { return !!busy || vo.st === "run"; };
+
   // ---------- 13. Wiring & boot ----------
   function applyI18n() {
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
@@ -10835,6 +10882,7 @@
         b.setAttribute("aria-label", t(x[2]));
         b.title = t(x[2]);
       });
+    besideDraw();
     $("side-new").textContent = t("btn.new");
     $("side-hist").textContent = t("hist.title");
     if ($("side-rt")) $("side-rt").textContent = t("rt.btn");
@@ -10868,6 +10916,7 @@
       if (c) openChat(c.id);
     });
     $("settings-btn").addEventListener("click", settingsDialog);
+    if ($("beside-btn")) $("beside-btn").addEventListener("click", besideTap);
     $("wel-setup").addEventListener("click", settingsDialog);
     $("wel-local").addEventListener("click", function () { sysAIAsk("install"); });
     $("wel-brief").addEventListener("click", startBriefing);

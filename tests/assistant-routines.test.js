@@ -201,7 +201,7 @@ test("the routine frame only reads (assistant.js wiring)", () => {
   assert.match(src, /if \(rtCtx\) return rtApps\(\);/);
   assert.match(src, /a\.perm !== "never" && !C\.NEVER_APPS\[a\.id\]/);
   assert.match(src, /if \(GATE\) gateBoot\(\); else if \(RTN\) rtnBoot\(\); else boot\(\);/);
-  assert.match(src, /if \(MINI \|\| RTN\) \{/, "no sync slice in the routine frame");
+  assert.match(src, /if \(MINI \|\| RTN\) return;\n    if \(!api \|\| typeof api\.registerSlice/, "no sync slice in the routine frame");
   const host = fs.readFileSync(path.join(ROOT, "assistant/rthost.js"), "utf8");
   assert.match(host, /assistant\/index\.html\?routine=1/);
   const auto = fs.readFileSync(path.join(ROOT, "automations/host.js"), "utf8");

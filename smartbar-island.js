@@ -15,7 +15,9 @@
 // It closes again when the pointer leaves, on Escape, on a tap outside
 // and when the bar locks. Sensitive work shows only the app's name: no
 // title, no lyric, no cover. A locked app's player never reaches it
-// (the shell's media() leaves it out). Data goes in with textContent;
+// (the shell's media() leaves it out). The colours follow the cover
+// (COVERTINT-1, the shell's tint(), contrast checked there) when there
+// is one. Data goes in with textContent;
 // the icons are smartbar.js's own static SVG. Nothing is stored.
 // Pure part unit-tested in node (tests/island.test.js).
 // ============================================================
@@ -138,6 +140,22 @@
       var h = host();
       return call(function () { return h && typeof h.art === "function" ? h.art(m.title) : ""; }) || "";
     }
+    // COVERTINT-1: the island takes the cover's colours (or its own dark).
+    var TINT_VARS = { "--sbi-bg": "bg", "--text": "ink", "--text-dim": "dim", "--sbi-tint": "tint", "--sbi-tint-ink": "tintInk", "--accent-soft": "soft", "--border": "border" };
+    var tintKey = "";
+    function tintOf(m) {
+      if (!m || strict()) return null;
+      var h = host(), v = call(function () { return h && typeof h.tint === "function" ? h.tint(m.title) : null; });
+      return v && typeof v.bg === "string" ? v : null;
+    }
+    function paintTint(tn) {
+      var k = tn ? tn.bg + tn.tint : "";
+      if (!holder || k === tintKey) return;
+      tintKey = k;
+      Object.keys(TINT_VARS).forEach(function (n) {
+        if (tn) holder.style.setProperty(n, tn[TINT_VARS[n]]); else holder.style.removeProperty(n);
+      });
+    }
     function cbtn(cls, icon, label, fn) {
       var b = el("button", "sbi-b " + cls);
       b.type = "button";
@@ -213,6 +231,7 @@
       var m = pick(list, shownId, lastPlay, now, open);
       if (m && m.playing) lastPlay = now;
       cur = m;
+      paintTint(tintOf(m));
       if (!m) {
         shownId = "";
         if (open) setOpen(false);
@@ -248,7 +267,7 @@
       holder.setAttribute("role", "region");
       holder.setAttribute("aria-label", t("sbi.label"));
     }
-    function close() { clearTimeout(closeT); if (open) setOpen(false); }
+    function close() { clearTimeout(closeT); if (open) setOpen(false); paintTint(null); }
     return { mount: mount, paint: paint, close: close };
   }
 

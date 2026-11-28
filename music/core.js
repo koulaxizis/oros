@@ -573,6 +573,13 @@
   //   user's own server is { k "sv:…", s "sv", sh server id, ii item id
   //   on that server, ai? / ri? album / artist id, ca? cover id }: no
   //   address (it needs the login, which stays on the device).
+  //   Since MU-EMB (2026-11-27): "em" is an album or song of Bandcamp
+  //   or SoundCloud that plays in the service's own player inside Music
+  //   (never through the shell's audio): { k "em:…", s "em", u its page
+  //   (https, canonical form, see embedUrl), vi "sc" | "album" | "track",
+  //   ai Bandcamp's numeric id (Bandcamp only), art? https cover on the
+  //   service's image host }. No licence, never offline, never queued.
+  //   An older device keeps the key, title and artist only.
   //   Since wave 6a (artists.js): fa: [follow] = artists the person
   //   follows, follow = { k MusicBrainz artist id, m, on 1|0, n name,
   //   im? https photo }. Merged like likes (newest m per k, tie: larger
@@ -628,6 +635,7 @@
   }
   function remote(r, o) {
     if (r.s === "sv") return server(r, o);
+    if (r.s === "em") return embedRef(r, o);
     if (!SRC_RE.test(r.s) || r.k.slice(0, 3) !== r.s + ":" || !httpsUrl(r.u)) return o;
     o.s = r.s; o.u = r.u;
     if (httpsUrl(r.pg)) o.pg = r.pg;
@@ -1018,6 +1026,106 @@
   // screen (servers.js coverUrl), never kept in the queue.
   function itemOf(r) { var o = refOf(r); if (r.p) o.p = r.p; if (r.u && r.s !== "sv") o.u = r.u; if (r.art && r.s !== "sv") o.art = r.art; return o; }
   function isRemote(r) { return !!(r && r.s && SRC_RE.test(r.s) && httpsUrl(r.u)); }
+  // ---------- Bandcamp / SoundCloud players (MU-EMB) ----------
+  // Neither service lets other apps stream its audio: Bandcamp has no
+  // public API and SoundCloud gives API keys only with a paid plan. Both
+  // allow their own embedded players, so a link the person pastes plays
+  // in that player, inside Music. Only these address shapes are taken;
+  // everything else is refused (no custom domains, no short links).
+  var SC_RESERVED = /^(tracks|sets|albums|likes|reposts|popular-tracks|following|followers|comments|spotlight|playlists|toptracks)$/;
+  // -> { kind "sc" | "bc", vi "sc" | "album" | "track", u canonical https page } | null
+  function embedUrl(u) {
+    if (typeof u !== "string" || u.length > 1000) return null;
+    var b = u.trim().split(/[?#]/)[0].replace(/\/+$/, ""), m;
+    m = /^https?:\/\/(?:www\.|m\.)?soundcloud\.com\/([A-Za-z0-9_-]{1,100})\/(sets\/)?([A-Za-z0-9_-]{1,200})$/i.exec(b);
+    if (m && !/^(discover|search|you|pages|stream|upload|charts|messages|notifications|settings|people|terms-of-use|imprint)$/i.test(m[1]) && (m[2] || !SC_RESERVED.test(m[3]))) {
+      return { kind: "sc", vi: "sc", u: "https://soundcloud.com/" + m[1] + "/" + (m[2] ? "sets/" : "") + m[3] };
+    }
+    m = /^https?:\/\/([a-z0-9][a-z0-9-]{0,62})\.bandcamp\.com\/(album|track)\/([a-z0-9][a-z0-9-]{0,199})$/i.exec(b);
+    if (m && !/^(www|daily|blog|get|f\d*|s\d*)$/i.test(m[1])) {
+      return { kind: "bc", vi: m[2].toLowerCase(), u: "https://" + m[1].toLowerCase() + ".bandcamp.com/" + m[2].toLowerCase() + "/" + m[3].toLowerCase() };
+    }
+    return null;
+  }
+  var EM_ART = /^https:\/\/([a-z0-9]+\.sndcdn\.com|f\d\.bcbits\.com)\/[A-Za-z0-9._\/-]{1,300}$/;
+  function embedRef(r, o) {
+    var e = embedUrl(r.u);
+    if (!e || r.k.slice(0, 3) !== "em:" || r.vi !== e.vi) return o;
+    if (e.kind === "bc" && !(typeof r.ai === "string" && /^\d{1,15}$/.test(r.ai))) return o;
+    o.s = "em"; o.u = e.u; o.vi = e.vi;
+    if (e.kind === "bc") o.ai = r.ai;
+    if (typeof r.art === "string" && EM_ART.test(r.art)) o.art = r.art;
+    return o;
+  }
+  function isEmbed(r) { return !!(r && r.s === "em" && embedRef(r, { k: r.k }).s === "em"); }
+  function embedKind(r) { return r && r.vi === "sc" ? "sc" : "bc"; }
+  function deEnt(s) {
+    return String(s).replace(/&quot;/g, '"').replace(/&#39;|&#x27;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ")
+      .replace(/&#(\d{1,7});/g, function (x, n) { n = +n; return n > 0 && n < 0x110000 ? String.fromCodePoint(n) : ""; })
+      .replace(/&amp;/g, "&");
+  }
+  function metaOf(html, prop) {
+    var re = new RegExp('<meta\\s+(?:property|name)="' + prop.replace(/[.:]/g, "\\$&") + '"\\s+content="([^"]{0,2000})"', "i");
+    var m = re.exec(html);
+    if (!m) { re = new RegExp('<meta\\s+content="([^"]{0,2000})"\\s+(?:property|name)="' + prop.replace(/[.:]/g, "\\$&") + '"', "i"); m = re.exec(html); }
+    return m ? deEnt(m[1]) : "";
+  }
+  // A Bandcamp album or song page (HTML, read through the relay) ->
+  // the ref, or null. Reads only the page's own embed id and its
+  // title, artist and cover meta tags.
+  function bcParse(html, pageUrl) {
+    var e = embedUrl(pageUrl);
+    if (!e || e.kind !== "bc" || typeof html !== "string") return null;
+    var id = "", props = metaOf(html, "bc-page-properties");
+    try { var j = JSON.parse(props); if (j && /^[at]$/.test(j.item_type) && /^\d{1,15}$/.test(String(j.item_id)) && (j.item_type === "a") === (e.vi === "album")) id = String(j.item_id); } catch (x) {}
+    if (!id) { var v = /EmbeddedPlayer\/(?:v=2\/)?(album|track)=(\d{1,15})/.exec(metaOf(html, "og:video") || ""); if (v && v[1] === e.vi) id = v[2]; }
+    if (!id) return null;
+    var title = clean(metaOf(html, "og:title")), t0 = title, a = "";
+    var by = /^(.*), by (.+)$/.exec(title);
+    if (by) { t0 = by[1]; a = by[2]; }
+    var r = { k: "em:" + hash(e.u), s: "em", u: e.u, vi: e.vi, ai: id, t: clean(t0) || "?", a: clean(a) };
+    if (e.vi === "album") r.al = r.t;
+    var art = metaOf(html, "og:image");
+    if (EM_ART.test(art)) r.art = art;
+    return normRef(r);
+  }
+  // SoundCloud's oEmbed answer (JSON) -> the ref, or null.
+  function scParse(j, pageUrl) {
+    var e = embedUrl(pageUrl);
+    if (!e || e.kind !== "sc" || !j || typeof j !== "object" || j.provider_name !== "SoundCloud") return null;
+    var a = clean(j.author_name), t0 = clean(j.title);
+    var suf = a ? " by " + a : "";
+    if (suf && t0.length > suf.length && t0.slice(-suf.length) === suf) t0 = t0.slice(0, -suf.length);
+    var r = { k: "em:" + hash(e.u), s: "em", u: e.u, vi: "sc", t: t0 || e.u.split("/").pop(), a: a };
+    if (typeof j.thumbnail_url === "string" && EM_ART.test(j.thumbnail_url)) r.art = j.thumbnail_url;
+    return normRef(r);
+  }
+  // A ref from the address alone (when the details cannot be read):
+  // SoundCloud only, since a Bandcamp player needs the page's id.
+  function scBare(pageUrl) {
+    var e = embedUrl(pageUrl);
+    if (!e || e.kind !== "sc") return null;
+    var p = e.u.split("/");
+    return normRef({ k: "em:" + hash(e.u), s: "em", u: e.u, vi: "sc", t: p.pop().replace(/-/g, " "), a: p[3] });
+  }
+  function scOembedUrl(pageUrl) { return "https://soundcloud.com/oembed?format=json&url=" + encodeURIComponent(pageUrl); }
+  // The player's address. o = { dark: bool, color: "rrggbb", small: bool
+  // (a phone: a Bandcamp album without its track list, a SoundCloud
+  // playlist at a song's height) }
+  function embedSrc(r, o) {
+    o = o || {};
+    if (!isEmbed(r)) return "";
+    var col = /^[0-9a-f]{6}$/i.test(o.color || "") ? o.color.toLowerCase() : "";
+    if (r.vi === "sc") {
+      return "https://w.soundcloud.com/player/?url=" + encodeURIComponent(r.u) + (col ? "&color=%23" + col : "") +
+        "&auto_play=true&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false";
+    }
+    return "https://bandcamp.com/EmbeddedPlayer/" + r.vi + "=" + r.ai + "/size=large/bgcol=" + (o.dark ? "333333" : "ffffff") +
+      "/linkcol=" + (col || "0687f5") + "/tracklist=" + (r.vi === "album" && !o.small ? "true" : "false") + "/artwork=small/transparent=true/";
+  }
+  function embedHeight(r, small) { return small ? (r.vi === "sc" ? 166 : 120) : r.vi === "sc" ? (/\/sets\//.test(r.u) ? 340 : 166) : r.vi === "album" ? 400 : 120; }
+  // Only these two players grow: a Bandcamp album and a SoundCloud playlist.
+  function embedGrows(r) { return !!r && (r.vi === "album" || (r.vi === "sc" && /\/sets\//.test(r.u || ""))); }
   function isServer(r) { return !!(r && r.s === "sv" && SH_RE.test(r.sh) && svId(r.ii, 1000)); }
   // Listening history on this device: { c: {k: plays}, r: [item] recent, l: {k: last ms} }
   function addPlay(h, item, now) {
@@ -1240,7 +1348,7 @@
   }
 
   var api = {
-    VERSION: "1.8.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
+    VERSION: "1.9.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
     clean: clean, fold: fold, hash: hash, newId: newId, decodeLegacy: decodeLegacy, looksGreek: looksGreek, utf16: utf16,
     sniffImage: sniffImage, genreName: genreName, fromName: fromName, stem: stem,
     id3Size: id3Size, parseId3v2: parseId3v2, parseId3v1: parseId3v1, mp3Duration: mp3Duration,
@@ -1254,7 +1362,7 @@
     qRepeat: qRepeat, qCycleRepeat: qCycleRepeat, qAddNext: qAddNext, qAddLast: qAddLast, qRemoveUp: qRemoveUp,
     qClearUp: qClearUp, qJump: qJump, qUpcoming: qUpcoming,
     albums: albums, artists: artists, genres: genres, folderView: folderView, sortTracks: sortTracks, search: search,
-    words: words, matches: matches, resolver: resolver, refOf: refOf, itemOf: itemOf, isRemote: isRemote, isServer: isServer, addPlay: addPlay, fmtTime: fmtTime,
+    words: words, matches: matches, resolver: resolver, refOf: refOf, itemOf: itemOf, isRemote: isRemote, isServer: isServer, embedUrl: embedUrl, isEmbed: isEmbed, embedKind: embedKind, bcParse: bcParse, scParse: scParse, scBare: scBare, scOembedUrl: scOembedUrl, embedSrc: embedSrc, embedHeight: embedHeight, embedGrows: embedGrows, addPlay: addPlay, fmtTime: fmtTime,
     byTrackNo: byTrackNo, collator: collator,
     parseLrc: parseLrc, lrcAt: lrcAt, lrclibPick: lrclibPick,
     EQ_HZ: EQ_HZ, EQ_PRESETS: EQ_PRESETS, SLEEP_MIN: SLEEP_MIN, normSound: normSound, rgFactor: rgFactor, eqPreamp: eqPreamp,
