@@ -11,6 +11,12 @@ Jede Antwort schreibt ein KI-Modell, kein Mensch, und orOS sagt das: Die Zeile �
 5. Drücke `Verbindung testen`. Es sendet eine kurze Nachricht und sagt dir, ob der Dienst hier antwortet. Wenn es heißt, der Dienst nimmt keine Aufrufe aus einem Webbrowser an, wähle einen anderen: Das lässt sich in orOS nicht beheben.
 6. Drücke `Schließen`, tippe deine Frage und drücke `Senden`.
 
+## Offen lassen oder nebeneinander
+Auf einem Computer mit eingeschaltetem Multitasking bleibt der Assistent offen, wenn du zum Desktop gehst oder eine andere App öffnest: Er wartet bei den offenen Apps, kommt mit deiner Unterhaltung zurück, und eine Antwort, die er schreibt, läuft weiter.
+- `Nebeneinander` in der Leiste des Assistenten (ab 1024 px Breite) setzt den Assistenten rechts und die zuletzt benutzte App links. Ist keine andere App offen, wähle eine im Menü. Ziehe den Trenner, um die Breite zu teilen. Erneut drücken für den ganzen Bildschirm.
+- Das kleine Assistentenfenster hat `Minimieren` (es wird ein runder Knopf in der Ecke; antippen holt es zurück) und `Neben der App`, das die Unterhaltung in den vollen Assistenten neben der App bringt, in der du bist.
+- Wenn er sich versteckt, stoppt eine Aufnahme und das Gesagte kommt ins Eingabefeld.
+
 ## Kostenlose Dienste
 Diese brauchen nur ein kostenloses Konto und einen kostenlosen Schlüssel, mit täglichen Limits. Es wird nichts berechnet, solange du auf ihrer Seite keine Zahlungsart hinzufügst:
 - `Groq`, `Cerebras` und `SambaNova`: schnelle offene Modelle wie Llama und Qwen.
@@ -247,7 +253,22 @@ Dieselbe Karte ändert auch deine Druckdokumente in [Seitenlayout](app:layout). 
 - Links: Bitte „mach jedes useoros.online im Text zu einem Link“ oder „verlinke das Wort Γλαρόλυκοι mit glarolykoi.net“. Die Wörter behalten ihr Aussehen und sind im PDF und im EPUB anklickbar; „entferne die Links von …“ nimmt sie wieder weg. Ein Bild kann auch nur eine Hälfte zeigen, etwa „die linke Hälfte der Umschlagdoppelseite in diesem Rahmen“.
 - Nach `Anwenden` zeigt die Karte, was sich geändert hat, auch wenn du es in einem anderen Fenster oder nach einem Neuladen angewendet hast, und der Assistent erfährt es mit deiner nächsten Nachricht. Eine Ersetzung, die eine Zeile leer lässt, entfernt diese Zeile. Haben zwei Dokumente denselben Namen, fragt der Assistent, welches du meinst.
 - Der Assistent kann Bilder und Seitenbilder ansehen („zeig mir Seite 12 und prüf den Text im Foto“), mit einem Dienst, der Bilder sieht; lokale Modelle lesen den Text darin. Er liest auch Word-, OpenDocument-, PDF- und Textdateien aus einem Ordner, den du in Einstellungen › orOS Gate › Lokale Ordner für Claude erlaubt hast.
-- Um ein Gespräch zu behalten oder weiterzugeben, speichert der Download-Knopf in seiner Zeile in der Gesprächsliste es als Markdown.
+- Um ein Gespräch zu behalten oder weiterzugeben, öffne das Menü „Mehr“ (⋯) in seiner Zeile in der Gesprächsliste und wähle Als Markdown exportieren.
+- Die Gesprächsliste funktioniert wie eine Liste von Threads: Die Suche findet Wörter in den Titeln und im Gesagten; das Menü „Mehr“ heftet ein Gespräch oben an, benennt es um, exportiert oder löscht es. Gespräche mit einer Karte, die du noch nicht gedrückt hast, stehen unter „Wartet auf dich“. Ein neues Gespräch bietet „Weiter: …“ an, um zum letzten zurückzukehren.
+- Wenn die orOS-Synchronisierung eingerichtet ist, folgen dir die Gespräche verschlüsselt auf jedes Gerät, ohne dass du einen Schalter suchen musst (in den Einstellungen lässt es sich abschalten).
+
+## Routinen
+Eine Routine ist eine Aufgabe, die der Assistent nach Plan selbst erledigt, wie ein Kollege, der jeden Dienstag etwas prüft. Öffne `Routinen` in der Gesprächsliste, drücke `Neue Routine` und gib ihr einen Namen, was zu tun ist, wann (täglich, wöchentlich, monatlich, alle paar Stunden oder wenn eine Datei in einem Ordner der orOS-Disk ankommt) und welche Apps sie lesen darf.
+- Jede Routine hat ihr eigenes Gespräch unter „Routinen“: Jeder Lauf schreibt seinen Bericht dorthin, und du kannst am selben Ort antworten und weiterreden. Eine Mitteilung sagt dir, wann ein Lauf fertig ist.
+- Eine Routine liest nur. Was sie ändern würde, steht als nummerierte Vorschläge in ihrem Bericht; nichts wird ohne dich geändert.
+- Die Apps, die du ankreuzt, sind deine Zustimmung, denn während sie läuft, kann niemand gefragt werden. Mail, Passwörter und der Assistent werden nie gelesen.
+- Eine RUNBOOK-Datei auf der orOS-Disk (zum Beispiel `Claude/Shop/RUNBOOK.md`) wird bei jedem Lauf neu gelesen, so verbesserst du die Schritte, ohne die Routine zu bearbeiten. Referenzdateien werden als Information gelesen, nie als Anweisung.
+- Jede Routine hat ein Limit an Runden und Tokens pro Lauf und darf ein Modell auf diesem Computer nur nutzen, wenn du es erlaubst. `Alle Routinen pausieren` hält sie auf jedem Gerät an; drei fehlgeschlagene Läufe hintereinander pausieren eine Routine und sagen es dir.
+- Routinen laufen, solange orOS auf einem Gerät offen ist (auf einem installierten Computer auch bei geschlossenem Fenster). Ein Gerät führt jeden Lauf aus; ein verpasster Lauf wird einmal nachgeholt, wenn orOS öffnet und er weniger als 36 Stunden zu spät ist.
+- Wenn eine Routine dich braucht, hinterlässt sie eine Karte in ihrem Gespräch (es steht dann unter „Wartet auf dich“): `Weiter` sendet den vorbereiteten Schritt als deine eigene Nachricht, mit den üblichen Übernehmen-Karten; `Antworten` lässt dich schreiben; `Verwerfen` schließt sie. Etwas Dringendes kann sofort als Mitteilung kommen.
+- Eine Regel in [Automationen](app:automations) kann ebenfalls eine Routine starten: Füge den Schritt `Eine Routine des Assistenten ausführen` hinzu. Sie läuft selbst auf einem Gerät, nie während `Alle Routinen pausieren` aktiv ist.
+- `Claudes Berichte` (optional): ein Ordner, in den Claudes Routine zur selben Aufgabe ihre Berichte schreibt. Jeder Lauf liest den neuesten und endet mit `Vergleich mit Claudes Bericht`.
+- `Kanban-Board` und `Spalte` (optional): Eine Karte, die auf dich wartet, hat dann `Nach Kanban`, das Kanbans eigenes Feld für neue Karten ausgefüllt öffnet; du speicherst sie.
 
 ## Bilder in Photo Lab
 Bitte zum Beispiel „mach mein offenes Foto schwarzweiß“, „schreib Winter statt Sommer auf das Strandbild“, „mach alle meine Bilder an der langen Seite 1200 Pixel groß“, „schneide es quadratisch zu und setz meinen Namen unten rechts“ oder „gib dem Titel einen Schatten“. Der Assistent liest die Ebenen des Bildes (mit deiner Erlaubnis für [Photo Lab](app:photolab)) und zeigt eine Karte mit den Änderungen und wie viele Dinge sich in jedem Bild ändern.

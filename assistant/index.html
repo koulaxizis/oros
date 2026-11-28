@@ -9,8 +9,8 @@
   <meta name="referrer" content="no-referrer">
   <title>Assistant · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=9.11.00">
-  <link rel="stylesheet" href="assistant.css?v=9.11.00">
+  <link rel="stylesheet" href="../fonts.css?v=9.15.00">
+  <link rel="stylesheet" href="assistant.css?v=9.15.00">
 
 </head>
 <body data-side="closed">
@@ -19,6 +19,7 @@
     <button type="button" class="icon-btn" id="nav-btn"></button>
     <div id="bar-title" class="bar-title"></div>
     <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="beside-btn" aria-pressed="false" hidden></button>
     <button type="button" class="icon-btn" id="new-btn"></button>
     <button type="button" class="icon-btn" id="settings-btn"></button>
   </header>
@@ -29,8 +30,10 @@
     <!-- Conversations (device-local) -->
     <nav id="side" aria-label="Conversations">
       <button type="button" class="side-new" id="side-new"></button>
+      <input type="search" id="chat-q" class="chat-q" autocomplete="off" spellcheck="false" hidden>
       <div id="chats"></div>
       <p id="chats-foot" class="hint pad"></p>
+      <button type="button" class="side-hist" id="side-rt"></button>
       <button type="button" class="side-hist" id="side-hist"></button>
     </nav>
     <div id="scrim" hidden></div>
@@ -45,6 +48,7 @@
             <p id="wel-text"></p>
             <button type="button" class="dlg-btn primary" id="wel-local" data-i18n="sys.install" hidden>Install local AI</button>
             <button type="button" class="dlg-btn primary" id="wel-setup" data-i18n="btn.setup">Set up the assistant</button>
+            <button type="button" class="dlg-btn wel-resume" id="wel-resume" hidden></button>
             <button type="button" class="dlg-btn primary" id="wel-brief" data-i18n="brief.btn" hidden>Briefing</button>
             <p id="wel-brief-hint" class="hint" data-i18n="brief.hint" hidden></p>
           </div>
@@ -68,31 +72,33 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=9.11.00" data-app="assistant,recipes,automations"></script>
-  <script src="../importkit.js?v=9.11.00"></script>
-  <script src="../atelier/zip.js?v=9.11.00"></script>
-  <script src="../recipes/core.js?v=9.11.00"></script>
-  <script src="../recipes/share.js?v=9.11.00"></script>
-  <script src="../atelier/commands.js?v=9.11.00"></script>
-  <script src="../designkit/model.js?v=9.11.00"></script>
-  <script src="../layout/recipesteps.js?v=9.11.00"></script>
-  <script src="../layout/pro.js?v=9.11.00"></script>
-  <script src="../layout/retrim.js?v=9.11.00"></script>
-  <script src="../layout/altlayout.js?v=9.11.00"></script>
-  <script src="../layout/symbols.js?v=9.11.00"></script>
-  <script src="../layout/bookindex.js?v=9.11.00"></script>
-  <script src="../layout/commands.js?v=9.11.00"></script>
-  <script src="../photolab/commands.js?v=9.11.00"></script>
-  <script src="../automations/core.js?v=9.11.00"></script>
-  <script src="doctext.js?v=9.11.00"></script>
-  <script src="core.js?v=9.11.00"></script>
-  <script src="imgai.js?v=9.11.00"></script>
-  <script src="summary.js?v=9.11.00"></script>
-  <script src="edits.js?v=9.11.00"></script>
-  <script src="create.js?v=9.11.00"></script>
-  <script src="import.js?v=9.11.00"></script>
-  <script src="assistant.js?v=9.11.00"></script>
+  <script src="../i18n.js?v=9.15.00" data-app="assistant,recipes,automations"></script>
+  <script src="../importkit.js?v=9.15.00"></script>
+  <script src="../atelier/zip.js?v=9.15.00"></script>
+  <script src="../recipes/core.js?v=9.15.00"></script>
+  <script src="../recipes/share.js?v=9.15.00"></script>
+  <script src="../atelier/commands.js?v=9.15.00"></script>
+  <script src="../designkit/model.js?v=9.15.00"></script>
+  <script src="../layout/recipesteps.js?v=9.15.00"></script>
+  <script src="../layout/pro.js?v=9.15.00"></script>
+  <script src="../layout/retrim.js?v=9.15.00"></script>
+  <script src="../layout/altlayout.js?v=9.15.00"></script>
+  <script src="../layout/symbols.js?v=9.15.00"></script>
+  <script src="../layout/bookindex.js?v=9.15.00"></script>
+  <script src="../layout/commands.js?v=9.15.00"></script>
+  <script src="../photolab/commands.js?v=9.15.00"></script>
+  <script src="../automations/core.js?v=9.15.00"></script>
+  <script src="routines.js?v=9.15.00"></script>
+  <script src="doctext.js?v=9.15.00"></script>
+  <script src="core.js?v=9.15.00"></script>
+  <script src="imgai.js?v=9.15.00"></script>
+  <script src="summary.js?v=9.15.00"></script>
+  <script src="edits.js?v=9.15.00"></script>
+  <script src="create.js?v=9.15.00"></script>
+  <script src="import.js?v=9.15.00"></script>
+  <script src="threads.js?v=9.15.00"></script>
+  <script src="assistant.js?v=9.15.00"></script>
 
-  <script src="../pickers.js?v=9.11.00" defer></script>
+  <script src="../pickers.js?v=9.15.00" defer></script>
 </body>
 </html>

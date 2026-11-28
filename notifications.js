@@ -724,6 +724,11 @@
       var A = window.orosAutomations;
       if (/^[A-Za-z0-9_-]{1,64}@\d{8,12}$/.test(String(key)) && A && typeof A.openRun === 'function') A.openRun(String(key));
     },
+    // Assistant routines (AS-RT) — "assistant:chat:<chat id>": a run's
+    // notice opens the routine's own conversation.
+    assistant: function (id) {
+      if (/^c[a-z0-9]{6,40}$/.test(String(id)) && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('assistant', { chat: String(id) });
+    },
     // Sticky Notes — "stickies:<noteId>": a ring opens the desktop
     // with that note in front (its editor on a phone).
     stickies: function (id) { if (typeof window.__orosOpenStickies === 'function') window.__orosOpenStickies(String(id)); },

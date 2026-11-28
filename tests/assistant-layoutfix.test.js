@@ -218,7 +218,7 @@ test("Greek typesetting words and the justification advice", () => {
   assert.match(sp, /hyphenation = ο συλλαβισμός \(never «σπορά λέξεων»\)/);
   assert.match(sp, /style = το στυλ/);
   assert.match(sp, /colophon = ο κολοφώνας/);
-  assert.match(sp, /download button next to it in the list of conversations/);
+  assert.match(sp, /Export as Markdown in the More \(⋯\) menu on its row in the list of conversations/);
   assert.match(SH.GUIDE.layout.ops.style, /justified text, align j, needs hyph on/);
 });
 
@@ -237,7 +237,7 @@ test("a conversation as Markdown: words, files, tools and their results", () => 
   assert.match(md, /> `files_read` ✗\n\n````\nError: ``` x\n````/);
   assert.doesNotMatch(md, /continue/);
   const as = read("assistant/assistant.js");
-  assert.match(as, /exp\.addEventListener\("click", function \(\) \{ exportChat\(c\); \}\);/);
+  assert.match(as, /item\(t\("chat\.export"\), "", function \(\) \{ exportChat\(c\); \}\);/);
   ["chat.export", "exp.you", "exp.ai", "exp.tools", "exp.files", "exp.saved", "ed.op.link.layout", "ed.f.half", "ed.note.badUrl"].forEach((k) => {
     assert.equal((as.match(new RegExp("\"" + k.replace(/\./g, "\\.") + "\": ", "g")) || []).length, 2, k + " EN + EL");
     assert.match(read("i18n/de/assistant.js"), new RegExp("\"" + k.replace(/\./g, "\\.") + "\": "), k + " DE");

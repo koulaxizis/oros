@@ -3,6 +3,18 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.15.00
+- **The Assistant keeps your conversations like threads, and does routines.** Search your conversations, pin, rename and export them; the ones waiting for you stand at the top, and a new conversation offers to continue the last one. With sync set up they follow you to every device. New `Routines`: jobs the Assistant does by itself on a schedule or when a file lands in a folder, each with its own conversation for its reports. A routine only reads; when it needs you it leaves a card to go ahead, answer or send to Kanban. An Automations rule can start a routine too.
+
+## Version 9.14.00
+- **The Assistant stays open, or works side by side.** On a computer the Assistant no longer closes when you go to the desktop or open another app: it waits with the open apps and comes back with your conversation, and an answer goes on. A new button in its bar puts it beside the app you used last. The small Assistant window can be minimised to a round button, or moved beside the app you are in.
+
+## Version 9.13.00
+- **Cover colours.** The island, the Now playing player in the top bar and the media widget on the desktop take their colours from the cover of what plays: a dark shade behind light text that stays easy to read, a lighter one for the progress and the play button. Never under high contrast or while Sensitive work is on.
+
+## Version 9.12.00
+- **Bandcamp and SoundCloud in Music.** Paste a Bandcamp album or song, or a SoundCloud song or playlist, into Search (or press + › Bandcamp or SoundCloud link) and it plays inside Music, in the service's own player. Like it or add it to a playlist like any song. Off at first: Music's settings › Bandcamp and SoundCloud players.
+
 ## Version 9.11.00
 - **Island in the centre.** The top bar can gather the live pills and what plays into one dark pill at the top centre: a thin line with the line being sung (Music's synced lyrics) or the title, growing on hover or tap into the cover, the time played and left, Previous, Play and Next. Off at first, windows at least 760 px wide, this device only: Settings › Appearance › Top bar › Island in the centre.
 

@@ -11,6 +11,12 @@ Every answer is written by an AI model, not by a person, and orOS says so: the l
 5. Press `Test the connection`. It sends one short message and tells you if the service answers here. If it says the service does not accept calls from a web browser, pick another one: that can't be fixed from orOS.
 6. Press `Close`, type your question and press `Send`.
 
+## Keep it open, or side by side
+On a computer with multitasking on, the Assistant stays open when you go to the desktop or open another app: it waits with the open apps and comes back with your conversation, and an answer it is writing goes on.
+- `Side by side` in the Assistant's bar (from 1024 px wide) puts the Assistant on the right and the app you used last on the left. With no other app open, pick one in the menu. Drag the divider to share the width. Press it again for the whole screen.
+- The small Assistant window has `Minimise` (it becomes a round button in the corner; tap it to bring it back) and `Beside the app`, which moves the conversation to the full Assistant next to the app you are in.
+- When it hides, a recording stops and what you said is written into the box.
+
 ## Free services
 These need only a free account and a free key, with daily limits. Nothing is charged unless you add a way to pay on their site:
 - `Groq`, `Cerebras` and `SambaNova`: fast open models such as Llama and Qwen.
@@ -247,7 +253,22 @@ The same card changes your print documents in [Layout](app:layout). Ask, for exa
 - Links: ask "make every useoros.online in the text a link" or "link the word Γλαρόλυκοι to glarolykoi.net". The words keep their look and become clickable in the PDF and the EPUB; "remove the links from …" takes them off. A picture can also show only one half, for example "the left half of the cover spread in this frame".
 - After you press `Apply`, the card shows what changed, even if you applied it in another window or after reloading, and the assistant hears it with your next message. A replacement that leaves a line empty removes that line. When two documents have the same name, the assistant asks which one you mean.
 - The assistant can look at pictures and page images ("show me page 12 and check the photo's text") with a service that sees pictures; local models read the text in them. It can also read Word, OpenDocument, PDF and text files from a folder you allowed in Settings › orOS Gate › Local folders for Claude.
-- To keep or share a conversation, the download button on its row in the list of conversations saves it as Markdown.
+- To keep or share a conversation, open the "More" (⋯) menu on its row in the list of conversations and pick Export as Markdown.
+- The list of conversations works like a list of threads: search finds words in the titles and in what was said; the More menu pins a conversation to the top, renames, exports or deletes it. Conversations with a card you have not pressed yet stand under "Waiting for you". A new conversation offers "Continue: …" to go back to the last one.
+- When orOS sync is set up, conversations follow you to every device, encrypted, without a switch to find (Settings can still turn it off).
+
+## Routines
+A routine is a job the assistant does by itself on a schedule, like a colleague who checks something every Tuesday. Open `Routines` in the list of conversations, press `New routine` and give it a name, what to do, when (every day, week, month, every few hours, or when a file lands in a folder of the orOS disk) and the apps it may read.
+- Every routine has its own conversation under "Routines": each run writes its report there, and you can answer and keep talking in the same place. A notice tells you when a run is done.
+- A routine only reads. What it would change comes as numbered proposals in its report; nothing is changed without you.
+- The apps you tick are your consent, because nobody can be asked while it runs. Mail, Passwords and the Assistant are never read.
+- A RUNBOOK file on the orOS disk (for example `Claude/Shop/RUNBOOK.md`) is read again every run, so you can improve the steps without editing the routine. Reference files are read as information, never as orders.
+- Each routine has a limit of rounds and tokens per run, and may use a model on this computer only if you allow it. `Pause all routines` stops them on every device; three failed runs in a row pause a routine and tell you.
+- Routines run while orOS is open on a device (on an installed computer also with the window closed). One device runs each run; a missed run is done once when orOS opens, if it is less than 36 hours late.
+- When a routine needs you, it leaves a card in its conversation (it then stands under "Waiting for you"): `Go ahead` sends the step it prepared as your own message, with the usual Apply cards; `Answer` lets you write; `Dismiss` closes it. Something urgent can come as a notice at once.
+- An [Automations](app:automations) rule can start a routine too: add the step `Run an Assistant routine`. It runs by itself on one device, never while `Pause all` is on.
+- `Claude's reports` (optional): a folder where Claude's routine on the same job writes its reports. Each run reads the newest one and ends with `Compared with Claude's report`.
+- `Kanban board` and `column` (optional): a card that waits for you then has `To Kanban`, which opens Kanban's own new-card field filled in; you save it.
 
 ## Pictures in Photo Lab
 Ask, for example, "make my open photo black and white", "write Winter instead of Summer on the beach picture", "make all my pictures 1200 pixels on the long side", "crop it square and add my name at the bottom right" or "give the title a shadow". The assistant reads the picture's layers (with your permission for [Photo Lab](app:photolab)) and shows a card with the changes and how many things each picture gets.
