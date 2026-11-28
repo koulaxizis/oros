@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "9.11.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "9.12.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -10458,6 +10458,12 @@
         { name: "Audius", url: "https://audius.co/",
           by: "The Audius community; each track by its artist", lic: { k: "cr.lic.audius" },
           k: "cr.audius" },
+        { name: "Bandcamp", url: "https://bandcamp.com/",
+          by: "Bandcamp; each release by its artist or label", lic: { k: "cr.lic.bandcamp" },
+          k: "cr.bandcamp" },
+        { name: "SoundCloud", url: "https://soundcloud.com/",
+          by: "SoundCloud Global Limited; each track by its uploader", lic: { k: "cr.lic.soundcloud" },
+          k: "cr.soundcloud" },
         { name: "open.audio (Funkwhale)", url: "https://open.audio/",
           by: "The Funkwhale project's public pod; each song by its uploader", lic: { k: "cr.lic.openaudio" },
           k: "cr.openaudio" },
