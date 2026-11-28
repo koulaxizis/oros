@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.07.00
+- **Screen recording in Quick settings.** Next to Screenshot, one tap records your screen. It keeps going while you open and close apps; the button and the top bar show the time and stop it. The video saves itself in Files › Videos. On an Android phone the orOS app records it, into the phone's Movies › orOS. See [Screen Capture](help:a/capture).
+
 ## Version 9.06.00
 - **Screen time in the top bar.** A new Screen time card shows how long you used orOS today; tap it for today's apps, longest first. Names stay hidden during Sensitive work.
 
