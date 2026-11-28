@@ -2491,7 +2491,7 @@ orosPack("de", "assistant", {
  "tool.shopFind": "Produkte von {shop} für „{q}“: {n}",
  "tool.shopErr": "Der Shop konnte nicht gefragt werden",
  "tool.gh": "GitHub {repo}: {what}", "tool.ghErr": "GitHub konnte nicht gelesen werden ({repo})",
- "tool.calc": "Mit den Formeln der Tabelle berechnet: {n}", "tool.hash": "SHA-256 von {path}",
+ "tool.calc": "Mit den Formeln der Tabelle berechnet: {n}", "tool.wchk.status": "Geprüft: {host}", "tool.wchk.dns": "DNS von {host}", "tool.wchk.sitemap": "Sitemap von {host}", "tool.hash": "SHA-256 von {path}",
  "gh.w.releases": "Releases", "gh.w.latest_release": "neuestes Release", "gh.w.file": "Datei", "gh.w.runs": "Actions-Läufe", "gh.w.pulls": "Pull-Requests", "gh.w.commits": "Commits", "gh.w.issues": "Issues",
  "f.pweight": "Gewicht",
  "f.length": "Länge",

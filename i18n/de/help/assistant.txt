@@ -270,6 +270,9 @@ Eine Routine ist eine Aufgabe, die der Assistent nach Plan selbst erledigt, wie 
 - `Claudes Berichte` (optional): ein Ordner, in den Claudes Routine zur selben Aufgabe ihre Berichte schreibt. Jeder Lauf liest den neuesten und endet mit `Vergleich mit Claudes Bericht`.
 - `Kanban-Board` und `Spalte` (optional): Eine Karte, die auf dich wartet, hat dann `Nach Kanban`, das Kanbans eigenes Feld für neue Karten ausgefüllt öffnet; du speicherst sie.
 
+## Website-Prüfungen
+Mit eingeschalteter Websuche frag „Ist noxpress.tech erreichbar?“, „Welche MX-Einträge hat glarolykoi.net?“ oder „Wie viele Seiten nennt die Sitemap von useoros.online?“. Die Seite wird über das orOS-Relay geprüft, DNS über Cloudflare. Geprüft werden nur Websites, die du genannt hast (oder die eine Suche gefunden hat). Eine Routine prüft Websites, wenn sie im Web suchen darf.
+
 ## Genaue Rechnungen
 Für Summen, Mehrwertsteuer, Prozente, Daten und Kredite nutzt der Assistent die Formeln der [Tabelle](app:spreadsheet), statt im Kopf zu rechnen („Wie viel sind 24 % MwSt. auf diese 38 Zeilen?“, „Wie viele Arbeitstage hat der Dezember?“). Er nennt auch die SHA-256 einer Datei auf der orOS-Disk, um einen Download zu prüfen.
 
