@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.06.00
+- **Screen time in the top bar.** A new Screen time card shows how long you used orOS today; tap it for today's apps, longest first. Names stay hidden during Sensitive work.
+
 ## Version 9.05.00
 - **The Light show follows the beat.** The [Light show](app:wallpaper) wallpaper and Music's Light show now answer each beat of the music: the glow swells, a ring starts, the bars jump, the wave grows. Songs that stream move it too when their server lets orOS listen; when it does not, Settings › Appearance › Wallpaper says so and the light moves calmly on its own.
 

@@ -3905,6 +3905,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+- **2026-11-28 · Screen time card (STC-1):** Chris (thread «💡 Ιδέες από νέο βίντεο για το orOS», cards 00:32Z–02:30Z, video ideas 2026-11-23 #16). Smart-bar kind `screen` (smartbar-apps OWN), shown only while Screen time is on; reads `device/screentime.js` `todayUse()` (read-only, pending time included). The peek lists today's apps, longest first; names hidden under Sensitive work, a locked app never listed. smartbar 1.11.0, smartbar-apps 1.1.0. Test `tests/screencard.test.js`.
 - **2026-11-28 · Dock groups (DOCK-GRP):** Chris (thread «💡 Ιδέες από νέο βίντεο για το orOS», cards 00:32Z–02:30Z, video ideas 2026-11-23 #15). Dock items carry an optional `grp` (`g[a-z0-9]{1,23}`) while pinned; `groups: [{id, name, dock, mtime}]` appears only once a group exists, synced with the Dock (newer copy wins; on a tie the copy with groups). Drop on the middle 28–72% of a tile makes or joins a group; default name the category, else `Group n`; a group of one dissolves; the badge is the sum. launcher.js 1.10.0. Test `tests/dockgroups.test.js`.
 - **2026-11-28 · Game mode (GAMEMODE-1):** Chris (thread «💡 Ιδέες από νέο βίντεο για το orOS», cards 00:32Z–02:30Z, video ideas 2026-11-23 #14). Device-local `oros-gamemode`. Active (`gameActive`) when on, the open app is in the Games category, and the document is full screen or the app fills the screen; `data-oros-game` on html, `__orosGameQuiet` silences notification pop-ups and sounds (they still land in the list). The shell keeps a 2 px strip at the top so the pointer can peek the bar for 3 s. Test `tests/gamemode.test.js`.
 - **2026-11-28 · Menu button icon (MENUICON-1):** Chris (thread «💡 Ιδέες από νέο βίντεο για το orOS», cards 00:32Z–02:30Z, video ideas 2026-11-23 #13). Device-local `oros-menuicon` = grid (default) | dots | ring | spark | leaf | lines | none; static SVGs in shell.js; `none` keeps the accessible name. Test `tests/menuicon.test.js`.
@@ -14309,3 +14310,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** vizkit.js, music/host.js, shell.js, settings/settings.js, settings/core.js, i18n/de/settings.js, help wallpaper/music EN/EL/DE, whatsnew EN/EL, .github/qa/budget.json (music), OROS_BIBLE.md, tests/vizbeat.test.js, tests/vizslow.test.js.
 - **Tests:** tests/vizbeat.test.js; full suite; Playwright Chromium at 360 px EL/EN with a 120 bpm kick: local file and CORS stream lock to the beat (brightness autocorrelation 0.88–0.92 at 500 ms), a stream without CORS plays plain and Settings shows the note.
 - **Not tested:** real phone, real Jamendo CORS, Safari.
+
+### 2026-11-28 — 9.06.00 — Screen time card (STC-1)
+- **Why:** video ideas 2026-11-23 #16 (Chris, approved on cards).
+- **What:** A new Screen time card shows how long you used orOS today; tap it for today's apps, longest first. Names stay hidden during Sensitive work. Rules in Part IX STC-1.
+- **Files:** smartbar.js, smartbar-apps.js, device/screentime.js, translations.js, i18n/de (shell, help/topics/appearance), help/topics/appearance.en/el.txt, whatsnew EN/EL, OROS_BIBLE.md, tests/screencard.test.js.
+- **Tests:** tests/screencard.test.js; full suite; Playwright Chromium at 360 px and 1280 px: the card and its peek, Sensitive work, no page errors.
+- **Not tested:** Safari, Firefox.
