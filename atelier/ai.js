@@ -107,12 +107,13 @@
     var pid = pidIn || (d.set && d.set.prov);
     var p = pid && core.PROVIDERS[pid];
     if (!p) return null;
-    var pc = d.provs[pid] || {};
+    // This computer's own local AI may answer for a synced address (AS-SYSAI 2).
+    var pc = core.localUse ? core.localUse(pid, d.provs[pid] || {}) : (d.provs[pid] || {});
     var model = pc.model || p.model || "";
     if (p.kind === "webllm" && core.webllmModel && !core.webllmModel(model)) model = p.model;
     if (!model) return null;
     var name = p.kind === "webllm" ? t("ai.wlName") : p.name;
-    return { pid: pid, name: name, model: model, base: core.provBase(pid, pc), p: p };
+    return { pid: pid, name: name, model: model, base: core.provBase(pid, pc), p: p, sys: pc.sys ? 1 : 0 };
   }
 
   // The Assistant's key for pid, read from its IndexedDB without
@@ -283,7 +284,7 @@
     }
     return readKey(cf.pid).then(function (key) {
       if (cf.p.key === "yes" && !key) throw new core.ProviderError("nokey");
-      var req = core.buildRequest(cf.pid, { key: key, base: cf.base, model: cf.model }, msgs, { system: system });
+      var req = core.buildRequest(cf.pid, { key: cf.sys ? "" : key, base: cf.base, model: cf.model }, msgs, { system: system });
       return fetch(req.url, {
         method: "POST", headers: req.headers, body: JSON.stringify(req.body), signal: signal,
         credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"

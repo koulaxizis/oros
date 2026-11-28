@@ -5380,7 +5380,10 @@
     var wait = el("p", "hint", t("dv.loading"));
     host.appendChild(wait);
     loadDevice().then(function () {
-      if (current !== "device" || !host.isConnected) return;
+      // Drawn inside System too (both()): "current" is then "system", so
+      // only a host that left the page stops it (SY-Z: the storage notice
+      // opens settings/device; it stayed on "Reading this device…").
+      if (!host.isConnected) return;
       if (wait.parentNode) wait.parentNode.removeChild(wait);
       window.SettingsDevice.mount(host);
       if (lit && lit.row[1] === "device" && Date.now() < lit.until) lightUp(true);

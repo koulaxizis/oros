@@ -224,7 +224,7 @@
       "set.tier4": "Paid online",
       "set.chain.ok": "set up here",
       "set.chain.off": "not set up here",
-      "set.chain.down": "not answering now",
+      "set.chain.down": "not answering now", "set.chain.sys": "this computer's local AI answers",
       "set.fbAuto": "The connected services below decide who answers when this server is away.",
       "set.chainHint": "Every service set up on this device can answer. Your assistant above answers first; if it is away, busy or over its limit, the next one below takes over. Untick one to leave it out.",
       "set.chainNow": "{name} answers first; if it can't, the next one below takes over.",
@@ -541,6 +541,9 @@
       "ed.shp.rtriangle": "right triangle", "ed.shp.diamond": "diamond", "ed.shp.pentagon": "pentagon", "ed.shp.hexagon": "hexagon", "ed.shp.octagon": "octagon",
       "ed.shp.star": "star", "ed.shp.burst": "badge", "ed.shp.heart": "heart", "ed.shp.cross": "cross", "ed.shp.arrow": "arrow", "ed.shp.chevron": "chevron", "ed.shp.parallelogram": "parallelogram",
       "ed.shp.trapezoid": "trapezoid", "ed.shp.arch": "arch", "ed.shp.drop": "drop", "ed.shp.shield": "shield", "ed.shp.bubble": "speech bubble",
+      "ed.op.link.layout": "Links on words", "ed.f.url.layout": "to", "ed.f.half": "shows", "ed.v.half.left": "the left half", "ed.v.half.right": "the right half", "ed.v.half.top": "the top half", "ed.v.half.bottom": "the bottom half", "ed.v.half.centre": "the middle",
+      "ed.note.badUrl": "Some words were not linked: their address is not a web or e-mail address.",
+      "chat.export": "Export as Markdown", "exp.you": "You", "exp.ai": "Assistant", "exp.tools": "Tools", "exp.files": "Files", "exp.saved": "Saved: {name}",
       "ed.op.text": "Find and replace", "ed.op.pstyle": "Paragraph style", "ed.op.style": "Change a style", "ed.op.master": "Master page", "ed.op.margins": "Margins (mm)",
       "ed.op.fit": "Fit the text", "ed.op.numbering": "Page numbers", "ed.op.grey": "Pictures in black and white", "ed.op.imgfit": "Fit pictures", "ed.f.name": "style",
       "ed.f.lead": "leading", "ed.f.sb": "space before", "ed.f.sa": "space after", "ed.f.fi": "first line indent", "ed.f.brk": "starts", "ed.f.hyph": "hyphenation",
@@ -926,7 +929,7 @@
       "set.tier4": "Πληρωμένα online",
       "set.chain.ok": "ρυθμισμένο εδώ",
       "set.chain.off": "δεν έχει ρυθμιστεί εδώ",
-      "set.chain.down": "δεν απαντά τώρα",
+      "set.chain.down": "δεν απαντά τώρα", "set.chain.sys": "απαντά το τοπικό AI αυτού του υπολογιστή",
       "set.fbAuto": "Οι συνδεδεμένες υπηρεσίες παρακάτω αποφασίζουν ποιος απαντά όταν αυτός ο server λείπει.",
       "set.chainHint": "Κάθε υπηρεσία ρυθμισμένη σε αυτή τη συσκευή μπορεί να απαντήσει. Ο βοηθός σου παραπάνω απαντά πρώτος· αν λείπει, είναι απασχολημένος ή έφτασε το όριό του, συνεχίζει η επόμενη από κάτω. Ξετσέκαρε μία για να μείνει έξω.",
       "set.chainNow": "Πρώτη απαντά η υπηρεσία {name}· αν δεν μπορεί, συνεχίζει η επόμενη από κάτω.",
@@ -1246,6 +1249,9 @@
       "ed.shp.hexagon": "εξάγωνο", "ed.shp.octagon": "οκτάγωνο", "ed.shp.star": "αστέρι", "ed.shp.burst": "σήμα", "ed.shp.heart": "καρδιά", "ed.shp.cross": "σταυρός",
       "ed.shp.arrow": "βέλος", "ed.shp.chevron": "σιρίτι", "ed.shp.parallelogram": "παραλληλόγραμμο", "ed.shp.trapezoid": "τραπέζιο", "ed.shp.arch": "αψίδα", "ed.shp.drop": "σταγόνα",
       "ed.shp.shield": "ασπίδα", "ed.shp.bubble": "συννεφάκι",
+      "ed.op.link.layout": "Σύνδεσμοι σε λέξεις", "ed.f.url.layout": "προς", "ed.f.half": "δείχνει", "ed.v.half.left": "το αριστερό μισό", "ed.v.half.right": "το δεξί μισό", "ed.v.half.top": "το πάνω μισό", "ed.v.half.bottom": "το κάτω μισό", "ed.v.half.centre": "τη μέση",
+      "ed.note.badUrl": "Κάποιες λέξεις δεν έγιναν σύνδεσμοι: η διεύθυνσή τους δεν είναι διεύθυνση ιστού ή e-mail.",
+      "chat.export": "Εξαγωγή σε Markdown", "exp.you": "Εσύ", "exp.ai": "Βοηθός", "exp.tools": "Εργαλεία", "exp.files": "Αρχεία", "exp.saved": "Αποθηκεύτηκε: {name}",
       "ed.op.text": "Εύρεση και αντικατάσταση", "ed.op.pstyle": "Στυλ παραγράφου", "ed.op.style": "Αλλαγή στυλ", "ed.op.master": "Πρότυπη σελίδα",
       "ed.op.margins": "Περιθώρια (mm)", "ed.op.fit": "Χωράει το κείμενο", "ed.op.numbering": "Αρίθμηση σελίδων", "ed.op.grey": "Ασπρόμαυρες εικόνες",
       "ed.op.imgfit": "Προσαρμογή εικόνων", "ed.f.name": "στυλ", "ed.f.lead": "διάστιχο", "ed.f.sb": "κενό πριν", "ed.f.sa": "κενό μετά", "ed.f.fi": "εσοχή πρώτης γραμμής",
@@ -1540,6 +1546,7 @@
     stop: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
     spark: '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>',
     search: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+    down: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     globe: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
     mic: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
@@ -1621,7 +1628,10 @@
   function curProv() { return fbUse || data.set.prov; }
   function provConf(pid) { return data.provs[pid] || { m: 0, base: "", model: "" }; }
   function modelOf(pid) { return provConf(pid).model || (C.PROVIDERS[pid] && C.PROVIDERS[pid].model) || ""; }
-  function baseOf(pid) { return C.provBase(pid, provConf(pid)); }
+  // The settings a call uses on this device: this computer's own local
+  // AI may answer in place of a synced address that does not (AS-SYSAI 2).
+  function useConf(pid) { return C.localUse(pid, provConf(pid)); }
+  function baseOf(pid) { return C.provBase(pid, useConf(pid)); }
   function setProvConf(pid, patch) {
     var cur = provConf(pid);
     var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0, kit: cur.kit || "", nt: cur.nt ? 1 : 0, fast: cur.fast ? 1 : 0, tm: cur.tm || "" };
@@ -1952,7 +1962,7 @@
   function readKey(q) { return loadKey(q).then(function (k) { return k ? k.key : ""; }); }
   // Does the local server answer at all? (core.probeLocal, the same
   // check Feeds and Atelier make)
-  function localUp(pid) { return C.probeLocal(pid, provConf(pid), readKey); }
+  function localUp(pid) { return C.probeLocal(pid, provConf(pid), readKey, sysAI); }
   // Is a model that runs in the browser ready here (no download)?
   function onDevice(pid) {
     var P = C.PROVIDERS[pid];
@@ -1983,14 +1993,14 @@
   function pickNow(c) {
     var order = C.chainOrder(data);
     if (order.length < 2) return Promise.resolve(order[0] && order[0] !== data.set.prov ? order[0] : "");
-    return C.pickChain(data, { readKey: readKey, device: onDevice, tools: turnTools(c), cool: cool }).then(function (r) {
+    return C.pickChain(data, { readKey: readKey, device: onDevice, tools: turnTools(c), cool: cool, sys: sysAI }).then(function (r) {
       return r.pid && r.pid !== data.set.prov ? r.pid : "";
     });
   }
   function chooseProv(c, keep) {
     return (keep ? Promise.resolve(fbUse) : pickNow(c)).then(function (use) {
       fbUse = use;
-      tmUse = C.toolModel(provConf(curProv()), C.PROVIDERS[curProv()] && C.PROVIDERS[curProv()].local && turnNeeds(c));
+      tmUse = C.toolModel(useConf(curProv()), C.PROVIDERS[curProv()] && C.PROVIDERS[curProv()].local && turnNeeds(c));
       noteProv(c);
     });
   }
@@ -2085,8 +2095,8 @@
     return loadKey(pid).then(function (k) {
       if (p.key === "yes" && !(k && k.key)) throw new C.ProviderError("nokey");
       function send(o) {
-        var tm = turnModel(pid);
-        var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: tm || modelOf(pid), vis: tm ? 0 : provConf(pid).vis, nt: tm ? 0 : provConf(pid).nt, fast: provConf(pid).fast }, msgs, o);
+        var pc = useConf(pid), tm = turnModel(pid);
+        var req = C.buildRequest(pid, { key: k && !pc.sys ? k.key : "", base: pc.base, model: tm || pc.model || modelOf(pid), vis: tm ? 0 : pc.vis, nt: tm ? 0 : pc.nt, fast: pc.fast }, msgs, o);
         return fetch(req.url, {
           method: "POST", headers: req.headers, body: JSON.stringify(req.body), signal: signal,
           credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
@@ -2371,6 +2381,27 @@
     setSide(false);
     renderAll();
     scrollEnd();
+  }
+  // AS-EXP (Chris 2026-11-27): the whole conversation as Markdown
+  // (core.chatMarkdown), saved where the user picks (the shell's save
+  // dialog) or downloaded; nothing goes anywhere else.
+  function exportChat(c) {
+    var md = C.chatMarkdown(c, { title: t("chat.untitled"), you: t("exp.you"), ai: t("exp.ai"), tools: t("exp.tools"), files: t("exp.files"),
+      when: function (ms) { try { return new Date(ms).toLocaleString(loc()); } catch (e) { return C.ymd(ms); } },
+      model: function (m) { return m.model || (m.prov && C.PROVIDERS[m.prov] ? C.PROVIDERS[m.prov].name || m.prov : ""); } });
+    var name = String(c.title || t("chat.untitled")).replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) + ".md";
+    var blob = new Blob([md], { type: "text/markdown" }), dh = null, done;
+    try { dh = window.parent && window.parent !== window ? window.parent.orosDialog : null; } catch (e) {}
+    if (dh && typeof dh.saveFile === "function") {
+      done = Promise.resolve(dh.saveFile({ blob: blob, filename: name, mime: "text/markdown", types: [{ description: "Markdown", accept: { "text/markdown": [".md"] } }] })).then(function (x) { return !!(x && x.ok); });
+    } else {
+      var url = URL.createObjectURL(blob), link = el("a");
+      link.href = url; link.download = name;
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 40000);
+      done = Promise.resolve(true);
+    }
+    done.then(function (ok) { if (ok) showToast(t("exp.saved", { name: name })); }, function () {});
   }
   function deleteChat(c) {
     confirmDialog(t("del.title"), t("del.q", { title: c.title || t("chat.untitled") }), t("btn.delete"), function () {
@@ -2926,6 +2957,17 @@
   // file, while this session still has it.
   function withFiles(msgs) {
     return msgs.map(function (m) {
+      // AS-SEE: a tool result's pictures, while this session has them
+      if (m && m.r === "tool" && Array.isArray(m.results) && m.results.some(function (r) { return r && Array.isArray(r.pic); })) {
+        return { r: "tool", results: m.results.map(function (r) {
+          if (!r || !Array.isArray(r.pic)) return r;
+          var o = {}, pics = r.pic.filter(function (x) { return x && attMem[x.id]; }).map(function (x) { return { type: x.type, data: attMem[x.id] }; });
+          Object.keys(r).forEach(function (k) { if (k !== "pic") o[k] = r[k]; });
+          if (pics.length) o.pics = pics;
+          else o.content = String(r.content || "") + " [The picture is no longer in this session's memory: read the file again to see it.]";
+          return o;
+        }) };
+      }
       if (!m || m.r !== "user" || !Array.isArray(m.att) || !m.att.length) return m;
       return { r: "user", text: m.text, att: m.att.map(function (a) {
         if (!attMem[a.id]) return a;
@@ -3032,7 +3074,6 @@
     var blob = new Blob([b64Bytes(attMem[a.id])], { type: a.type });
     return ocrImage(blob, onProgress);
   }
-  function pdfText(a, onProgress) { return pdfBytesText(b64Bytes(attMem[a.id]), onProgress); }
   function pdfBytesText(bytes, onProgress) {
     return pdfjs().then(function (lib) {
       return lib.getDocument({ data: bytes, isEvalSupported: false, enableXfa: false,
@@ -3286,6 +3327,8 @@
     });
   }
   function runTurnNow(c, again) {
+    // AS-RB2: what the user applied since the last answer goes with this turn
+    if (takeReports(c)) saveChat(c);
     var pid = curProv();
     var ctl = typeof AbortController === "function" ? new AbortController() : null;
     busy = { abort: ctl, live: "", consent: null, chat: c };
@@ -3788,7 +3831,7 @@
   // gets it as this tool's result (only numbers and font names).
   function takeRebuilt(r, c) {
     var ui = r.ui, key = ui && ui.key, rep = key ? attRb[key] : null;
-    if (!rep || ui.st !== "opened") return false;
+    if (!rep || !rbWaits(ui)) return false;
     if (rep.failed) {
       ui.st = "failed";
       r.content = ui.sla ? "The user pressed Open, but Layout could not open the Scribus file (it may be damaged or too big). Nothing was made."
@@ -3858,7 +3901,7 @@
   }
   function takeHouse(r, c) {
     var ui = r.ui, key = ui && ui.key, rep = key ? attRb[key] : null;
-    if (!rep || ui.st !== "opened") return false;
+    if (!rep || !rbWaits(ui)) return false;
     ui.rep = C.houseReport(ui.op, rep);
     ui.st = ui.rep && !ui.rep.failed ? "done" : "failed";
     r.content = ui.st === "failed" && ui.rep && ui.rep.why === "cancel" ? "The user closed Layout's questions without laying out the book. Nothing was made."
@@ -3893,7 +3936,7 @@
   }
   function takeEpub(r, c) {
     var ui = r.ui, key = ui && ui.key, rep = key ? attRb[key] : null;
-    if (!rep || ui.st !== "opened") return false;
+    if (!rep || !rbWaits(ui)) return false;
     ui.rep = C.epubReport(rep);
     ui.st = ui.rep && !ui.rep.failed ? "done" : "failed";
     r.content = ui.st === "failed" ? "The user pressed the button, but " + epubText(ui.rep).charAt(0).toLowerCase() + epubText(ui.rep).slice(1) : epubText(ui.rep);
@@ -3935,7 +3978,7 @@
   }
   function takeMockup(r, c) {
     var ui = r.ui, key = ui && ui.key, rep = key ? attRb[key] : null;
-    if (!rep || ui.st !== "opened") return false;
+    if (!rep || !rbWaits(ui)) return false;
     ui.rep = C.mockupReport(rep);
     ui.st = ui.rep && !ui.rep.failed ? "done" : "failed";
     var txt = C.mockupText(rep);
@@ -3949,7 +3992,7 @@
   }
   function takePdf(r, c) {
     var ui = r.ui, key = ui && ui.key, rep = key ? attRb[key] : null;
-    if (!rep || ui.st !== "opened") return false;
+    if (!rep || !rbWaits(ui)) return false;
     ui.rep = C.pdfReport(rep);
     ui.st = ui.rep && !ui.rep.failed ? "done" : "failed";
     r.content = ui.st === "failed" ? "The user pressed the button, but " + pdfText(ui.rep).charAt(0).toLowerCase() + pdfText(ui.rep).slice(1) : pdfText(ui.rep);
@@ -3957,16 +4000,27 @@
     return true;
   }
 
+  // AS-RB2: a card waits for its report once Apply was pressed
+  // ("opened"); a card still showing its buttons ("") takes one too,
+  // since a report under its key exists only after its Apply (pressed
+  // where this conversation was not saved with it, Chris 2026-11-27).
+  function rbWaits(ui) { return ui.st === "opened" || ui.st === ""; }
+  // Every report that is in for this conversation's cards → any taken
+  function takeReports(c) {
+    var hit = false;
+    if (!c || !Array.isArray(c.msgs)) return false;
+    c.msgs.forEach(function (m) {
+      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && ((r.ui.k === "rebuild" && takeRebuilt(r, c)) || (r.ui.k === "house" && takeHouse(r, c)) || (r.ui.k === "epub" && takeEpub(r, c)) || (r.ui.k === "pdf" && takePdf(r, c)) || (r.ui.k === "mockup" && takeMockup(r, c)) || (r.ui.k === "edit" && takeEdited(r, c)))) hit = true; });
+    });
+    return hit;
+  }
   // Only while this frame is alive: an app opened from a card may take
-  // its place, and the report then waits for the next opening.
+  // its place, and the report then waits for the next opening (kept on
+  // the device by the shell, AS-RB2) or the next message.
   function onRb() {
     takeUndoAnswers();
     if (!chat) return;
-    var hit = false;
-    chat.msgs.forEach(function (m) {
-      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && ((r.ui.k === "rebuild" && takeRebuilt(r, chat)) || (r.ui.k === "house" && takeHouse(r, chat)) || (r.ui.k === "epub" && takeEpub(r, chat)) || (r.ui.k === "pdf" && takePdf(r, chat)) || (r.ui.k === "mockup" && takeMockup(r, chat)) || (r.ui.k === "edit" && takeEdited(r, chat)))) hit = true; });
-    });
-    if (hit) renderMessages();
+    if (takeReports(chat)) renderMessages();
   }
   // (the hidden orOS Gate frame never takes it from an open Assistant;
   // it looks for its own reports itself, gateWatch)
@@ -4278,7 +4332,7 @@
     if (typeof v === "boolean" || v === 1 && /^(cs|word|dup|copies|fonts|palette|flow|mono|up|desc)$/.test(k)) return "";
     // a shape's fill (not a colour) and a boundary's kind
     if ((k === "fill" && /^(whiteboard|mindmap)$/.test(app)) || (k === "kind" && app === "mindmap")) return edT(app, "ed.v." + k + "." + v);
-    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|strike|caps|lock|hide|anim|trans|brk|hyph|on|mode|dir|kind|valign|side|start|layout|theme|num|date|tag|paper|lang|part|numfmt|wrap|border|head|each|row|mute|solo|loop|inst|ends|dash|route|starthead|endhead|where|va|set|keep|pad|numstyle|done|nodesize|sides)$/.test(k)) return edT(app, "ed.v." + k + "." + v);
+    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|strike|caps|lock|hide|anim|trans|brk|hyph|on|mode|dir|kind|valign|side|start|layout|theme|num|date|tag|paper|lang|part|numfmt|wrap|border|head|each|row|mute|solo|loop|inst|ends|dash|route|starthead|endhead|where|va|set|keep|pad|numstyle|half|done|nodesize|sides)$/.test(k)) return edT(app, "ed.v." + k + "." + v);
     if (k === "fmt") return edT(app, "ed.v.fmt." + v);   // GX-3: the export formats
     if (k === "f" && app === "photolab") return v + "×";   // PL-AI
     if (k === "path" && app === "photolab") return edQuote(String(v).split("/").pop());
@@ -4298,7 +4352,7 @@
     if (/^(sort|color|icc)$/.test(k)) return edT(app, "ed.v." + k + "." + v);
     if ((k === "pages" || k === "paras") && /^(all|odd|even|first|last)$/.test(v)) return t("ed.v.pages." + v);
     if (k === "secs" && v < 1) return String(v).replace(".", LANG === "en" ? "." : ",");
-    if (/^(has|find|repl|text|title|footer|alt|header|author|tags|category|house|style|base|nest_cs|nest_to|subtitle|publisher|prefix|master)$/.test(k)) return edQuote(String(v).slice(0, 80) + (String(v).length > 80 ? "…" : ""));
+    if (/^(has|find|repl|text|title|footer|alt|header|author|tags|category|house|style|base|nest_cs|nest_to|subtitle|publisher|prefix|master)$/.test(k) || (k === "url" && app === "layout")) return edQuote(String(v).slice(0, 80) + (String(v).length > 80 ? "…" : ""));
     return String(v);
   }
   // Mockups (MK-G): its pictures by file name, its ready choices in
@@ -4357,7 +4411,7 @@
   // the numbers, and the change goes to the change history with Undo.
   function takeEdited(r, c) {
     var ui = r.ui, key = ui && ui.key, rep = key ? attRb[key] : null;
-    if (!rep || ui.st !== "opened") return false;
+    if (!rep || !rbWaits(ui)) return false;
     var app = ui.args && String(ui.args.app || ""), name = installed()[app] || app;
     if (rep.failed || !rep.ok) {
       ui.st = "failed";
@@ -5265,8 +5319,108 @@
       });
     });
   }
+  // AS-SEE: a picture for the model to look at → the result. It is
+  // redrawn as Photos are (longest side IMG_EDGE, JPEG) and kept in the
+  // session's memory like an attachment (never stored or synced); the
+  // conversation keeps only its id (r.pic) and core.js sends the newest
+  // ones to a provider that sees pictures. A model that can't see, the
+  // gate, or ocr: true → its text is read here (Tesseract, el + en).
+  var PIC_KIND = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", bmp: "image/bmp", tif: "image/tiff", tiff: "image/tiff", avif: "image/avif", heic: "image/heic" };
+  function picDims(blob) {
+    if (typeof createImageBitmap !== "function") return Promise.resolve(null);
+    return createImageBitmap(blob).then(function (b) { var d = b.width + "x" + b.height; if (b.close) b.close(); return d; }, function () { return null; });
+  }
+  function picResult(blob, name, head, a, ui) {
+    var ext = String(name).slice(String(name).lastIndexOf(".") + 1).toLowerCase(), type = PIC_KIND[ext] || blob.type || "image/jpeg";
+    var pid = curProv(), see = GATE || C.attCaps(pid, provConf(pid)).img, ocr = a.ocr === true || !see;   // GATE-IMG: through the Gate it goes as a picture
+    if (blob.size > 60 * 1024 * 1024) { head.note = "Only the details: the picture is over 60 MB."; return Promise.resolve({ content: JSON.stringify(head), ui: ui }); }
+    return picDims(blob).then(function (dims) {
+      if (dims) head.pixels = dims;
+      var prep = otherPhoto(type) || !C.attKind(type) ? redraw(blob, type).then(function (r) { return shrink(r.blob, r.type); }) : shrink(blob, type);
+      if (GATE) prep = prep.then(gateFit);
+      return prep.then(function (r) {
+        var jobs = [see ? readB64(r.blob) : Promise.resolve(""), ocr ? ocrImage(r.blob).catch(function () { return null; }) : Promise.resolve(null)];
+        return Promise.all(jobs).then(function (got) {
+          var out = { content: "", ui: ui };
+          if (see && got[0]) {
+            var id = attId();
+            attMem[id] = got[0];
+            attTrim();
+            out.pic = [{ id: id, type: r.type }];
+            head.shown = "The picture is attached to this result for you to look at" + (r.blob.size < blob.size ? " (made smaller to send)." : ".");
+          } else head.shown = "This model can't see pictures; its text was read on the device instead.";
+          if (got[1] !== null) {
+            var txt = String(got[1] || "").replace(/[ \t]+\n/g, "\n").trim();
+            head.ocr_text = txt ? txt.slice(0, 20000) : "";
+            if (!txt) head.ocr_note = "No text was found in the picture.";
+          } else if (ocr) head.ocr_note = "The text in the picture could not be read on this device.";
+          out.content = JSON.stringify(head);
+          return out;
+        });
+      });
+    }).catch(function () { head.note = "The picture could not be opened on this device."; return { content: JSON.stringify(head), ui: ui }; });
+  }
+  // GATE-IMG: through orOS Gate a picture must stay under the relay's
+  // 512 KB (and three of them within one answer): a bigger one is drawn
+  // again smaller as JPEG, 1600 then 1100 then 800 px on the long side.
+  var GATE_PIC = 260 * 1024;
+  function gateFit(r) {
+    if (!r || !r.blob || r.blob.size <= GATE_PIC || typeof createImageBitmap !== "function") return r;
+    var edges = [1600, 1100, 800];
+    return createImageBitmap(r.blob).then(function (bmp) {
+      var step = function (i) {
+        var k = Math.min(1, edges[i] / Math.max(bmp.width, bmp.height)), cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(bmp.width * k)); cv.height = Math.max(1, Math.round(bmp.height * k));
+        var g = cv.getContext("2d");
+        g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height);
+        g.drawImage(bmp, 0, 0, cv.width, cv.height);
+        return new Promise(function (res) { cv.toBlob(res, "image/jpeg", 0.8); }).then(function (b) {
+          if (b && b.size <= GATE_PIC) return { blob: b, type: "image/jpeg" };
+          if (i + 1 < edges.length) return step(i + 1);
+          return b && b.size <= 500 * 1024 ? { blob: b, type: "image/jpeg" } : r;
+        });
+      };
+      return step(0).then(function (x) { if (bmp.close) bmp.close(); return x; });
+    }, function () { return r; });
+  }
+  // files_read of local:<root>/<path> (LOCAL-1): a local folder the owner
+  // opened for Claude, read-only (Chris 2026-11-27: .docx and .odt of the
+  // book's folder failed, only listing it worked).
+  function localRead(a, apps) {
+    var L = localBridge(), path = String(a.path).trim();
+    if (!L || typeof L.read !== "function") return Promise.resolve(cfErr(LOCAL_SAY.noBridge + "."));
+    if (!appOf(apps, "layout") && !appOf(apps, "files")) return Promise.resolve(cfErr("Claude may not read Layout or Files."));
+    return Promise.all([L.read(path, "files_read"), cfMod()]).then(function (got) {
+      var f = got[0], CF = got[1], name = f && f.name ? f.name : path.slice(path.lastIndexOf("/") + 1);
+      if (!CF) return cfErr("the files tools could not be loaded.");
+      if (CF.secret && CF.secret("/internal/" + name)) return cfErr("that name looks like a key or a secret; it is never read.");
+      var kind = CF.kindOf(name), head = { path: path, kind: kind, size: f.size || 0, local: true };
+      if (f.lastModified) head.modified = new Date(f.lastModified).toISOString();
+      var ui = { k: "cfRead", path: path };
+      if (kind === "image") return picResult(f, name, head, a, ui);
+      if (!/^(text|document|pdf)$/.test(kind) || f.size > CF_TEXT_MAX) {
+        head.note = kind === "media" || kind === "other" ? "Only the details: files_read gives the text of text files, documents and PDFs, and shows pictures." : "Only the details: the file is over 50 MB.";
+        return { content: JSON.stringify(head), ui: ui };
+      }
+      return f.arrayBuffer().then(function (buf) {
+        var bytes = new Uint8Array(buf);
+        if (kind === "text") return new TextDecoder("utf-8").decode(bytes);
+        if (kind === "pdf") return pdfBytesText(bytes);
+        if (!DT) throw new Error("doctext");
+        return DT.read(bytes, name, { sheets: sheets, max: CF.READ_MAX * 4 });
+      }).then(function (text) {
+        var pg = CF.page(String(text || ""), a.offset, a.length);
+        Object.keys(pg).forEach(function (k) { head[k] = pg[k]; });
+        return { content: JSON.stringify(head), ui: ui };
+      }, function () { return cfErr("\"" + path + "\" could not be read as text (damaged, or a kind orOS can't read: " + name.slice(name.lastIndexOf(".") + 1) + ")."); });
+    }, function (e) {
+      var why = e && e.why ? e.why : "unreadable";
+      return cfErr((LOCAL_SAY[why] || "the local file could not be read (" + why + ")") + ". Path: " + path + localHint());
+    });
+  }
   function filesRead(c, a, apps) {
     a = a && typeof a === "object" ? a : {};
+    if (typeof a.path === "string" && /^local:/i.test(a.path.trim())) return localRead(a, apps);
     return cfPrep(apps, false).then(function (x) {
       if (x.err) return cfErr(x.err);
       var CF = x.CF, p = CF.normPath(a.path), why = CF.reach(p, x.folders);
@@ -5281,9 +5435,13 @@
         return cfVer(x.fs, p).then(function (v) {
           head.version = v;
           var ui = { k: "cfRead", path: CF.show(p) };
+          if (kind === "image" && !st.cloud) {
+            return cfBytes(x.fs, p).then(function (bytes) { return picResult(new Blob([bytes]), name, head, a, ui); },
+              function () { return cfErr("\"" + CF.show(p) + "\" could not be read."); });
+          }
           if (!/^(text|document|pdf)$/.test(kind) || st.size > CF_TEXT_MAX) {
             head.note = kind === "image" || kind === "media" || kind === "other"
-              ? "Only the details: files_read gives the text of text files, documents and PDFs."
+              ? "Only the details: files_read gives the text of text files, documents and PDFs, and shows pictures on this device."
               : "Only the details: the file is over 50 MB.";
             return { content: JSON.stringify(head), ui: ui };
           }
@@ -5466,7 +5624,10 @@
   // in the apps' IndexedDB; read them (read-only: a database that is
   // not there is never created) for edits3.js before a change.
   var PREP_DB = { feeds: ["oros-feeds", "heads"], podcasts: ["oros-podcasts", "feeds"], music: ["oros-music", "tracks"] };
-  function idbAll(name, store) {
+  // AS-IDB: its own name. A second idbAll here hid the Assistant's own
+  // (the later declaration wins), so saved conversations and the change
+  // history never loaded after the Assistant was opened again.
+  function appDbAll(name, store) {
     return new Promise(function (resolve) {
       var rq;
       try { rq = indexedDB.open(name); } catch (e) { resolve([]); return; }
@@ -5492,7 +5653,7 @@
     if (r0 && r0.app === "publish") { if (window.OrosAssistEdits4) window.OrosAssistEdits4.setCache("woo", createCtx().woo); return Promise.resolve(); }
     var Ex = r0 && (r0.app === "music" ? window.OrosAssistEdits4 : window.OrosAssistEdits3), p = r0 && PREP_DB[r0.app];
     if (!p || !Ex) return Promise.resolve();
-    return idbAll(p[0], p[1]).then(function (list) {
+    return appDbAll(p[0], p[1]).then(function (list) {
       var m = {};
       (Array.isArray(list) ? list : []).forEach(function (x) {
         if (r0.app === "music") { if (x && typeof x.k === "string") m[x.k] = x; return; }
@@ -7854,7 +8015,15 @@
       del.setAttribute("aria-label", t("btn.delete"));
       del.title = t("btn.delete");
       del.addEventListener("click", function () { deleteChat(c); });
+      // AS-EXP: the conversation as a Markdown file
+      var exp = el("button", "icon-btn small chat-exp");
+      exp.type = "button";
+      exp.innerHTML = ICON.down;
+      exp.setAttribute("aria-label", t("chat.export"));
+      exp.title = t("chat.export");
+      exp.addEventListener("click", function () { exportChat(c); });
       row.appendChild(b);
+      row.appendChild(exp);
       row.appendChild(del);
       host.appendChild(row);
     });
@@ -9449,7 +9618,7 @@
         chainBox.textContent = "";
         var here = [], other = [];
         order.forEach(function (q, k) { (st[k] === "off" ? other : here).push({ q: q, st: st[k] }); });
-        var used = here.filter(function (x) { return skip.indexOf(x.q) < 0 && x.st === "ok"; });
+        var used = here.filter(function (x) { return skip.indexOf(x.q) < 0 && (x.st === "ok" || x.st === "sys"); });
         var sum = el("p", "chain-sum");
         sum.id = "as-chain-sum";
         sum.textContent = !used.length ? t("set.chainNone") : t(used.length > 1 ? "set.chainNow" : "set.chainOnly", { name: provName(used[0].q) });
@@ -9470,7 +9639,7 @@
           });
           cb.parentNode.classList.add("check");
           var tag = q === data.set.prov ? t("set.chainFirst") + " · " : "";
-          var stEl = el("span", "chain-st" + (x.st === "ok" ? " ok" : ""), tag + t("set.chain." + x.st));
+          var stEl = el("span", "chain-st" + (x.st === "ok" || x.st === "sys" ? " ok" : ""), tag + t("set.chain." + x.st));
           row.appendChild(stEl);
           chainBox.appendChild(row);
         });
@@ -9489,7 +9658,7 @@
       var P = C.PROVIDERS[q], pc = provConf(q);
       if (P.device) return Promise.resolve(onDevice(q)).then(function (v) { return v ? "ok" : "off"; });
       if (!modelOf(q)) return Promise.resolve("off");
-      if (P.local) return baseOf(q) ? localUp(q).then(function (v) { return v ? "ok" : "down"; }) : Promise.resolve("off");
+      if (P.local) return baseOf(q) ? localUp(q).then(function (v) { return !v ? "down" : useConf(q).sys ? "sys" : "ok"; }) : Promise.resolve("off");
       if (P.key !== "yes") return Promise.resolve("ok");
       return readKey(q).then(function (k) { return k ? "ok" : "off"; });
     }
@@ -10635,7 +10804,9 @@
         var rec = m && m.ref ? gateConv.refs[m.ref] : null;
         return rec ? { i: m.i, rec: { app: rec.app, target: rec.target, title: String(rec.title || "").slice(0, 160), id: rec.id } } : null;
       }).filter(Boolean) : undefined;
-      return { ok: true, c: text, u: u, x: gateMem(u), ud: Array.isArray(r.ud) ? r.ud : undefined, a: used, k: r.ui && typeof r.ui.n === "number" ? r.ui.n : 0, made: made };
+      // GATE-IMG: a picture files_read made goes with the answer (gate.js and the relay check it again)
+      var img = name === "files_read" && Array.isArray(r.pic) ? r.pic.map(function (p) { return attMem[p.id] ? { data: attMem[p.id], mimeType: p.type } : null; }).filter(Boolean).slice(0, 3) : [];
+      return { ok: true, c: text, u: u, x: gateMem(u), ud: Array.isArray(r.ud) ? r.ud : undefined, a: used, k: r.ui && typeof r.ui.n === "number" ? r.ui.n : 0, made: made, img: img.length ? img : undefined };
     }, function () { return { ok: false, c: "The call failed on the device." }; });
   }
   // The results speak of "the user" pressing; through the gate nobody did.
