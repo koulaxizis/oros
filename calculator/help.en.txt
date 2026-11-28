@@ -75,6 +75,7 @@ The numbers you type in Finance stay on this device until you change them.
 - Numbers take a comma or a point for decimals, simple sums (`2,5*3`, `(3+4)/2`) and `1,5e3`. Results have 6 significant digits; change them with the settings button (`Converter settings`).
 - `Cooking` turns cups and spoons into grams with an `Ingredient` (approximate kitchen weights). `Data` has kB, MB, GB and KiB, MiB, GiB. The traditional Greek stremma, oka, drachm and builder's cubit are there too.
 - `Currency` uses the euro reference rates of the European Central Bank through the free Frankfurter service, fetched when you open `Currency` (at most every 6 hours) or tap `Update rates`, and kept on this device for offline use. They are for information: banks and card payments use their own rates.
+  In the currency list you can also type a country (`Greece`, `Japan`, `Ελβετία`): its currency shows with the country beside it (`Euro · Greece`). The smart top bar's `Exchange rate` card (Settings › Appearance › Top bar) shows your pair from these same stored rates, and a tap opens it here.
 - `All units` shows the value in every unit of the category (tap a row to copy it). ☆ adds the pair to `Favourites`, the chips above the converter. `Recent` keeps your last 20 conversions; `Clear` empties it, with `Undo`.
 - In the orOS menu search, type a conversion such as `10 km to mi` or `5 stremma`: the answer appears under `In your data`, and a tap opens it here. Favourite pairs are found there too.
 

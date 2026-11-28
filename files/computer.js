@@ -90,6 +90,14 @@
       "c.zip":         "Compress to ZIP",
       "c.extract":     "Extract here",
       "c.noPreview":   "No preview for this kind of file. Copy it to the orOS disk to open it in an app.",
+      "c.drive":       "orOS Drive",
+      "c.drivePaused": "orOS Drive (paused)",
+      "c.openOros":    "Open in orOS",
+      "c.inDrive":     "orOS Drive",
+      "c.driveFetch":  "Downloading {name}…",
+      "c.driveFail":   "Could not download {name}",
+      "c.driveNotYet": "orOS Drive has not brought this file into orOS yet (it is new, still uploading, or bigger than its size limit). It opens straight in orOS once it is there.",
+      "c.driveOff":    "orOS Drive is paused for this folder, so the copy in orOS may be older. Resume it in orOS Drive to open the file straight in orOS.",
       "c.close":       "Close",
       "c.trashEmpty":  "The Trash is empty",
       "c.restore":     "Put back",
@@ -175,6 +183,14 @@
       "c.zip":         "Συμπίεση σε ZIP",
       "c.extract":     "Αποσυμπίεση εδώ",
       "c.noPreview":   "Δεν υπάρχει προεπισκόπηση για αυτό το είδος αρχείου. Αντίγραψέ το στον δίσκο του orOS για να το ανοίξεις σε εφαρμογή.",
+      "c.drive":       "orOS Drive",
+      "c.drivePaused": "orOS Drive (σε παύση)",
+      "c.openOros":    "Άνοιγμα στο orOS",
+      "c.inDrive":     "orOS Drive",
+      "c.driveFetch":  "Λήψη του {name}…",
+      "c.driveFail":   "Δεν έγινε λήψη του {name}",
+      "c.driveNotYet": "Το orOS Drive δεν έχει φέρει ακόμη αυτό το αρχείο στο orOS (είναι καινούριο, ανεβαίνει ακόμη ή ξεπερνά το όριο μεγέθους του). Μόλις φτάσει, ανοίγει κατευθείαν στο orOS.",
+      "c.driveOff":    "Το orOS Drive είναι σε παύση για αυτόν τον φάκελο, οπότε το αντίγραφο στο orOS μπορεί να είναι παλιότερο. Συνέχισέ το στο orOS Drive για να ανοίγει το αρχείο κατευθείαν στο orOS.",
       "c.close":       "Κλείσιμο",
       "c.trashEmpty":  "Ο Κάδος είναι άδειος",
       "c.restore":     "Επαναφορά",
@@ -251,6 +267,7 @@
   var win = false;          // Windows: drive letters, the Recycle Bin (roots.os)
   var renderToken = 0;
   var busy = false;
+  var mirrors = [];         // DRIVE-OPEN: folders orOS Drive mirrors here (C.driveMirrors)
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
@@ -463,7 +480,7 @@
     var my = ++renderToken;
     var ul = $("cmp-entries");
     status(t("c.loading"));
-    var job = trashMode ? loadTrash() : (cwd === PREFIX ? loadTop() : loadFolder());
+    var job = trashMode ? loadTrash() : (cwd === PREFIX ? loadTop() : loadMirrors().then(loadFolder));
     job.then(function (rows) {
       if (my !== renderToken || !active) return;
       ul.innerHTML = "";
@@ -561,6 +578,47 @@
     }, function (e) { busy = false; fail(e); load(); });
   }
 
+  // ---------- orOS Drive mirrors (DRIVE-OPEN) ----------
+  // A folder orOS Drive mirrors is already in orOS, under
+  // /internal/Drive/<device>/<name>: its files open from there (downloaded
+  // on demand, VD-OD) in orOS's own apps, and what changes goes back to
+  // this folder through orOS Drive. Nothing is copied.
+  function loadMirrors() {
+    return api.drive().then(function (l) { mirrors = l; }, function () { mirrors = []; });
+  }
+  function mirrorOf(p) { return C.mirrorOf(mirrors, p, win); }
+  function vault() {
+    try { var v = ctx && ctx.vault ? ctx.vault() : null; return (v && typeof v.isRemoteOnly === "function") ? v : null; }
+    catch (e) { return null; }
+  }
+  // Resolves to the orOS path when the file is (or now is) on the orOS
+  // disk; rejects with "notyet" when orOS Drive has not brought it in.
+  function orosCopy(r, m) {
+    var fs = disk(), v = vault();
+    if (!fs) return Promise.reject({ code: "notyet" });
+    return fs.stat(m.path).then(function () { return m.path; }, function () {
+      if (!v || !v.isRemoteOnly(m.path)) throw { code: "notyet" };
+      status(t("c.driveFetch", { name: r.name }));
+      return v.fetch(m.path).then(function () { status(""); return m.path; }, function () {
+        status("");
+        throw { code: "fetch" };
+      });
+    });
+  }
+  function openInOros(r, m) {
+    if (busy) return;
+    busy = true;
+    orosCopy(r, m).then(function (p) {
+      busy = false;
+      leave();
+      if (ctx && ctx.openFile) ctx.openFile(p);
+    }, function (e) {
+      busy = false;
+      if (e && e.code === "fetch") toast(t("c.driveFail", { name: r.name }));
+      else preview(r, t("c.driveNotYet"));
+    });
+  }
+
   // ---------- a folder ----------
   function loadFolder() {
     return api.list(cwd).then(function (list) {
@@ -578,7 +636,13 @@
     var g = el("span", "glyph " + (r.dir ? "folder" : "file"));
     g.innerHTML = r.dir ? ICON.folder : ICON.file;
     li.appendChild(g);
-    li.appendChild(el("span", "ename col-name", cwd === PREFIX + "/home" && r.dir ? folderLabel(r.name) : r.name));
+    var nm = el("span", "ename col-name", cwd === PREFIX + "/home" && r.dir ? folderLabel(r.name) : r.name);
+    var mr = r.dir ? mirrorOf(r.path) : null;
+    if (mr && mr.path === mr.mirror.remote) {
+      nm.appendChild(document.createTextNode(" "));
+      nm.appendChild(el("span", "cmp-sub cmp-drive", t(mr.mirror.paused ? "c.drivePaused" : "c.drive")));
+    }
+    li.appendChild(nm);
     li.appendChild(el("span", "col-size", r.dir ? "-" : fmtKB(r.size)));
     li.appendChild(el("span", "col-date", fmtDate(r.mtime)));
     var more = btn("tool cmp-more", ICON.more, t("c.actions", { name: r.name }), function (e) {
@@ -599,7 +663,9 @@
 
   function activate(r) {
     if (r.dir) { go(r.path); return; }
-    preview(r);
+    var m = mirrorOf(r.path);
+    if (m && !m.mirror.paused) { openInOros(r, m); return; }
+    preview(r, m ? t("c.driveOff") : "");
   }
 
   // ZIP here works like on the orOS disk: Files' own zipCreate /
@@ -618,8 +684,11 @@
   function canZip() { return !!(ctx && ctx.zipCreate && ctx.zipExtract); }
 
   function actions(r) {
+    var m = mirrorOf(r.path);
+    var live = m && !m.mirror.paused;
     var list = [
-      { label: t("c.toDisk"), value: "disk" },
+      // in a mirrored folder the file is already in orOS: no copy
+      live ? { label: t(r.dir ? "c.inDrive" : "c.openOros"), value: "oros" } : { label: t("c.toDisk"), value: "disk" },
       { label: t("c.rename"), value: "rename" },
       { label: t(win ? "c.deleteW" : "c.delete"), value: "trash", cls: "danger" },
       { label: t("c.cancel"), value: null }
@@ -630,7 +699,8 @@
     }
     if (!r.dir) list.unshift({ label: t("c.preview"), value: "preview" });
     dialog(r.name, null, list, "cmp-acts").then(function (v) {
-      if (v === "preview") preview(r);
+      if (v === "oros") { if (r.dir) { leave(); if (ctx && ctx.openDrive) ctx.openDrive(m.path); } else openInOros(r, m); }
+      else if (v === "preview") preview(r);
       else if (v === "zip") ctx.zipCreate([r.path], ZIP_IO);
       else if (v === "extract") ctx.zipExtract(r.path, ZIP_IO);
       else if (v === "disk") copyToDisk([r]);
@@ -645,7 +715,7 @@
   var AUD = /\.(mp3|ogg|oga|wav|flac|m4a|aac|opus)$/i;
   var TXT = /\.(txt|md|csv|tsv|json|log|ini|conf|cfg|xml|html?|css|js|srt|vtt|yml|yaml)$/i;
 
-  function preview(r) {
+  function preview(r, note) {
     var d = el("dialog", "cmp-dlg cmp-pv");
     var head = el("div", "cmp-pv-head");
     head.appendChild(el("strong", "", r.name));
@@ -674,12 +744,14 @@
       fetch(url, { credentials: "same-origin", headers: { Range: "bytes=0-" + (TEXT_PREVIEW - 1) } })
         .then(function (res) { return res.ok ? res.text() : ""; })
         .then(function (s) { pre.textContent = s; }, function () { pre.textContent = ""; });
-    } else {
+    } else if (!note) {
       body.appendChild(el("p", "", t("c.noPreview")));
     }
+    if (note) body.insertBefore(el("p", "cmp-note", note), body.firstChild);
     d.appendChild(body);
     var row = el("menu", "dlg-row");
-    row.appendChild(textBtn("", t("c.toDisk"), function () { d.close(); copyToDisk([r]); }));
+    var pm = mirrorOf(r.path);
+    if (!pm || pm.mirror.paused) row.appendChild(textBtn("", t("c.toDisk"), function () { d.close(); copyToDisk([r]); }));
     row.appendChild(el("span", "spacer"));
     row.appendChild(textBtn("primary", t("c.close"), function () { d.close(); }));
     d.appendChild(row);

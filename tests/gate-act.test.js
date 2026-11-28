@@ -137,7 +137,7 @@ test("closed orOS: the device runs only the changes the relay may queue", () => 
   const relayWrites = R.TOOLS.filter((t) => !(t.annotations && t.annotations.readOnlyHint === true) && R.LIVE_ONLY.indexOf(t.name) < 0 && R.META_TOOLS.indexOf(t.name) < 0 && !R.IMPORT_TOOLS[t.name]).map((t) => t.name);
   assert.deepEqual(R.LIVE_ONLY, ["budget_refresh"], "BK-AO: a bank read needs the device's key, never queued");
   assert.ok(G.QUEUED.indexOf("budget_refresh") < 0);
-  assert.deepEqual(G.QUEUED.slice().sort(), relayWrites.concat(["create_items"], R.REF_QUEUED, Object.keys(R.FILE_CHANGE), Object.keys(R.SCREEN_TOOLS)).sort(), "5.96.00: changes and links by ref too; F3: Claude's folders; GATE-SCREEN: the screen tools");
+  assert.deepEqual(G.QUEUED.slice().sort(), relayWrites.concat(["create_items"], R.REF_QUEUED, Object.keys(R.FILE_CHANGE), Object.keys(R.SCREEN_TOOLS), ["local_folders_request"]).sort(), "5.96.00: changes and links by ref too; F3: Claude's folders; GATE-SCREEN: the screen tools; LOCAL-GONE: a waiting local_folders_request is still answered");
   assert.ok(G.QUEUED.indexOf("budget_delete") >= 0 && G.QUEUED.indexOf("budget_transfer") >= 0);
   assert.deepEqual(Object.keys(R.SCREEN_TOOLS).sort(), G.ACT_OPEN.concat(["edit_in_app", "mockup_render"]).sort(), "GATE-SCREEN (GATE-PL10: mockup_render): the relay keeps the same screen tools the device holds");
   const src = require("fs").readFileSync(require("path").join(__dirname, "../gate/gate.js"), "utf8");

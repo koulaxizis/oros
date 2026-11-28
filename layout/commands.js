@@ -148,7 +148,12 @@
   // its own, its texts linked to the original's (layout/altlayout.js)
   CATALOG.alternate = { kind: "doc", args: { mode: { t: "enum", v: ["make", "update", "unlink"], def: "make" }, name: { t: "str", max: 60 },
     w: MMv(0, 5080, 0), h: MMv(0, 5080, 0), scale_text: { t: "bool", def: 1 } } };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version", "table", "index", "effects", "symbol", "alternate"];
+  // link (AS-LINK, Chris 2026-11-27 «Οι σύνδεσμοι στο τέλος να γίνουν
+  // clickable αλλά unstyled»): the words `find` become a link (ext.href)
+  // wherever they stand; their look does not change
+  CATALOG.link = { kind: "doc", args: { find: { t: "str", max: 400, req: 1 }, url: { t: "str", max: 2000 }, cs: { t: "bool", def: 0 }, word: { t: "bool", def: 0 }, remove: { t: "bool", def: 0 } } };
+  CATALOG.picture.args.half = { t: "enum", v: ["", "left", "right", "top", "bottom", "centre"], def: "" };
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version", "table", "index", "effects", "symbol", "alternate", "link"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -163,11 +168,11 @@
     "side right|left (the side of the first page), mm the bleed on every side in mm, or bt bb bi bo for top, bottom, inside and outside (-1 = as mm), slug in mm, " +
     "margins t b i o in mm (-1 = 15), ncol columns, gut the gutter in mm, grid a baseline grid step in pt (0 = none), color rgb|cmyk, icc fogra39 (the print profile for cmyk), " +
     "starter novel|stories|poetry|essay|study|children|photo|cookbook|catalogue|magazine|workbook|zine (a starter book of that kind made for the trim: its styles, masters with page numbers and running heads, title, copyright and contents pages, a sample chapter or spread; n, facing and side are then the starter's; margins given still apply), pair noto|garamond|literata|alegreya|sans (its type: built-in Noto, EB Garamond + Fira Sans, Literata + Open Sans, Alegreya + Alegreya Sans, Fira Sans)" +
-    "\nimages: one new page per picture, in order: paths (files on the orOS disk inside Claude's folders, as files_list shows them, or local:<root>/<path> in a local folder the owner opened for Claude) or folder (every picture in it), " +
+    "\nimages: one new page per picture, in order: paths (files on the orOS disk inside Claude's folders, as files_list shows them) or folder (every picture in it), " +
     "sort natural (1_A, 2_a … 10, 27) | name | given (paths as listed), fit trim (the picture fills the trim) | bleed (it fills trim and bleed) | margins | proportional (whole picture, no crop), " +
     "at end | before | after page `page`, side any | right | left (a blank page goes first when the first picture would land on the other side); Layout copies the pictures into the document, the folder is never changed" +
     "\nbleedfill: the full-page pictures on `pages` that stop at the trim get a bleed: mode smart (the texture of paper, wood or cloth carried on) | mirror | stretch; the original picture is kept for undo" +
-    "\nthumbs: page pictures (PNG, dpi 36-150) of `pages`, spreads true = facing pages side by side, saved under /internal/Layout/Proofs/ (read them with files_link when that folder is one of Claude's folders), out local:<root>/<folder> also saves them in a local write folder the owner opened, or out a folder of Claude's on the orOS disk (e.g. Drive/Books/Proofs; Files at «may change») saves them there too (with no out and exactly one write folder open, they also go to local:<that root>/Proofs, which Claude can look at); changes nothing" +
+    "\nthumbs: page pictures (PNG, dpi 36-150) of `pages`, spreads true = facing pages side by side, saved under /internal/Layout/Proofs/ (read them with files_link when that folder is one of Claude's folders), out a folder of Claude's on the orOS disk (e.g. Drive/Books/Proofs; Files at «may change») saves them there too; changes nothing" +
     "\ndefstyle: makes or changes a style by `name`: kind para (paragraph) | char (character), base the style it is based on, font a family as list_fonts shows it (serif, sans, mono, a family the document or the owner's fonts have, or any Fontsource family by name: Layout adds it to the document), " +
     "size, lead (leading) and track in pt (0 = as it is), align l|c|r|j, sb sa (space before, after) fi (first line indent) li ri (left, right indent) in pt (-1 = as it is), " +
     "bold ital caps under on|off, color #rrggbb, a nested style: nest_cs a character style for the start of each paragraph up to and including the first nest_to (e.g. \":\" for a speaker; nest_cs none removes it), " +
@@ -186,7 +191,7 @@
     "\nmasterpages: the pages `pages` (all, odd, even or 3-10) get the master `master` by name (\"\" = none)" +
     "\ndefmaster: makes or changes a master by `name`: prefix 1-3 letters, base the master it is based on (its objects show under this one's; none = not based on any)" +
     "\npagesize: the pages `pages` get their own trim w × h in mm (a fold-out, a smaller insert; at least 13 mm); w 0 and h 0 = the document's size again; the PDF, the pictures and the editor follow" +
-    "\nplacepage: the picture frame `frame` (an id from the frames list) gets page `page` (1 = the first) of the file `path` (a .pdf, .sla or .idml on the orOS disk inside Claude's folders, or local:<root>/<file>), drawn at 300 ppi and shown whole; read-back says page_of" +
+    "\nplacepage: the picture frame `frame` (an id from the frames list) gets page `page` (1 = the first) of the file `path` (a .pdf, .sla or .idml on the orOS disk inside Claude's folders), drawn at 300 ppi and shown whole; read-back says page_of" +
     "\nframemod: the frames `frame` (ids as the document's frames list shows, comma-separated; text or picture) get x y (mm from the page's top left) w h (mm; -1 = as it is), " +
     "ncol columns (0 = as it is), gut the gutter and ins the inset in mm (-1 = as it is), va t|m|b, fill #rrggbb or nofill true, opacity 0-100 (-1 = as it is); del true removes them " +
     "(a story goes with its last frame; with other frames in its chain the text flows on in them); " +
@@ -217,7 +222,10 @@
     "\npicture: picture frames by `frame` (ids as the document's frames list shows, comma-separated) or every picture on `pages`: flip none|h|v|hv (mirrored), corner the corner radius in mm (-1 = as it is), fit fit (whole picture) | fill (fills the frame) | frame (the frame takes the picture's proportions, same width); " +
     "colour corrections, kept apart from the file (numbers separated by spaces; empty = as it is; values that change nothing take that correction off; applied in this order): " +
     "levels \"black white gamma [out_black out_white]\" (0-255, gamma 0.1-9.99, e.g. \"12 240 1.1\"), curves \"shadows mids highlights\" (outputs at 64 128 192, e.g. \"56 132 200\"), " +
-    "bc \"brightness contrast\" (-150..150, -100..100), balance \"red green blue\" midtones -100..100, hsl \"hue saturation lightness\" (-180..180, -100..100, -100..100), gray on|off (black and white), adjust none takes every correction off";
+    "bc \"brightness contrast\" (-150..150, -100..100), balance \"red green blue\" midtones -100..100, hsl \"hue saturation lightness\" (-180..180, -100..100, -100..100), gray on|off (black and white), adjust none takes every correction off; " +
+    "half left|right|top|bottom|centre: the picture fills the frame and shows that part of it (a cover spread's left half = the back cover, its right half = the front; an endpaper spread's half on one page): one picture file, nothing cut" +
+    "\nlink: the words `find` (exact text, cs true = same case, word true = whole words) become a clickable link to `url` (http, https or mailto; empty = the words themselves are the address: www.x.gr or x.gr/y become https://…, an e-mail address mailto:) wherever they stand in the document's text; " +
+    "their style and look do not change (PDF and EPUB links; a link is never coloured or underlined by this); remove true takes the link off those words";
 
   // addfont styles → fonts.js variants
   var STYLE_OF = { regular: "r", "400": "r", bold: "b", "700": "b", italic: "i", "400i": "i", "400 italic": "i", "bold italic": "bi", "700i": "bi", "700 italic": "bi" };
@@ -275,7 +283,7 @@
     var bad = steps.filter(function (st) { return st.op === "images" && !(st.paths && st.paths.length) && !st.folder; });
     if (bad.length) return { ok: false, err: "images needs paths or folder" };
     if (steps.some(function (st) { return st.op === "images" && (st.paths || []).some(function (p) { return !/^local:/i.test(String(p).trim()) && !PRO.normPath(p); }); })) return { ok: false, err: "images: every path is a file on the orOS disk (/internal/… or as files_list shows it)" };
-    if (steps.some(function (st) { return st.op === "placepage" && !/^local:/i.test(String(st.path).trim()) && !PRO.normPath(st.path); })) return { ok: false, err: "placepage: path is a file on the orOS disk (/internal/… or as files_list shows it) or local:<root>/<file>" };
+    if (steps.some(function (st) { return st.op === "placepage" && !/^local:/i.test(String(st.path).trim()) && !PRO.normPath(st.path); })) return { ok: false, err: "placepage: path is a file on the orOS disk (/internal/… or as files_list shows it)" };
     if (steps.some(function (st) { return st.op === "placepage" && !/\.(pdf|sla|sla\.gz|idml)$/i.test(String(st.path).trim()); })) return { ok: false, err: "placepage: path is a .pdf, .sla (or .sla.gz) or .idml file (an Affinity .af page: export it as a PDF first)" };
     if (steps.some(function (st) { return st.op === "retext" && !st.frame && !st.story; })) return { ok: false, err: "retext needs frame or story" };
     if (steps.some(function (st) { return st.op === "table" && !st.frame && !st.story; })) return { ok: false, err: "table needs frame or story" };
@@ -350,8 +358,9 @@
     if (st.op === "picture") {
       var fids = st.frame ? String(st.frame).split(/[\s,]+/).filter(Boolean) : [];
       if (!fids.length && !st.pages) return 0;
-      return PRO.setPicture(doc, fids, st.pages ? S.pageTest(st.pages) : null, { flip: st.flip, corner: st.corner >= 0 ? st.corner * PT_PER_MM : -1, fit: st.fit, adj: pictureAdj(st) }, now);
+      return PRO.setPicture(doc, fids, st.pages ? S.pageTest(st.pages) : null, { flip: st.flip, corner: st.corner >= 0 ? st.corner * PT_PER_MM : -1, fit: st.fit, adj: pictureAdj(st), half: st.half }, now);
     }
+    if (st.op === "link") return applyLink(doc, st, env, now);
     if (st.op === "masterfield") {
       var mfr = PRO.masterField(doc, Object.assign({}, st, { env: env }), now, env.idf, function (list) {
         if (!list) return [];
@@ -396,6 +405,69 @@
       if (st.op === "pages" && st.flow) st = Object.assign({}, st, { flow: 0 });
     }
     return S.apply(doc, st, now, { grey: env.grey || {} });
+  }
+
+  // link (AS-LINK): "" | the address a link takes → its url, or null
+  // when it is not a web or e-mail address
+  function linkUrl(want, found) {
+    var u = String(want || "").trim() || String(found || "").trim().replace(/[.,;:)»"']+$/, "");
+    if (!u || /\s/.test(u)) return null;
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(u)) {
+      if (/^[^@\/]+@[^@\/]+\.[a-z]{2,}$/i.test(u)) u = "mailto:" + u;
+      else if (/^(www\.)?[^\s\/@]+\.[a-z]{2,}([\/?#].*)?$/i.test(u)) u = "https://" + u;
+    }
+    return /^(https?:\/\/[^\s"<>]{3,2000}|mailto:[^\s"<>@]+@[^\s"<>]+)$/i.test(u) ? u : null;
+  }
+  // the words `find` in every story get ext.href (or lose it): runs are
+  // split where a match starts and ends, so nothing else changes
+  function applyLink(doc, st, env, now) {
+    var esc = String(st.find).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (st.word) esc = "(?<![\\p{L}\\p{N}_])" + esc + "(?![\\p{L}\\p{N}_])";
+    var rx = new RegExp(esc, "gu" + (st.cs ? "" : "i")), n = 0, bad = false;
+    (doc.stories || []).forEach(function (story) {
+      var k = 0;
+      (story.paras || []).forEach(function (p) {
+        var runs = p.runs || [], out = [], i = 0;
+        while (i < runs.length) {
+          if (typeof runs[i].t !== "string") { out.push(runs[i]); i++; continue; }
+          var j = i, txt = "", starts = [];
+          while (j < runs.length && typeof runs[j].t === "string") { starts.push(txt.length); txt += runs[j].t; j++; }
+          var hits = [], m;
+          rx.lastIndex = 0;
+          while ((m = rx.exec(txt))) {
+            if (!m[0].length) { rx.lastIndex++; continue; }
+            var url = st.remove ? "" : linkUrl(st.url, m[0]);
+            if (url === null) { bad = true; continue; }
+            hits.push([m.index, m.index + m[0].length, url]);
+          }
+          for (var q = i; q < j; q++) {
+            var r = runs[q], rs = starts[q - i], re = rs + r.t.length, cuts = [rs, re];
+            var keep = r.f || (r.ext && (r.ext.fn || r.ext.xr));
+            hits.forEach(function (h) { if (h[0] > rs && h[0] < re) cuts.push(h[0]); if (h[1] > rs && h[1] < re) cuts.push(h[1]); });
+            cuts = cuts.filter(function (v, x, a) { return a.indexOf(v) === x; }).sort(function (a, b) { return a - b; });
+            for (var c = 0; c + 1 < cuts.length; c++) {
+              var x0 = cuts[c], x1 = cuts[c + 1], hit = null;
+              hits.forEach(function (h) { if (x0 >= h[0] && x1 <= h[1]) hit = h; });
+              var piece = JSON.parse(JSON.stringify(r));
+              piece.t = r.t.slice(x0 - rs, x1 - rs);
+              if (hit && !keep) {
+                var e = piece.ext ? piece.ext : {}, was = e.href || "";
+                if (hit[2]) e.href = hit[2]; else delete e.href;
+                if (Object.keys(e).length) piece.ext = e; else delete piece.ext;
+                if ((e.href || "") !== was) k++;
+              }
+              if (piece.t.length) out.push(piece);
+            }
+          }
+          i = j;
+        }
+        if (JSON.stringify(out) !== JSON.stringify(runs)) p.runs = out;
+      });
+      if (k) { story.h = [story.m].concat(story.h || []).slice(0, 20); M.touch(story, now); n += k; }
+    });
+    if (bad && env.notes && env.notes.indexOf("badUrl") < 0) env.notes.push("badUrl");
+    if (n) doc.m = Math.max(now, (doc.m || 0) + 1);
+    return n;
   }
 
   // index (LY-W13): marks, then the index story (made by Layout when
@@ -484,7 +556,15 @@
     else if (designs === "named") {
       var q = norm(name);
       if (!q) return { ok: false, err: "give the document's name" };
+      // AS-DUP (Chris 2026-11-27): a document is also named by its id, and
+      // a name two documents share is never taken as both of them
+      var byId = docs.filter(function (d) { return d.id === String(name).trim(); });
+      if (byId.length) return { ok: true, docs: [{ id: byId[0].id, name: byId[0].name || "" }] };
       list = docs.filter(function (d) { return norm(d.name) === q; });
+      if (list.length > 1) {
+        return { ok: false, err: list.length + " documents are called " + JSON.stringify(String(name).slice(0, 80)) + " (ids " + list.slice(0, 20).map(function (d) { return d.id; }).join(", ") +
+          "); ask the user which one they mean (read_in_app shows each one's pages) and give its id as name" };
+      }
       if (!list.length) list = docs.filter(function (d) { return norm(d.name).indexOf(q) >= 0; });
       if (!list.length) return { ok: false, err: "no document is called " + JSON.stringify(String(name).slice(0, 80)) + "; documents: " + docs.slice(0, 30).map(function (d) { return JSON.stringify(d.name || "Untitled"); }).join(", ") };
       if (list.length > 1 && !docs.some(function (d) { return norm(d.name) === q; })) {

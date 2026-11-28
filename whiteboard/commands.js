@@ -93,7 +93,7 @@
     "connect: an arrow from the object `from` to the object `to` (an id, or words of its text), with text (its label), c, ends, dash, route, starthead, endhead",
     "remove: delete the picked objects (needs ids, what, has or frame)",
     "rename: the board's name becomes `title`",
-    "export: the whole board as a file, saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Boards with Files at «may change»; never over a file): fmt png | svg | pdf | drawio; changes nothing"
+    "export: the whole board as a file, saved into `out` (a folder of Claude's on the orOS disk such as Drive/Boards with Files at «may change»; never over a file): fmt png | svg | pdf | drawio; changes nothing"
   ].join("\n");
 
   // ---------- 1. Checking ----------

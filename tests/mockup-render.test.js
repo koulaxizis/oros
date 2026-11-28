@@ -50,9 +50,10 @@ test("GATE-PL10: requests, templates, slots and names are checked", () => {
   assert.match(R.mockupCheck({ tpl: ["Βυθός"] }, { template: "Κύκλοι", image: "/internal/Mockups/Claude/front.png" }, idx, [], { files: "write" })[0], /no mockup is called "Κύκλοι"; mockups: "Βυθός"/);
   assert.match(R.mockupCheck(null, { template: "x", image: "/internal/Mockups/Claude/new.png" }, idx, [], { files: "write" })[0], /neither in the copy/);
   assert.deepEqual(R.mockupCheck(null, { template: "x", image: "/internal/Mockups/Claude/new.png" }, idx, ["/internal/Mockups/Claude/new.png"], { files: "write" }), [], "a waiting files_write counts");
-  assert.match(R.mockupCheck(null, { template: "x", image: "local:P/a.png" }, idx, [], { files: "read" }).join(" "), /Files at «may change»/);
-  assert.match(R.mockupCheck(null, { template: "x", image: "local:P/a.png", out: "/internal/Else" }, idx, [], { files: "write" }).join(" "), /outside Claude's folders/);
-  assert.deepEqual(R.mockupCheck(null, { template: "x", image: "local:P/a.png", out: "local:Out" }, null, [], {}), [], "a local folder is checked on the device");
+  // LOCAL-GONE (9.02.00): local:… paths are refused, the error names /internal/Drive
+  assert.match(R.mockupCheck(null, { template: "x", image: "local:P/a.png" }, idx, [], { files: "write" }).join(" "), /local:… paths are gone.*\/internal\/Drive\//);
+  assert.match(R.mockupCheck(null, { template: "x", image: "/internal/Mockups/Claude/front.png", out: "local:Out" }, idx, [], { files: "write" }).join(" "), /local:… paths are gone/);
+  assert.match(R.mockupCheck(null, { template: "x", image: "/internal/Mockups/Claude/front.png", out: "/internal/Else" }, idx, [], { files: "write" }).join(" "), /outside Claude's folders/);
 });
 
 function chromium() {

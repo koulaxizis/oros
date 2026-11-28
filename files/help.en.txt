@@ -187,6 +187,7 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 
 ## This computer
 On the orOS USB stick, on a computer where orOS is installed from it, in orOS Portable and in the orOS apps for Windows and Linux, `This computer` in the folder list shows the computer's own files: the home folder (Documents, Downloads, Pictures, Music, Videos, Desktop) and its disks. It does not appear in the browser or on macOS.
+- Folders that the orOS Drive app mirrors on this computer carry the `orOS Drive` mark. They are already in orOS, so a file there opens straight in orOS's own apps, with nothing to copy, and what you change goes back to the computer through orOS Drive. A file orOS Drive has not brought in yet (new, still uploading, or over its size limit) shows a preview with a note. This needs orOS for Windows or Linux 0.9.9 or later.
 - orOS Portable asks once on each computer whether to show its files; the orOS apps for Windows and Linux show them from the start. Change it any time in [Settings › System](help:a/settings), `This computer`. The orOS Portable folder itself never shows.
 - Tap a folder to open it and a file to preview it (pictures, video, sound and text). `⋯` on a row copies it to the orOS disk, renames it or moves it to the Trash.
 - Under `Disks`, tap a USB stick or another disk to open it, and the eject button before you unplug a stick. Windows disks open read-only, so nothing on Windows can be damaged. USB sticks and other disks can be written to.

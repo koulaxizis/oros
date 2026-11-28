@@ -42,14 +42,16 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.10.0";
+  var VER = "1.11.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
-               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing"];
-  var MONEY = { budget: 1, sales: 1, invoices: 1 };
+               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing", "screen", "storage", "rates"];
+  var MONEY = { budget: 1, sales: 1, invoices: 1, rates: 1 };
   // SB5: the cards of other apps live in smartbar-apps.js, loaded the
   // first time one of them is ticked (start-up stays as it was).
-  var APPS = { habits: 1, plants: 1, chores: 1, timer: 1, invoices: 1, trip: 1, kanban: 1, meal: 1, reading: 1 };
+  var APPS = { habits: 1, plants: 1, chores: 1, timer: 1, invoices: 1, trip: 1, kanban: 1, meal: 1, reading: 1, screen: 1, storage: 1, rates: 1 };
+  // Peek panels painted by smartbar-apps.js (STC-1 Screen time).
+  var APP_PEEK = { screen: 1 };
   var LIVE = ["rec", "tmr", "sw"];          // SB-LIVE pills, in this order, before the chips
   var LOOKS = ["", "glass", "midnight", "solid", "islands"];   // SB3: "" = the classic bar; SBZ-1 "islands"
   var ZONES = ["l", "c", "r"];              // SBZ-1: left (after the menu button), centre, right (default)
@@ -391,6 +393,11 @@
     ".pk-row .pk-w { min-width: 0; overflow-wrap: anywhere; }",
     ".pk-row .pk-a { margin-left: auto; flex: none; color: var(--text-dim); font-size: 12px; }",
     ".pk-empty { padding: 6px; color: var(--text-dim); font-size: 13px; }",
+    // STC-1: a Screen time row, its time on the right and a bar under it
+    ".pk-row.pk-st { flex-wrap: wrap; row-gap: 4px; }",
+    ".pk-row.pk-st .pk-t { margin-left: auto; width: auto; color: var(--text-dim); }",
+    ".pk-bar { flex: 0 0 100%; height: 4px; border-radius: 2px; background: var(--accent-soft); overflow: hidden; }",
+    ".pk-bar > span { display: block; height: 100%; border-radius: 2px; background: var(--accent); }",
     ".pk-open { display: block; width: 100%; min-height: 44px; margin-top: 8px; border: 1px solid var(--border); border-radius: 12px;",
     "  background: transparent; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; }",
     ".pk-mt { font-size: 16px !important; overflow-wrap: anywhere; }",
@@ -723,14 +730,20 @@
       var w = call(function () { return host.weather(); });
       if (!w || !Array.isArray(w.days) || !w.days.length) { closePeek(); return; }
       fillWeather(peekEl, w);
+    } else if (APP_PEEK[peekKind]) {
+      if (!apps || !call(function () { return apps.fill(peekKind, peekEl, peekKit); })) { closePeek(); return; }
     } else fillEvent(peekEl);
     var f = (focusSel && peekEl.querySelector(focusSel)) || peekEl.querySelector("button");
     if (f) f.focus();
   }
   // → true when a panel opened (or the same one closed); false when there
   // is nothing to show, so the caller opens the app as before.
+  // What smartbar-apps.js may use to paint its peeks.
+  var peekKit = { el: el, pbtn: function (cls, text, fn, label) { return pbtn(cls, text, fn, label); },
+                  close: function () { closePeek(); }, open: function (id) { openApp(id); } };
   function peek(kind, from) {
-    if (!host || (kind !== "weather" && kind !== "event" && kind !== "media") || locked()) return false;
+    if (!host || (kind !== "weather" && kind !== "event" && kind !== "media" && !APP_PEEK[kind]) || locked()) return false;
+    if (APP_PEEK[kind] && !(apps && call(function () { return apps.canPeek(kind); }))) return false;
     if (peekEl && peekKind === kind) { closePeek(true); return true; }
     closePeek();
     closePop();
@@ -746,7 +759,8 @@
     peekEl = el("div");
     peekEl.id = "sb-peek";
     peekEl.setAttribute("role", "dialog");
-    peekEl.setAttribute("aria-label", kind === "weather" ? (appName("weather") || "Weather") : kind === "media" ? t("sb.k.playing") : (appName("calendar") || "Calendar"));
+    peekEl.setAttribute("aria-label", kind === "weather" ? (appName("weather") || "Weather") : kind === "media" ? t("sb.k.playing") :
+      APP_PEEK[kind] ? t("sb.k." + kind) : (appName("calendar") || "Calendar"));
     doc.body.appendChild(peekEl);
     placeUp(peekEl, peekFrom);
     if (peekFrom) peekFrom.setAttribute("aria-expanded", "true");
@@ -991,7 +1005,8 @@
       apps = call(function () {
         return root.orosSmartBarApps.make({
           t: t, call: call, strict: strict, appName: appName, clock: clock, ymdOf: ymdOf, ttl: TODAY_MS,
-          host: hostFn, kinds: function () { return Object.keys(chips); }, repaint: repaint
+          host: hostFn, kinds: function () { return Object.keys(chips); }, repaint: repaint,
+          peek: function (k) { return peek(k, chips[k] && chips[k].btn); }
         });
       }) || null;
       if (!apps) { appsLoad = 0; return; }
@@ -1114,6 +1129,8 @@
       if (!host) return;
       save(list(), undefined, !!on);
     },
+    // QS-REC-1: the running recording's handle for Quick settings, or null
+    recNow: function () { return recLive; },
     // Screen Capture's recording { state() → { ms, paused }, stop() } | null, in memory
     live: function (kind, h) {
       if (kind !== "rec") return;

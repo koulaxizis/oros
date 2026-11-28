@@ -2274,12 +2274,170 @@
     localStorage.setItem(key, JSON.stringify(obj));
   }
 
-  function readCarry() { return readJson(CARRY_KEY); }
-  function writeCarry(obj) {
-    if (obj && Object.keys(obj).length > 0) {
-      if (!writeJson(CARRY_KEY, obj)) storeFailed = true;   // SY-Q1
+  // SY-Z (2026-11-27) — THE MAILBOX IS STORED PACKED. The mailbox holds
+  // every app this device never opened (relayed for the other devices)
+  // and the cloud copies parked for closed apps; on a phone that is a
+  // third or more of the one ~5 MB localStorage (R30). Chris's phone
+  // filled up and sync stopped for good ("Sync needs you", 2026-11-27).
+  // A mailbox over CARRY_PACK_AT characters is now written packed:
+  // CARRY_PACKED + lzPack(JSON), lossless, about a quarter of the size.
+  // A small one stays plain JSON. Readers take both forms; the parsed
+  // text of the last packed value is kept in memory, so a read only
+  // unpacks after a write. A write of the same content is skipped.
+  // Code outside this file reads the mailbox only through
+  // orosSync.carryPeek / carryDrop / carrySizes.
+  var CARRY_PACKED = "\u0001Z1";
+  var CARRY_PACK_AT = 32768;
+  var carryMem = null;                      // { raw, json }: last value read or written
+
+  // lzPack / lzUnpack: LZW over UTF-16 code units, written 15 bits per
+  // character (code + 32, never a surrogate or a control character).
+  // Codes: 0 = new character (8 bits follow), 1 = new character (16
+  // bits follow), 2 = end, 3+ = dictionary. Both sides add, after each
+  // token, previous token + first character of this one, then the new
+  // character of a literal; the width is the bit length of the largest
+  // code in use when the token is read, the same on both sides.
+  function lzPack(s) {
+    s = String(s);
+    var n = s.length, single = new Map(), trie = new Map(), size = 3;
+    var out = [], chunk = [], buf = 0, nb = 0;
+    function put(v, w) {                    // most significant bit first; buf < 2^39
+      buf = buf * Math.pow(2, w) + v;
+      nb += w;
+      while (nb >= 15) {
+        nb -= 15;
+        var m = Math.pow(2, nb), ch = Math.floor(buf / m);
+        buf -= ch * m;
+        chunk.push(ch + 32);
+        if (chunk.length === 8192) { out.push(String.fromCharCode.apply(null, chunk)); chunk = []; }
+      }
     }
-    else localStorage.removeItem(CARRY_KEY);
+    function width() { return 32 - Math.clz32(size - 1); }
+    var i = 0, prev = -1;
+    while (i < n) {
+      var c = s.charCodeAt(i), code = single.get(c), k;
+      if (code === undefined) {
+        var w = width();
+        if (c < 256) { put(0, w); put(c, 8); } else { put(1, w); put(c, 16); }
+        i++;
+        if (prev >= 0) { k = prev * 65536 + c; if (!trie.has(k)) trie.set(k, size); size++; }
+        single.set(c, size); code = size++;
+      } else {
+        i++;
+        while (i < n) {
+          var nx = trie.get(code * 65536 + s.charCodeAt(i));
+          if (nx === undefined) break;
+          code = nx; i++;
+        }
+        put(code, width());
+        if (prev >= 0) { k = prev * 65536 + c; if (!trie.has(k)) trie.set(k, size); size++; }
+      }
+      prev = code;
+    }
+    put(2, width());
+    if (nb > 0) chunk.push(buf * Math.pow(2, 15 - nb) + 32);
+    out.push(String.fromCharCode.apply(null, chunk));
+    return out.join("");
+  }
+  function lzUnpack(z) {
+    z = String(z);
+    var pos = 0, buf = 0, nb = 0, dict = [null, null, null], parts = [], prev = null;
+    function get(w) {
+      var v = 0;
+      while (w-- > 0) {
+        if (nb === 0) {
+          if (pos >= z.length) throw new Error("lz-short");
+          buf = z.charCodeAt(pos++) - 32;
+          if (buf < 0 || buf > 32767) throw new Error("lz-char");
+          nb = 15;
+        }
+        nb--;
+        v = (v << 1) | ((buf >>> nb) & 1);
+      }
+      return v;
+    }
+    for (;;) {
+      var code = get(32 - Math.clz32(dict.length - 1)), str;
+      if (code === 2) break;
+      if (code < 2) {
+        str = String.fromCharCode(get(code === 0 ? 8 : 16));
+        if (prev !== null) dict.push(prev + str);
+        dict.push(str);
+      } else {
+        str = dict[code];
+        if (str === undefined || str === null) throw new Error("lz-code");
+        if (prev !== null) dict.push(prev + str.charAt(0));
+      }
+      parts.push(str);
+      prev = str;
+    }
+    return parts.join("");
+  }
+  // The JSON text of a stored mailbox value (plain or packed).
+  function carryText(raw) {
+    if (!raw) return null;
+    if (carryMem && carryMem.raw === raw) return carryMem.json;
+    var json = raw.indexOf(CARRY_PACKED) === 0 ? lzUnpack(raw.slice(CARRY_PACKED.length)) : raw;
+    carryMem = { raw: raw, json: json };
+    return json;
+  }
+  function readCarry() {
+    try { return JSON.parse(carryText(localStorage.getItem(CARRY_KEY))); }
+    catch (e) { return null; }
+  }
+  // → false when the store refused it (the caller decides what that means).
+  function storeCarry(obj) {
+    try {
+      if (!(obj && Object.keys(obj).length > 0)) {
+        localStorage.removeItem(CARRY_KEY);
+        carryMem = null;
+        return true;
+      }
+      var json = JSON.stringify(obj);
+      var cur = null;
+      try { cur = localStorage.getItem(CARRY_KEY); } catch (e) { cur = null; }
+      if (cur && carryMem && carryMem.raw === cur && carryMem.json === json) return true;   // unchanged
+      var raw = json.length > CARRY_PACK_AT ? CARRY_PACKED + lzPack(json) : json;
+      try { localStorage.setItem(CARRY_KEY, raw); }
+      catch (e) {
+        if (!freeDeviceCaches()) return false;
+        localStorage.setItem(CARRY_KEY, raw);
+      }
+      carryMem = { raw: raw, json: json };
+      return true;
+    } catch (e) { return false; }
+  }
+  function writeCarry(obj) {
+    if (!storeCarry(obj)) storeFailed = true;   // SY-Q1
+  }
+  // SY-Z: the first boot of this version packs a big plain mailbox, so
+  // the room comes back before the first sync of the session.
+  function packCarryNow() {
+    try {
+      var raw = localStorage.getItem(CARRY_KEY);
+      if (!raw || raw.indexOf(CARRY_PACKED) === 0 || raw.length <= CARRY_PACK_AT) return;
+      var obj = JSON.parse(raw);
+      if (obj && typeof obj === "object") { carryMem = null; storeCarry(obj); }
+    } catch (e) {}
+  }
+  // SY-Z: device-local copies of things on the internet, made again on
+  // their next use. When a write sync needs is refused, they go first.
+  // → true when something was removed.
+  var DEVICE_CACHE_KEYS = ["oros-podcasts-top", "oros-music-lyrics"];
+  var DEVICE_CACHE_PREFIXES = ["oros-radio-cache:"];
+  function freeDeviceCaches() {
+    var gone = 0;
+    try {
+      var keys = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k === null) continue;
+        if (DEVICE_CACHE_KEYS.indexOf(k) !== -1 ||
+            DEVICE_CACHE_PREFIXES.some(function (p) { return k.indexOf(p) === 0; })) keys.push(k);
+      }
+      keys.forEach(function (k) { try { localStorage.removeItem(k); gone++; } catch (e) {} });
+    } catch (e) {}
+    return gone > 0;
   }
 
   // SY-D3 — tiny persisted name sets.
@@ -2916,6 +3074,17 @@
     if (r.baselineCandidate !== null) r.baselineCandidate = stored;
   }
 
+  // SY-Z: a slice write the store refused is tried once more after the
+  // device's own caches of internet data are gone (freeDeviceCaches);
+  // still refused → it throws, and applyPayload reports it as before.
+  function setFreeing(name, data, opts) {
+    try { slices[name].set(data, opts); }
+    catch (e) {
+      if (!freeDeviceCaches()) throw e;
+      slices[name].set(data, opts);
+    }
+  }
+
   function applyPayload(payload) {
     if (!payload) return 0;
     reapClosedApps();                       // SY-D5
@@ -2928,7 +3097,7 @@
       var rs = applySlice("shell", payload.shell);
       if (rs.changed) {
         try {
-          slices.shell.set(rs.data, { merged: !!slices.shell.merge });
+          setFreeing("shell", rs.data, { merged: !!slices.shell.merge });
           settleApplied("shell", rs, payload.shell);
           if (rs.baselineCandidate !== null) recordBaseline("shell", rs.baselineCandidate);
           applied++;
@@ -2942,6 +3111,7 @@
     }
 
     if (payload.apps) {
+      var unknownIn = {};
       Object.keys(payload.apps).forEach(function (name) {
         var data = payload.apps[name];
         if (data === null || data === undefined) return;
@@ -2950,7 +3120,7 @@
           var ra = applySlice(name, data);
           if (ra.changed) {
             try {
-              slices[name].set(ra.data, { merged: !!slices[name].merge });
+              setFreeing(name, ra.data, { merged: !!slices[name].merge });
               settleApplied(name, ra, data);
               if (ra.baselineCandidate !== null) recordBaseline(name, ra.baselineCandidate);
               applied++;
@@ -2970,11 +3140,17 @@
           // known slice guarding itself). A snapshot taken before the
           // loop would silently clobber that park — destroying the
           // other device's only surviving copy of its work.
-          var liveCarry = readCarry() || {};
-          liveCarry[name] = data;
-          writeCarry(liveCarry);
+          // SY-Z: collected here and written ONCE after the loop (one
+          // packing per pull instead of one per unknown app), still as
+          // a fresh read-modify-write of the mailbox.
+          unknownIn[name] = data;
         }
       });
+      if (Object.keys(unknownIn).length) {
+        var liveCarry = readCarry() || {};
+        Object.keys(unknownIn).forEach(function (name) { liveCarry[name] = unknownIn[name]; });
+        writeCarry(liveCarry);
+      }
     }
 
     // Merge convergence OR guarded divergence produced something the
@@ -4557,6 +4733,7 @@
   // proxy whose local content diverged (unpushed offline work) never
   // loses it to a remote blob.
   purgeRetired();
+  packCarryNow();                           // SY-Z
   hydratePersistedSlices();
 
   // Only Dropbox signs in through a redirect; landing back from it
@@ -4588,7 +4765,38 @@
   });
 
   // ---------- Public API ----------
+  // SY-Z: the mailbox for code outside the engine (it may be packed).
+  // carryPeek(name) → a copy of that app's mailbox entry, or null.
+  function carryPeek(name) {
+    var c = readCarry();
+    return c && c[name] !== undefined ? c[name] : null;
+  }
+  // carryDrop(name): removes one entry (shell v2 legacy clean-up).
+  function carryDrop(name) {
+    var c = readCarry();
+    if (!c || c[name] === undefined) return;
+    delete c[name];
+    storeCarry(c);
+  }
+  // carrySizes() → { stored, apps: { name: characters of its JSON } }:
+  // stored = characters the mailbox takes in localStorage.
+  function carrySizes() {
+    var raw = null, out = { stored: 0, apps: {} };
+    try { raw = localStorage.getItem(CARRY_KEY); } catch (e) { raw = null; }
+    if (!raw) return out;
+    out.stored = raw.length;
+    var c = readCarry();
+    if (c) Object.keys(c).forEach(function (name) {
+      try { out.apps[name] = JSON.stringify(c[name]).length; } catch (e) { out.apps[name] = 0; }
+    });
+    return out;
+  }
+
   window.orosSync = {
+    carryPeek:          carryPeek,        // SY-Z
+    carryDrop:          carryDrop,
+    carrySizes:         carrySizes,
+    _lz:                { pack: lzPack, unpack: lzUnpack },   // tests
     // Lifecycle
     connect:            connect,
     connectWebdav:      connectWebdav,    // WebDAV W2: ({ url, user, pass, dir, relay? })

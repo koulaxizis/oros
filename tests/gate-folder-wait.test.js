@@ -59,7 +59,6 @@ test("every answer with orOS closed names the gate and the last device", () => {
 test("the device keeps an unanswered folder question as a notice", () => {
   const dev = fs.readFileSync(path.join(__dirname, "..", "gate", "gate.js"), "utf8");
   assert.match(dev, /askNotice\("disk", CF\.show\(path\), how\)/);
-  assert.match(dev, /askNotice\("pc", typed, how\)/);
   assert.match(dev, /deepLink: "gate:asks", ttlDays: 30/);
   const T1 = fs.readFileSync(path.join(__dirname, "..", "translations.js"), "utf8");
   assert.equal((T1.match(/"gate\.ask\.noteBody":/g) || []).length, 2);
