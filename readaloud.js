@@ -38,6 +38,12 @@
 //     read (not menus, buttons, fields, navigation or hidden parts;
 //     Chris 23:29 "Ναι, στο W2"); a voice per language (en, el, de)
 //     chosen in Settings › Accessibility, with Test (prefs vo).
+//   • 1.2.0 (VOICE-1, Chris 2026-11-27): orOS's own natural voice
+//     (voicekit/, a Piper voice run on the device) reads its language
+//     when the person downloaded it in Settings and left the voice on
+//     Automatic or picked it (prefs vo = "oros:<id>"); it also reads
+//     where the device has no voices at all. The host gives
+//     natural(lang) → voice id and voices() → Promise(window.OrosVoice).
 //
 // The pure part (section 1) is the same code as Library's
 // library/core.js speechParts / localVoice / speechText / guessLang;
@@ -48,7 +54,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var KEY = "oros-readaloud";
   var RATES = [0.8, 1, 1.2, 1.4, 1.6, 2];
   var MAX_TEXT = 20000;
@@ -275,6 +281,9 @@
   function strictOn() { return !!call(function () { return root.orosStrict && root.orosStrict.level(); }); }
   function locked() { return !!call(function () { return root.orosLock && root.orosLock.isLocked(); }); }
   function available() { return !!(synth && typeof root.SpeechSynthesisUtterance === "function"); }
+  // VOICE-1: orOS's own natural voice for a language (voicekit/), when it
+  // is on this device and chosen (or Automatic): its id, else "".
+  function natural(lang) { return host && host.natural ? call(function () { return host.natural(String(lang || "").split("-")[0]); }) || "" : ""; }
   function changed() { if (host && host.changed) call(host.changed); }
 
   // ---------- 3. What is selected ----------
@@ -423,10 +432,10 @@
     if (strictOn()) { toast("err", "ra.strict"); return false; }
     if (locked()) return false;
     if (!sel.text) { toast("err", "ra.blocked"); return false; }
-    if (!available()) { toast("err", "ra.none"); return false; }
     var p = prepare(sel.text);
     if (!p.text) { toast("", "ra.nosel"); return false; }
     var lang = langOf(p.text, sel.lang, host && host.lang ? call(host.lang) : "en");
+    if (!available() && !natural(lang)) { toast("err", "ra.none"); return false; }
     var parts = speechParts(p.text, p.breaks, lang.split("-")[0]);
     if (!parts.length) { toast("", "ra.nosel"); return false; }
     stop(true);
@@ -442,6 +451,8 @@
     if (!st || !st.playing) return;
     if (st.k >= st.parts.length) { stop(); return; }
     var p = st.parts[st.k], my = st.gen, k = st.k;
+    var nid = natural(st.lang);
+    if (nid) { speakNatural(nid); return; }
     var v = voiceFor(st.lang);
     if (!v) {
       var none = true;
@@ -475,6 +486,47 @@
     try { if (synth.speaking || synth.pending) synth.cancel(); } catch (e) {}
     mark(p);
     synth.speak(u);
+  }
+  // VOICE-1: a part read by orOS's natural voice. Each part is made in
+  // the voice's worker (host.voices() loads voicekit.js), the next one is
+  // made while this one plays; a pause or a new speed throws them away.
+  function clipOf(nid, k) {
+    var key = nid + "|" + rate() + "|" + k;
+    st.clips = st.clips || {};
+    if (!st.clips[key]) {
+      var part = st.parts[k], text = speechText(st.text.slice(part.a, part.b));
+      st.clips[key] = host.voices().then(function (OV) { return OV.synth(nid, text, { rate: rate() }); });
+      st.clips[key].catch(function () {});
+    }
+    return st.clips[key];
+  }
+  function natStop() {
+    if (st && st.player) { var pl = st.player; st.player = null; call(function () { pl.stop(); }); }
+  }
+  function speakNatural(nid) {
+    var my = st.gen, k = st.k, p = st.parts[k];
+    natStop();
+    mark(p);
+    clipOf(nid, k).then(function (clip) {
+      if (!st || st.gen !== my || st.k !== k || !st.playing) return;
+      return host.voices().then(function (OV) {
+        if (!st || st.gen !== my || st.k !== k || !st.playing) return;
+        var pl = st.player = OV.play(clip);
+        if (k + 1 < st.parts.length) clipOf(nid, k + 1);
+        return pl.done.then(function (ok) {
+          if (!ok || !st || st.gen !== my || st.k !== k || !st.playing) return;
+          st.player = null;
+          st.spoken++;
+          st.k++;
+          draw();
+          speak();
+        });
+      });
+    }).catch(function () {
+      if (!st || st.gen !== my) return;
+      stop();
+      toast("err", "ra.fail");
+    });
   }
   // ---------- 5b. The sentence lit up in the app (W2) ----------
   // CSS Custom Highlight API: a highlight over a Range, no change to the
@@ -514,8 +566,19 @@
     if (w) call(function () { w.CSS.highlights.delete(HL); });
   }
   // Test (Settings): a short sentence in that language and voice.
+  var testPlayer = null;
   function test(lang, uri) {
-    if (!available() || strictOn() || locked()) return false;
+    if (strictOn() || locked()) return false;
+    if (testPlayer) { call(function () { testPlayer.stop(); }); testPlayer = null; }
+    var nid = natural(lang);
+    if (nid && (!uri || uri === "oros:" + nid)) {
+      stop(true);
+      host.voices().then(function (OV) {
+        return OV.synth(nid, SAMPLES[lang] || SAMPLES.en, { rate: rate() }).then(function (clip) { testPlayer = OV.play(clip); });
+      }).catch(function () { toast("err", "ra.fail"); });
+      return true;
+    }
+    if (!available()) return false;
     stop(true);
     var list = [];
     try { list = synth.getVoices() || []; } catch (e) {}
@@ -535,6 +598,7 @@
     if (!st || !st.playing) return;
     st.playing = false;
     st.gen = ++gen;
+    natStop();
     try { synth.cancel(); } catch (e) {}
     draw();
     changed();
@@ -550,7 +614,7 @@
   }
   function stop(quiet) {
     var was = !!st;
-    if (was) clearMark(st.win);
+    if (was) { clearMark(st.win); natStop(); }
     st = null;
     gen++;
     if (was) { try { synth.cancel(); } catch (e) {} }
@@ -565,13 +629,13 @@
     st.gen = ++gen;
     draw();
     if (st.playing) speak();
-    else { try { synth.cancel(); } catch (e) {} }
+    else { natStop(); try { synth.cancel(); } catch (e) {} }
   }
   function cycleRate() {
     var r = nextRate(rate());
     if (host && host.setRate) call(function () { host.setRate(r); });
     draw();
-    if (st && st.playing) { st.gen = ++gen; speak(); }
+    if (st && st.playing) { st.gen = ++gen; st.clips = {}; speak(); }
   }
 
   // ---------- 6. The bar ----------
