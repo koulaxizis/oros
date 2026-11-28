@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.01.00
+- **Choose the menu button's icon.** Settings › Appearance › Menu button icon: four squares, nine dots, a ring, a spark, a leaf, three lines or no icon. This device only.
+
 ## Version 9.00.03
 - **The same private apps are off-limits to Claude and to the Assistant.** orOS Gate no longer offers Mail to Claude, the same as the Assistant. In the Assistant, Diary, Fitness, Health, Mood, Cycle and Baby start at `Never`, the same as in orOS Gate. You can still let either one read them.
 
