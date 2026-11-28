@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — smartbar-apps.js (smart top bar SB5, v1.0.0)
+// orOS — smartbar-apps.js (smart top bar SB5, v1.1.0)
 // ------------------------------------------------------------
 // The smart top bar's cards of other apps, loaded by smartbar.js the
 // first time one of them is ticked (so start-up stays as it was).
@@ -14,6 +14,10 @@
 //                                    book and trip names)
 //   Next trip                        Today / Tomorrow / in N days
 //   Today's meals, the book you are reading   today's line
+// Cards of the device itself (OWN, not from an agenda):
+//   Screen time (STC-1)   today's total; tap: the apps, longest first
+//                         (names hidden under Sensitive work, locked
+//                         apps never listed); off = no card
 // ============================================================
 (function (root) {
   "use strict";
@@ -68,6 +72,23 @@
     return null;
   }
 
+  // STC-1: seconds → "1 h 5 min" with the Screen time strings.
+  function durOf(secs, t) {
+    var m = Math.max(0, Math.floor(secs / 60));
+    if (m < 60) return t("st.fmt.m").replace("{m}", m);
+    if (m % 60 === 0) return t("st.fmt.h").replace("{h}", m / 60);
+    return t("st.fmt.hm").replace("{h}", Math.floor(m / 60)).replace("{m}", m % 60);
+  }
+  // STC-1: the peek's rows: real apps (never the desktop, Sensitive work
+  // or a locked app), longest first, at most `max`; pct of the longest.
+  function screenRows(apps, locked, max) {
+    var list = (Array.isArray(apps) ? apps : []).filter(function (a) {
+      return a && typeof a.id === "string" && a.id.charAt(0) !== "~" && a.secs >= 60 && !(locked && locked(a.id));
+    });
+    var top = list.length ? list[0].secs : 0;
+    return list.slice(0, max || 8).map(function (a) { return { id: a.id, name: a.name || a.id, secs: a.secs, pct: top ? Math.max(4, Math.round(a.secs / top * 100)) : 0 }; });
+  }
+
   // Icons: fixed markup, never data.
   var IC = {
     habits: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l4 4L20 5"/><path d="M4 20h16"/></svg>',
@@ -78,11 +99,15 @@
     trip: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 13.5l19-7-7 19-2.5-8z"/></svg>',
     kanban: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M9.5 4v16M15 4v16"/></svg>',
     meal: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10"/><path d="M17 21V3c-2 1.5-3 4-3 7v3h3"/></svg>',
-    reading: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5c3-1.5 6-1.5 9 .5 3-2 6-2 9-.5V19c-3-1.5-6-1.5-9 .5-3-2-6-2-9-.5z"/><path d="M12 6v13.5"/></svg>'
+    reading: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5c3-1.5 6-1.5 9 .5 3-2 6-2 9-.5V19c-3-1.5-6-1.5-9 .5-3-2-6-2-9-.5z"/><path d="M12 6v13.5"/></svg>',
+    screen: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v5l3 2"/><path d="M20.5 12a8.5 8.5 0 1 1-2.5-6"/><path d="M20.5 4v4h-4"/></svg>'
   };
+  // The cards that are not an app's agenda (OWN): their kinds.
+  var OWN = { screen: 1 };
+  var PEEKS = { screen: 1 };
 
   // api (from smartbar.js): { t, call, strict, appName, clock, ymdOf,
-  //   ttl, host(), kinds() (the ticked kinds), repaint(kinds) }
+  //   ttl, host(), kinds() (the ticked kinds), repaint(kinds), peek(kind) }
   function make(api) {
     var t = api.t, call = api.call, strict = api.strict, appName = api.appName, clock = api.clock, ymdOf = api.ymdOf;
     var ag = {};                       // app → { rows, at, busy }
@@ -144,6 +169,48 @@
       }, function () { c.busy = false; c.at = Date.now(); });
     }
     function agendaStale() { Object.keys(ag).forEach(function (a) { ag[a].at = 0; }); }
+    function appLocked(id) {
+      var L = root.orosLock;
+      return !!call(function () { return L && L.apps && L.apps.state(id); });
+    }
+    // STC-1: Screen time's own numbers for today (device-local, read only).
+    function screenUse() {
+      var S = root.orosScreenTime;
+      return S && typeof S.todayUse === "function" ? call(function () { return S.todayUse(); }) : null;
+    }
+    function openScreenTime() {
+      call(function () { root.__orosOpenAt("settings", { section: "screentime" }); });
+    }
+    var FILL = {
+      screen: function (p, kit) {
+        var u = screenUse();
+        if (!u || !u.on) return false;
+        var h = kit.el("div", "pk-h");
+        var tx = kit.el("div");
+        tx.appendChild(kit.el("b", null, durOf(u.total, t)));
+        tx.appendChild(kit.el("small", null, t("sb.screen.today")));
+        h.appendChild(tx);
+        p.appendChild(h);
+        if (strict()) p.appendChild(kit.el("div", "pk-empty", t("sb.screen.hidden")));
+        else {
+          var rows = screenRows(u.apps, appLocked, 8);
+          rows.forEach(function (r) {
+            var b = kit.pbtn("pk-row pk-st", null, function () { kit.open(r.id); }, r.name + ": " + durOf(r.secs, t));
+            b.appendChild(kit.el("span", "pk-w", r.name));
+            b.appendChild(kit.el("span", "pk-t", durOf(r.secs, t)));
+            var bar = kit.el("span", "pk-bar");
+            var fill = kit.el("span");
+            fill.style.setProperty("width", r.pct + "%");
+            bar.appendChild(fill);
+            b.appendChild(bar);
+            p.appendChild(b);
+          });
+          if (!rows.length) p.appendChild(kit.el("div", "pk-empty", t("sb.screen.none")));
+        }
+        p.appendChild(kit.pbtn("pk-open", t("sb.screen.open"), function () { kit.close(); openScreenTime(); }));
+        return true;
+      }
+    };
     var STATE = {
       habits: function (now) { return countCard("habits", now); },
       plants: function (now) { return countCard("plants", now); },
@@ -160,6 +227,14 @@
       },
       meal: function (now) { return strict() ? null : lineCard("meal", now); },
       reading: function (now) { return strict() ? null : lineCard("reading", now); },
+      // STC-1: only while Screen time is on and today has a minute.
+      screen: function () {
+        var u = screenUse();
+        if (!u || !u.on || u.total < 60) return null;
+        var d = durOf(u.total, t);
+        return { v: d, l: t("sb.screen.label"), tip: t("sb.screen.tip").replace("{d}", d),
+                 go: function () { if (!api.peek || !api.peek("screen")) openScreenTime(); } };
+      },
       timer: function (now) {
         var c = cardOf("timer", now), run = c ? timerRun() : null;
         if (!c || (root.orosTimesheetCore && !run)) return null;   // stopped since the last read
@@ -172,11 +247,14 @@
     return {
       state: function (kind, now) { return STATE[kind] ? STATE[kind](now) : null; },
       icon: function (kind) { return IC[kind] || ""; },
-      stale: agendaStale
+      stale: agendaStale,
+      canPeek: function (kind) { return !!PEEKS[kind] && !!STATE[kind] && !!STATE[kind](Date.now()); },
+      fill: function (kind, panel, kit) { return FILL[kind] ? FILL[kind](panel, kit) : false; }
     };
   }
 
-  var EXP = { VER: "1.0.0", AGENDA: AGENDA, KINDS: Object.keys(AGENDA), agendaCard: agendaCard, dayGap: dayGap, make: make };
+  var EXP = { VER: "1.1.0", AGENDA: AGENDA, OWN: OWN, KINDS: Object.keys(AGENDA).concat(Object.keys(OWN)), agendaCard: agendaCard, dayGap: dayGap,
+              durOf: durOf, screenRows: screenRows, make: make };
   if (typeof module !== "undefined" && module.exports) module.exports = EXP;
   root.orosSmartBarApps = EXP;
 })(typeof window !== "undefined" ? window : globalThis);
