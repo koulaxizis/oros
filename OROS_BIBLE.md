@@ -14459,3 +14459,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** calendar/zones.js (new), calendar/calendar.js, calendar.css, index.html, help EN/EL, i18n/de/calendar.js, i18n/de/help/calendar.txt, sw.js (precache), shell.js, help/topics/whatsnew EN/EL, OROS_BIBLE.md; tests calendar-zones (new).
 - **Tests:** full `node --test tests/*.test.js`; calendar-zones under several TZ (St_Johns, Kolkata, Kiritimati, Tokyo, Athens, UTC); Playwright Chromium (LANG=C.UTF-8) two devices with fake Dropbox: desktop EN + 360px EL, pick 3 of 4, Day columns and Week line, slice synced, 0 idle uploads, no errors, no overflow.
 - **Not tested:** a real phone, Safari, real Dropbox.
+
+### 2026-11-28 — 9.19.00 — The Assistant checks web sites (AS-WCHK, #1324)
+- **Why:** Chris 2026-11-28, AH-6 approved with a change (no TLS expiry in the browser, no headless render).
+- **What:** `web_check` status (through the orOS relay's web operation, feeds/fetch.js), DNS (Cloudflare DNS-over-HTTPS, never Google), sitemap (≤ 500 addresses); only sites the owner named or web_search returned; in routines with the web switch. Rule in Part II (AS-WCHK).
+- **Files:** assistant/core.js, assistant.js, help EN/EL, i18n/de (assistant, help), whatsnew EN/EL, shell.js, OROS_BIBLE.md, tests (assistant-webcheck, assistant-github, assistant-calc, fonts-list, gate-parity).
+- **Tests:** full `node --test tests/*.test.js`.
+- **Not tested:** real relay and Cloudflare calls from a browser.
