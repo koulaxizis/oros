@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.03.00
+- **Game mode.** While a game from the Games category runs full screen, notifications stay silent and the top bar and the Dock step aside; move the pointer to the top edge to see the bar. Off at first, this device only: Settings › Notifications › Game mode.
+
 ## Version 9.02.00
 - **Folders orOS Drive mirrors open straight in orOS.** In Files › This computer, a folder that orOS Drive mirrors shows an orOS Drive badge, and its files open from the orOS copy, with nothing to copy (needs orOS for Windows/Linux 0.9.9+).
 - **Local folders for Claude are gone, and so is their bar.** orOS Drive brings your computer's folders into orOS, where Claude works with them as Claude's folders.
