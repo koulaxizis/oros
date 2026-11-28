@@ -14302,3 +14302,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** launcher.js, shell.js, translations.js, i18n/de (shell, help/topics/appearance), help/topics/appearance.en/el.txt, whatsnew EN/EL, OROS_BIBLE.md, tests/dockgroups.test.js, tests/pocket.test.js.
 - **Tests:** tests/dockgroups.test.js; full suite; Playwright Chromium at 360 px and 1280 px: drag to group, the panel, rename, ungroup, no page errors.
 - **Not tested:** touch drag on a real phone, Safari, Firefox.
+
+### 2026-11-28 — 9.05.00 — The Light show follows the beat and reads streams (MU-VIZ-BEAT, #1283)
+- **Why:** Chris 2026-11-27: the music wallpaper moved without coherence, not following the rhythm and energy of the music.
+- **What:** vizkit 1.4.0 `beatStep` (bass spectral flux with an energy check) drives each style's answer to a beat (glow swells, a ring starts, bars jump, the wave grows); music/host.js 1.6.0 reads streams whose server allows CORS through a captureStream copy (never routed, never restarted, plain fallback on a failed load); the shell listens before the first song so the first stream is probed; Settings › Appearance › Wallpaper says when a song cannot be heard (`a.wallpaper.viz.calm` EN/EL/DE). Rules in Part IX MU-VIZ-BEAT.
+- **Files:** vizkit.js, music/host.js, shell.js, settings/settings.js, settings/core.js, i18n/de/settings.js, help wallpaper/music EN/EL/DE, whatsnew EN/EL, .github/qa/budget.json (music), OROS_BIBLE.md, tests/vizbeat.test.js, tests/vizslow.test.js.
+- **Tests:** tests/vizbeat.test.js; full suite; Playwright Chromium at 360 px EL/EN with a 120 bpm kick: local file and CORS stream lock to the beat (brightness autocorrelation 0.88–0.92 at 500 ms), a stream without CORS plays plain and Settings shows the note.
+- **Not tested:** real phone, real Jamendo CORS, Safari.
