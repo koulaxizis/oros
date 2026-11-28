@@ -146,7 +146,7 @@
     "add: a new element on page `page` (1 = first): what text (needs text; font, size, c, align l|c|r|j, bold) | shape (shape, fill) | icon (icon = a word for it, like heart, phone, star; c) | line (c); x, y, w, h in the design's unit (left out: centred, a sensible size); anim",
     "brand: use the user's brand kit: fonts (titles get the heading font, the rest the body font) and palette (the design's main colours become the kit's colours, white and black stay); false skips one",
     "resize: new sizes: sizes [{w, h, u px|mm}] (1-12); copies true (the default) keeps the design and makes a copy per size, and the commands after it change the copies; copies false changes the design itself to the first size",
-    "export: the designs as files: fmt png|jpg|pdf, scale 1|2|3 (png, jpg), dpi 150|300 (pdf); with out (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Designs with Files at «may change») they are saved there (never over a file) and the answer lists them, else the user saves them",
+    "export: the designs as files: fmt png|jpg|pdf, scale 1|2|3 (png, jpg), dpi 150|300 (pdf); with out (a folder of Claude's on the orOS disk such as Drive/Designs with Files at «may change») they are saved there (never over a file) and the answer lists them, else the user saves them",
     "create: a new design (only as the first command, with designs new): title, w, h, u px|mm, n pages (1-100), fill (background colour); the commands after it fill it in (add, bg, pagetime…)"
   ].join("\n");
 
