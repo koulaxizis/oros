@@ -609,7 +609,9 @@ room instead.
 
 `GET /rt/<room>` with `Upgrade: websocket`, where `<room>` is 64
 lowercase hex characters (a SHA-256 of the pairing code). Allowed origins and the rate limit apply as for
-`/v1`. One Durable Object (`RemoteRoom`, binding `REMOTE`) per room:
+`/v1`, and the orOS on the person's own computer (`LOCAL_ORIGINS`,
+`http://localhost:47800`: installed orOS, Portable, USB) may open rooms
+too, so Sync's "Add a browser" (`pair.js`, PAIR-1) works there (PAIR-LOCAL). One Durable Object (`RemoteRoom`, binding `REMOTE`) per room:
 
 - At most two sockets; a third gets 409.
 - Text frames up to 16 KB are passed to the other socket as they are.

@@ -51,6 +51,13 @@ test("route: only orOS, only a 64-hex room, only a WebSocket", async () => {
   let asked = null;
   const ns = { idFromName: (n) => "id:" + n, get: (id) => ({ fetch: () => { asked = id; return new Response("ok", { status: 200 }); } }) };
   assert.equal((await handle(upgrade("/rt/" + ROOM, "https://evil.example"), env(ns), null, Date.now())).status, 403);
+  // PAIR-LOCAL: the orOS on the person's own computer (USB, Portable,
+  // installed) pairs through the same rooms; other local ports do not.
+  assert.equal((await handle(upgrade("/rt/" + ROOM, "http://localhost:47800"), env(ns), null, Date.now())).status, 200);
+  assert.equal(asked, "id:" + ROOM);
+  asked = null;
+  assert.equal((await handle(upgrade("/rt/" + ROOM, "http://localhost:8080"), env(ns), null, Date.now())).status, 403);
+  assert.equal((await handle(upgrade("/rt/" + ROOM, "http://127.0.0.1:47800"), env(ns), null, Date.now())).status, 403);
   assert.equal((await handle(upgrade("/rt/" + ROOM.slice(2)), env(ns), null, Date.now())).status, 404);
   assert.equal((await handle(upgrade("/rt/" + ROOM.toUpperCase(), ORIGIN), env(ns), null, Date.now())).status, 404);
   const noUp = new Request("https://relay.example/rt/" + ROOM, { headers: { Origin: ORIGIN } });
