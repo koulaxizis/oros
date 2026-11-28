@@ -38,8 +38,8 @@
     // over 95 MB, so the mirror keeps it in two parts; sha is the whole file's
     color: {
       key: "ddcolor-tiny",
-      parts: [{ url: MIRROR + "ddcolor/ddcolor_tiny.onnx.001", size: 95000000 },
-              { url: MIRROR + "ddcolor/ddcolor_tiny.onnx.002", size: 40696757 }],
+      parts: [{ url: MIRROR + "ddcolor/ddcolor_tiny.onnx.part00", size: 95000000 },
+              { url: MIRROR + "ddcolor/ddcolor_tiny.onnx.part01", size: 40696757 }],
       sha: "422bfa6f6d27d57106412d70874b4b8468bb29b777f16e3e15dfc9958f5b72cf"
     }
   };

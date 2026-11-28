@@ -25,7 +25,7 @@ test("the models come from our mirror, SHA-256 pinned, parts under 95 MB", () =>
       assert.ok(p.size > 0 && p.size <= 95000000, p.url);
     });
   });
-  assert.deepEqual(SA.MODELS.color.parts.map((p) => p.url.slice(-4)), [".001", ".002"]);
+  assert.deepEqual(SA.MODELS.color.parts.map((p) => p.url.slice(-7)), [".part00", ".part01"]);
   const keys = Object.keys(SA.MODELS).map((k) => SA.MODELS[k].key);
   assert.equal(new Set(keys).size, keys.length);
 });
