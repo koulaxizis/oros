@@ -9988,6 +9988,9 @@
         { name: "Piper voice el_GR-joy-medium", url: "https://huggingface.co/rhasspy/piper-voices",
           by: "Piper voices project (rhasspy) & the recordings in its model card", lic: "CC BY-NC 4.0",
           k: "cr.piper-joy" },
+        { name: "Piper voice de_DE-thorsten-medium", url: "https://huggingface.co/rhasspy/piper-voices",
+          by: "Thorsten Müller (Thorsten-Voice) & the Piper voices project (rhasspy)", lic: "CC0",
+          k: "cr.piper-thorsten" },
         { name: "U²-Net (u2netp model)", url: "https://github.com/xuebinqin/U-2-Net",
           by: "Xuebin Qin & contributors", lic: "Apache-2.0",
           k: "cr.u2-net" },
@@ -18823,7 +18826,7 @@
     // VOICE-1: orOS's own natural voices (voicekit/voicekit.js, loaded
     // only when Settings or a reading needs it). nat[id] = { ready, pct, err }
     // on this device; the download is the person's own click in Settings.
-    var NAT = { el: "el-joy" }, nat = {}, vkLoading = null, natAbort = null;
+    var NAT = { el: "el-joy", de: "de-thorsten" }, nat = {}, vkLoading = null, natAbort = null;   // VOICE-2: + German
     function vkLoad() {
       if (window.OrosVoice) return Promise.resolve(window.OrosVoice);
       if (!vkLoading) vkLoading = new Promise(function (res, rej) {
@@ -18858,8 +18861,8 @@
     function natSnap() {
       return Object.keys(NAT).map(function (l) {
         var id = NAT[l], n = nat[id] || {}, V = window.OrosVoice && window.OrosVoice.VOICES[id];
-        return { lang: l, id: id, name: V ? V.name : "Joy", mb: V ? V.mb : 63, licence: V ? V.licence : "CC BY-NC 4.0",
-                 ready: !!n.ready, pct: n.pct == null ? null : n.pct, err: !!n.err };
+        return { lang: l, id: id, name: V ? V.name : "", mb: V ? V.mb : 63, licence: V ? V.licence : "",
+                 free: !!(V && V.free), ready: !!n.ready, pct: n.pct == null ? null : n.pct, err: !!n.err };
       });
     }
     function natGet(l) {

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS voices — natural voices on the device (voicekit/voicekit.js, v1.0.0)
+// orOS voices — natural voices on the device (voicekit/voicekit.js, v1.1.0)
 // Reads text aloud with a Piper voice (VITS, ONNX) in ONNX Runtime Web
 // (vendor/ort, MIT, the same runtime Atelier and Montage use), in a
 // worker (voicekit/worker.js) so the page never stalls.
@@ -9,8 +9,12 @@
 //     by SHA-256 before it is kept in IndexedDB "oros-voices", and from
 //     then on it works offline. "Remove" deletes it.
 //   - the text never leaves the device (rule 30: local speech only).
-//   - Greek text becomes phonemes in voicekit/greek.js (MIT; espeak-ng
-//     is never shipped).
+//   - text becomes phonemes in orOS's own code, one file per language
+//     (voicekit/greek.js, voicekit/german.js; MIT; espeak-ng is never
+//     shipped).
+//   - 1.1.0 (VOICE-2, Chris 2026-11-28): the German voice Thorsten
+//     (de_DE-thorsten-medium, CC0); voices made with Piper 1.5 read some
+//     vowel pairs as one sound (config vowel_clusters).
 //   OrosVoice.VOICES            the voices orOS knows (id → details)
 //   OrosVoice.forLang(lang)     → the voice id for a language, or ""
 //   OrosVoice.ready(id)         → Promise<bool> (on this device?)
@@ -29,13 +33,21 @@
   // records them (tools/mirror.py copies them unchanged from upstream).
   var VOICES = {
     "el-joy": {
-      lang: "el", name: "Joy", mb: 63, licence: "CC BY-NC 4.0",
+      lang: "el", name: "Joy", mb: 63, licence: "CC BY-NC 4.0", free: false, g2p: "greek",
       dir: "piper-el-joy/el/el_GR/joy/medium/",
       model: { file: "el_GR-joy-medium.onnx", sha: "31b1d51dc72dd43a5429b67798e27599f8cdcfce8a80265bc6f50d932bf144bc", size: 63516050 },
       config: { file: "el_GR-joy-medium.onnx.json", sha: "451a8885a0ea72e4432fffe22e65a75bbd2e65f6757273d1a5a9ed8a3419852e", size: 7367 }
+    },
+    "de-thorsten": {
+      lang: "de", name: "Thorsten", mb: 63, licence: "CC0", free: true, g2p: "german",
+      dir: "piper-de-thorsten/de/de_DE/thorsten/medium/",
+      model: { file: "de_DE-thorsten-medium.onnx", sha: "fd270eb3d1ebf91d763f8a0f949b1b1bebdfefaea18c3aaf8577dd34536e064f", size: 63221984 },
+      config: { file: "de_DE-thorsten-medium.onnx.json", sha: "e5bb7410dcbbcc0be6f4544f6bc66612b315ab5cb3099ec44bb46d860bc7cca9", size: 6455 }
     }
   };
-  var LANG_VOICE = { el: "el-joy" };
+  var LANG_VOICE = { el: "el-joy", de: "de-thorsten" };
+  // the phonemes of each language: voicekit/<g2p>.js sets self[<global>]
+  var G2P = { greek: "GreekVoice", german: "GermanVoice" };
   // The runtime comes from orOS itself (precached by nobody: kept with
   // the voice so it works offline).
   var RUNTIME = [
@@ -48,14 +60,19 @@
 
   // ---------- pure ----------
   // Piper's input: ^ _ (each phoneme, _) $ ; phonemes the voice does not
-  // know are skipped. map = config.phoneme_id_map ({ "a": [14], … }).
-  function idsOf(ph, map) {
-    var out = [], pad = (map._ || [0])[0];
+  // know are skipped. map = config.phoneme_id_map ({ "a": [14], … });
+  // clusters = config.vowel_clusters ([["a", "ɪ"], …], Piper 1.5): such a
+  // pair is one sound with an id of its own.
+  function idsOf(ph, map, clusters) {
+    var out = [], pad = (map._ || [0])[0], pairs = {};
+    (clusters || []).forEach(function (c) { var k = c.join(""); if (map[k]) pairs[k] = 1; });
     function add(sym) { var v = map[sym]; if (v) for (var i = 0; i < v.length; i++) out.push(v[i]); return !!v; }
     add("^"); out.push(pad);
     var s = String(ph || "").normalize("NFD");
     for (var i = 0; i < s.length;) {
       var cp = s.codePointAt(i), ch = String.fromCodePoint(cp);
+      var nx = i + ch.length < s.length ? String.fromCodePoint(s.codePointAt(i + ch.length)) : "";
+      if (nx && pairs[ch + nx]) { add(ch + nx); out.push(pad); i += ch.length + nx.length; continue; }
       i += ch.length;
       if (add(ch)) out.push(pad);
     }
@@ -78,7 +95,7 @@
     return s;
   }
 
-  var pure = { VOICES: VOICES, idsOf: idsOf, scalesOf: scalesOf, forLang: forLang, hex: hex, MIRROR: MIRROR, RUNTIME: RUNTIME };
+  var pure = { VOICES: VOICES, G2P: G2P, idsOf: idsOf, scalesOf: scalesOf, forLang: forLang, hex: hex, MIRROR: MIRROR, RUNTIME: RUNTIME };
   if (typeof module === "object" && module.exports) { module.exports = pure; return; }
 
   // ---------- browser: where this file lives ----------
@@ -217,9 +234,10 @@
       worker.onerror = function () { stopWorker(); };
       return Promise.all([f[id + ":model"].arrayBuffer(), f[id + ":config"].text()]).then(function (r) {
         var config = JSON.parse(r[1]);
+        var g = VOICES[id].g2p;
         return ask({
           op: "init", js: f["rt:js"], mjs: f["rt:mjs"], wasm: f["rt:wasm"],
-          greek: BASE + "voicekit/greek.js", model: r[0], config: config
+          g2p: BASE + "voicekit/" + g + ".js", g2pName: G2P[g], model: r[0], config: config
         }, [r[0]]).then(function () { return config; });
       });
     });

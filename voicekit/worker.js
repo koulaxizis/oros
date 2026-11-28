@@ -1,26 +1,30 @@
 // ============================================================
-// orOS voices — the worker (voicekit/worker.js, v1.0.0)
+// orOS voices — the worker (voicekit/worker.js, v1.1.0)
 // Runs a Piper voice in ONNX Runtime Web (vendor/ort, MIT). voicekit.js
 // owns every file: it reads the runtime and the voice from IndexedDB and
 // posts them here, so nothing in this worker touches the network.
-// Messages in:  { id, op: "init", js, mjs, wasm (Blobs), greek (URL),
+// Messages in:  { id, op: "init", js, mjs, wasm (Blobs), g2p (URL of the
+//                 language's phonemes, e.g. voicekit/german.js), g2pName
+//                 (the global it sets, e.g. "GermanVoice"),
 //                 model (ArrayBuffer), config (the voice's .onnx.json) }
 //               { id, op: "synth", text, scales: [noise, length, noise_w] }
 // Messages out: { id, ok: true, result } | { id, ok: false, error }
 //   synth → { audio: Float32Array (mono, -1..1), sampleRate }
 // ============================================================
-/* global importScripts, ort, GreekVoice */
+/* global importScripts, ort */
 (function () {
   "use strict";
 
-  var session = null, config = null;
+  var session = null, config = null, g2p = null;
   var PAUSE = 0.2;             // seconds of quiet between two sentences (the voice's own sentence_silence wins)
 
   function blobUrl(b, type) { return URL.createObjectURL(new Blob([b], { type: type })); }
 
   function init(m) {
     importScripts(blobUrl(m.js, "text/javascript"));
-    importScripts(m.greek);
+    importScripts(m.g2p);
+    g2p = self[m.g2pName];
+    if (!g2p || typeof g2p.sentences !== "function") throw new Error("g2p");
     ort.env.wasm.numThreads = 1;
     ort.env.wasm.proxy = false;
     ort.env.wasm.wasmPaths = { mjs: blobUrl(m.mjs, "text/javascript"), wasm: blobUrl(m.wasm, "application/wasm") };
@@ -31,13 +35,18 @@
     });
   }
 
+  // the same as idsOf in voicekit.js (tested there): Piper 1.5 voices
+  // read the pairs in config.vowel_clusters as one sound
   function idsOf(ph) {
-    var map = config.phoneme_id_map || {}, out = [], pad = (map._ || [0])[0];
+    var map = config.phoneme_id_map || {}, out = [], pad = (map._ || [0])[0], pairs = {};
+    (config.vowel_clusters || []).forEach(function (c) { var k = c.join(""); if (map[k]) pairs[k] = 1; });
     function add(sym) { var v = map[sym]; if (v) for (var i = 0; i < v.length; i++) out.push(v[i]); return !!v; }
     add("^"); out.push(pad);
     var s = String(ph || "").normalize("NFD");
     for (var i = 0; i < s.length;) {
       var ch = String.fromCodePoint(s.codePointAt(i));
+      var nx = i + ch.length < s.length ? String.fromCodePoint(s.codePointAt(i + ch.length)) : "";
+      if (nx && pairs[ch + nx]) { add(ch + nx); out.push(pad); i += ch.length + nx.length; continue; }
       i += ch.length;
       if (add(ch)) out.push(pad);
     }
@@ -64,7 +73,7 @@
   function synth(m) {
     if (!session) return Promise.reject(new Error("init"));
     var sr = (config.audio && config.audio.sample_rate) || 22050;
-    var list = GreekVoice.sentences(m.text);
+    var list = g2p.sentences(m.text);
     var inf = config.inference || {};
     var gap = Math.round((typeof inf.sentence_silence === "number" ? inf.sentence_silence : PAUSE) * sr);
     var chunks = [], total = 0;

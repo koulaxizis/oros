@@ -875,10 +875,11 @@
     }
 
     // VOICE-1: download, progress and removal of a natural voice. The
-    // licence is said before the download (CC BY-NC 4.0 for Joy).
+    // licence is said before the download (CC BY-NC 4.0 for Joy, CC0 for Thorsten).
     function natRow(nv) {
-      var hint = nv.err ? t("ac.read.nat.err") : nv.ready ? t("ac.read.nat.ready", { licence: nv.licence })
-        : t("ac.read.nat.hint", { mb: nv.mb, licence: nv.licence });
+      var free = nv.free ? ".free" : "";   // VOICE-2: a voice free for any use (CC0) says so
+      var hint = nv.err ? t("ac.read.nat.err") : nv.ready ? t("ac.read.nat.ready" + free, { licence: nv.licence })
+        : t("ac.read.nat.hint" + free, { mb: nv.mb, licence: nv.licence });
       var nr = row(t("ac.read.nat", { name: nv.name }), null, { hint: hint });
       var btns;
       if (nv.pct != null) {
