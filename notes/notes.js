@@ -3405,7 +3405,10 @@
     var A = window.MontageASR;
     return A && A.preferred ? A.preferred() : "base";
   }
-  function dkLang() { return LANG === "el" || LANG === "de" ? LANG : "en"; }
+  function dkLang() {
+    var A = window.MontageASR;   // the language chosen in the Assistant's Voice input, shared
+    return A && A.speakLang ? A.speakLang(LANG) : (LANG === "el" || LANG === "de" ? LANG : "auto");
+  }
   function dkLoad() {
     if (window.OrosListen) return window.OrosListen.load().then(function () { return window.OrosListen; });
     return loadScript("../montage/listen.js").then(function () {
@@ -3453,7 +3456,7 @@
     dk.pid = page.id; dk.before = ta.value; dk.n = 0;
     dk.pos = at >= 0 ? Math.min(at, ta.value.length) : ta.value.length;
     dk.run = L.start({
-      lang: dkLang(), model: model, waitFirst: 8000, waitAfter: 3000,
+      lang: dkLang(), langs: window.MontageASR && window.MontageASR.SPEAK_AUTO, model: model, waitFirst: 8000, waitAfter: 3000,
       onState: function (st, info) {
         if (st === "load") dkDraw(tf("dk.loading", { p: Math.round((info || 0) * 100) }));
         else if (st === "listen") dkDraw(t(dk.n ? "dk.listenMore" : "dk.listen"));

@@ -48,3 +48,34 @@ test("Whisper small (DICT-3): own keys, the WebGPU runtime, parts from the large
   assert.equal(A.MODELS.small.heads, 12);
   assert.equal(A.MODELS.small.gpu, true);
 });
+
+test("the language you speak: a choice wins, else Greek/German orOS, else the browser's, else automatic among el/en/de", () => {
+  const vm = require("node:vm"), fs = require("node:fs"), path = require("node:path");
+  const src = fs.readFileSync(path.join(__dirname, "../montage/asr.js"), "utf8");
+  function load(store, langs) {
+    const win = {
+      localStorage: { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } },
+      navigator: { languages: langs, language: langs[0] }, document: { currentScript: null }
+    };
+    win.window = win;
+    vm.runInNewContext(src, Object.assign(win, { Promise, Float32Array, Uint8Array, console }));
+    return win.MontageASR;
+  }
+  assert.equal(load({}, ["en-US"]).speakLang("el"), "el");
+  assert.equal(load({}, ["en-US"]).speakLang("de"), "de");
+  assert.equal(load({}, ["en-US", "el-GR"]).speakLang("en"), "el");   // English orOS, Greek browser
+  assert.equal(load({}, ["en-US"]).speakLang("en"), "auto");
+  const store = {}, A2 = load(store, ["en-US"]);
+  A2.setSpeakLang("el");
+  assert.equal(A2.speakLang("en"), "el");
+  assert.equal(A2.speakChoice(), "el");
+  A2.setSpeakLang("xx");
+  assert.equal(A2.speakChoice(), "el");
+  A2.setSpeakLang("");
+  assert.equal(A2.speakChoice(), "");
+  assert.deepEqual(Array.from(A2.SPEAK_AUTO), ["el", "en", "de"]);
+  // detection keeps to opts.langs; the Assistant and Notes pass them
+  assert.match(src, /only && only\.indexOf\(code\) < 0/);
+  assert.match(fs.readFileSync(path.join(__dirname, "../montage/listen.js"), "utf8"), /langs: o\.langs/);
+  assert.match(fs.readFileSync(path.join(__dirname, "../assistant/assistant.js"), "utf8"), /langs: voLangs\(\)/);
+});

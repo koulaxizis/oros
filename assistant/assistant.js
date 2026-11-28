@@ -230,6 +230,7 @@
       "vo.title": "Speak to the Assistant", "vo.need": "What you say is turned into text on this device by the Whisper speech model; the sound never leaves the device and nothing is sent before you press Send. The model downloads once and then works offline.",
       "vo.tiny": "Small and quick ({mb} MB)", "vo.base": "More accurate, better for Greek ({mb} MB)",
       "vo.small": "Best, much better Greek, on the graphics card ({mb} MB)", "set.voiceChange": "Change the model",
+      "set.voiceLang": "The language you speak", "set.voiceLangUi": "Like orOS (Greek or German), otherwise automatic", "set.voiceLangAuto": "Find it automatically",
       "vo.go": "Download and start", "vo.none": "Nothing was heard. Try again a little closer to the microphone.",
       "vo.fail": "Speech could not be turned into text on this device.", "vo.net": "The speech model could not be downloaded. Check the connection and try again.",
       "vo.mic": "The microphone is not available. Allow it for this app and try again.", "vo.max": "Recording stops by itself after two minutes.",
@@ -1048,6 +1049,7 @@
       "vo.title": "Μίλα στον Βοηθό", "vo.need": "Αυτό που λες γίνεται κείμενο σε αυτή τη συσκευή από το μοντέλο ομιλίας Whisper· ο ήχος δεν φεύγει ποτέ από τη συσκευή και τίποτα δεν στέλνεται πριν πατήσεις Αποστολή. Το μοντέλο κατεβαίνει μία φορά και μετά δουλεύει χωρίς σύνδεση.",
       "vo.tiny": "Μικρό και γρήγορο ({mb} MB)", "vo.base": "Πιο ακριβές, καλύτερο για ελληνικά ({mb} MB)",
       "vo.small": "Το καλύτερο, πολύ καλύτερα ελληνικά, στην κάρτα γραφικών ({mb} MB)", "set.voiceChange": "Αλλαγή μοντέλου",
+      "set.voiceLang": "Η γλώσσα που μιλάς", "set.voiceLangUi": "Όπως το orOS (ελληνικά ή γερμανικά), αλλιώς αυτόματα", "set.voiceLangAuto": "Να τη βρίσκει μόνο του",
       "vo.go": "Λήψη και έναρξη", "vo.none": "Δεν ακούστηκε τίποτα. Δοκίμασε ξανά λίγο πιο κοντά στο μικρόφωνο.",
       "vo.fail": "Η ομιλία δεν έγινε κείμενο σε αυτή τη συσκευή.", "vo.net": "Το μοντέλο ομιλίας δεν κατέβηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "vo.mic": "Το μικρόφωνο δεν είναι διαθέσιμο. Επίτρεψέ το σε αυτή την εφαρμογή και δοκίμασε ξανά.", "vo.max": "Η ηχογράφηση σταματά μόνη της μετά από δύο λεπτά.",
@@ -10756,7 +10758,12 @@
       document.head.appendChild(sc);
     });
   }
-  function voLang() { return LANG === "el" || LANG === "de" ? LANG : "en"; }
+  // the language the person speaks: their choice (Settings › Voice input), else Greek/German with that orOS language, else automatic
+  function voLang() {
+    var A = window.MontageASR;
+    return A && A.speakLang ? A.speakLang(LANG) : (LANG === "el" || LANG === "de" ? LANG : "auto");
+  }
+  function voLangs() { var A = window.MontageASR; return A && A.SPEAK_AUTO ? A.SPEAK_AUTO : ["el", "en", "de"]; }
   function voDraw(note) {
     var b = $("mic-btn");
     if (!b) return;
@@ -10864,7 +10871,7 @@
       if (document.visibilityState === "hidden") { voEnd(); return; }
       var heard = 0, listening = false;
       vo.live = L.start({
-        lang: voLang(), model: prefs.voice || "tiny", waitFirst: 8000, waitAfter: 2000, maxMs: VO_MAX_MS,
+        lang: voLang(), langs: voLangs(), model: prefs.voice || "tiny", waitFirst: 8000, waitAfter: 2000, maxMs: VO_MAX_MS,
         onText: function (text) {
           var box = $("input");
           box.value = C.voiceJoin(box.value, text).slice(0, MAX_INPUT);
@@ -10950,7 +10957,7 @@
       var samples = out.getChannelData(0);
       return voAsr().then(function (ASR) {
         return ASR.run(samples, {
-          lang: voLang(), model: prefs.voice || "tiny",
+          lang: voLang(), langs: voLangs(), model: prefs.voice || "tiny",
           progress: function (q, stage) { voDraw(t(stage === "download" ? "vo.dl" : "vo.run", { p: Math.round(q * 100) })); }
         });
       });
@@ -10986,6 +10993,23 @@
     sec.appendChild(button(t("set.voiceChange"), "small", function () {
       voAsr().then(function (ASR) { var d = document.querySelector("dialog[open]"); if (d) d.close(); voAsk(ASR, prefs.voice); });
     }));
+    // the language you speak (shared with Notes Dictate)
+    var lsel = el("select", "dlg-input");
+    lsel.setAttribute("aria-label", t("set.voiceLang"));
+    [["", t("set.voiceLangUi")], ["auto", t("set.voiceLangAuto")], ["el", "Ελληνικά"], ["en", "English"], ["de", "Deutsch"]].forEach(function (x) { // i18n-inline-ok: each language in its own name
+      var o = el("option", "", x[1]);
+      o.value = x[0];
+      lsel.appendChild(o);
+    });
+    lsel.id = "as-vo-lang";
+    var llab = el("label", "dlg-lbl", t("set.voiceLang"));
+    llab.htmlFor = "as-vo-lang";
+    sec.appendChild(llab);
+    sec.appendChild(lsel);
+    voAsr().then(function (ASR) {
+      if (ASR.speakChoice) lsel.value = ASR.speakChoice();
+      lsel.addEventListener("change", function () { if (ASR.setSpeakLang) ASR.setSpeakLang(lsel.value); });
+    }).catch(function () { lsel.disabled = true; });
     sec.appendChild(el("p", "dlg-hint", t("set.voiceHint")));
     function draw() {
       rm.hidden = true;

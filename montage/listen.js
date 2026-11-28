@@ -6,6 +6,7 @@
 // device. Used by Notes (Dictate) and the Assistant (voice input).
 //   OrosListen.start({
 //     lang: "el"|"en"|"de"|"auto", model: "tiny"|"base"|…,
+//     langs: ["el","en","de"],  with "auto": only these may be detected
 //     onText(text),            a phrase's text, in speaking order
 //     onState(st, info),       "load" (info = 0..1), "listen", "speak",
 //                              "write" (phrases waiting), "done", "error" (info = code)
@@ -103,7 +104,7 @@
       waiting++; lastPhrase = Date.now();
       state("write", waiting);
       queue = queue.then(function () {
-        return root.MontageASR.run(samples, { lang: o.lang || "auto", model: o.model, signal: ctl ? ctl.signal : undefined,
+        return root.MontageASR.run(samples, { lang: o.lang || "auto", langs: o.langs, model: o.model, signal: ctl ? ctl.signal : undefined,
           cancelled: function () { return cancelled; } });
       }).then(function (r) {
         var text = ((r && r.cues) || []).map(function (c) { return c.text; }).join(" ").replace(/\s+/g, " ").trim();

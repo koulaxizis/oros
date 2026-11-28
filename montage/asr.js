@@ -349,7 +349,14 @@
         var lo = await exclusive(() => m.dec.run(decFeeds(T, [SOT], hidden, null, emptyPast, layers)));
         drop(m, lo, null);
         var lg = lo.logits.data, best = -Infinity;
-        Object.keys(langIds).forEach(function (k) { var id = langIds[k]; if (lg[id] > best) { best = lg[id]; lang = k.replace(/[<|>]/g, ""); } });
+        // opts.langs: only these may win (dictation: the orOS languages; a
+        // short "Καλημέρα" otherwise came out as Japanese)
+        var only = opts.langs && opts.langs.length ? opts.langs : null;
+        Object.keys(langIds).forEach(function (k) {
+          var id = langIds[k], code = k.replace(/[<|>]/g, "");
+          if (only && only.indexOf(code) < 0) return;
+          if (lg[id] > best) { best = lg[id]; lang = code; }
+        });
         lang = lang || "en";
       }
       var langTok = langIds["<|" + lang + "|>"] || langIds["<|en|>"] || 50259;
@@ -688,6 +695,31 @@
     return p;
   }
   function setPreferred(v) { try { if (MODELS[v]) localStorage.setItem(PREF_KEY, v); } catch (e) {} }
+  // The language the person speaks (shared by Notes Dictate and the
+  // Assistant): "auto" lets Whisper find it, else a fixed language.
+  // Nothing chosen: the orOS language for Greek and German (Whisper
+  // given the language writes it reliably); with an English orOS, Greek
+  // or German from the browser's languages, else automatic, because an
+  // English orOS does not mean English speech (a Greek speaker forced
+  // to "en" got English translations).
+  // "auto" chooses among the orOS languages only (SPEAK_AUTO, passed as opts.langs).
+  var LANG_KEY = "oros-asr-lang", SPEAK = ["auto", "el", "en", "de"], SPEAK_AUTO = ["el", "en", "de"];
+  function speakLang(ui) {
+    var v = null;
+    try { v = localStorage.getItem(LANG_KEY); } catch (e) {}
+    if (v && SPEAK.indexOf(v) >= 0) return v;
+    if (ui === "el" || ui === "de") return ui;
+    // an English orOS: Greek or German among the browser's languages wins
+    // (detection on one short phrase is unreliable with tiny and base)
+    var nl = (root.navigator && (navigator.languages || [navigator.language])) || [];
+    for (var i = 0; i < nl.length; i++) {
+      var c = String(nl[i] || "").slice(0, 2).toLowerCase();
+      if (c === "el" || c === "de") return c;
+    }
+    return "auto";
+  }
+  function speakChoice() { try { var v = localStorage.getItem(LANG_KEY); return SPEAK.indexOf(v) >= 0 ? v : ""; } catch (e) { return ""; } }
+  function setSpeakLang(v) { try { if (!v) localStorage.removeItem(LANG_KEY); else if (SPEAK.indexOf(v) >= 0) localStorage.setItem(LANG_KEY, v); } catch (e) {} }
   // The model to use: the one chosen on this device, else small where
   // WebGPU works and base elsewhere (DICT-3).
   function pick() {
@@ -701,6 +733,7 @@
     ready: ready, run: run, forget: forget, decimate3: decimate3, MODEL_MB: MODEL_MB, RUNTIME_MB: RUNTIME_MB,
     melFilters: melFilters, logMel: logMel, splitCue: splitCue,
     runtime: runtime, file: oneFile, has: hasFile, preferred: preferred, setPreferred: setPreferred, gpuOk: gpuOk, pick: pick, exclusive: exclusive,
+    speakLang: speakLang, speakChoice: speakChoice, setSpeakLang: setSpeakLang, SPEAK_AUTO: SPEAK_AUTO,
     mbOf: function (model) { return MODELS[modelOf(model)].mb; },
     // the runtime a model needs: the WebGPU build for small, else the WASM one
     rtMbOf: function (model) { return MODELS[modelOf(model)].gpu ? GPU_MB : RUNTIME_MB; },
