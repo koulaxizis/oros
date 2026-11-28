@@ -4342,9 +4342,79 @@
       c2.appendChild(list);
     }
     host.appendChild(c2);
+    secMeaning(host);
 
     if (window.OrosTranslate) secTranslation(host);
     else txLoad();
+  }
+
+  // Search by meaning (MEANING-1, the shell's semantic.js through
+  // window.parent.orosMeaningLoad): one switch, this device only. On
+  // downloads the model once (size shown first, progress, Cancel);
+  // Off removes the model and the index (two taps).
+  var mn = { M: null, loading: false, on: false, count: null, prog: -1, err: "", stop: false, counting: false };
+  function meaningApi() {
+    if (mn.M || mn.loading) return;
+    var p = parentWin();
+    if (!p || typeof p.orosMeaningLoad !== "function") return;
+    mn.loading = true;
+    p.orosMeaningLoad().then(function (M) {
+      mn.M = M; mn.on = M.on();
+      return M.count();
+    }).then(function (n) { mn.count = n; }, function () { mn.err = "load"; })
+      .then(function () { mn.loading = false; render(); });
+  }
+  function secMeaning(host) {
+    var p = parentWin();
+    if (!p || typeof p.orosMeaningLoad !== "function") return;
+    var c = card(t("mn.title"), "device");
+    c.appendChild(el("p", "hint", t("mn.hint")));
+    if (!mn.M) {
+      meaningApi();
+      host.appendChild(c);
+      return;
+    }
+    var M = mn.M;
+    if (mn.prog >= 0) {
+      c.appendChild(row(t("mn.getting", { p: Math.round(mn.prog * 100) }), button(t("mn.cancel"), "mn.cancel", function () { mn.stop = true; })));
+    } else if (!mn.on) {
+      c.appendChild(row(t("mn.switch"), switchBtn(false, "mn.on", function () {
+        mn.prog = 0; mn.err = ""; mn.stop = false;
+        render();
+        var last = 0;
+        M.install(function (f) {
+          mn.prog = f;
+          if (Date.now() - last > 400) { last = Date.now(); render(); }
+        }, function () { return mn.stop; }).then(function () {
+          mn.on = true; mn.prog = -1; mn.count = 0;
+          if (p && typeof p.orosMeaningSync === "function") p.orosMeaningSync();
+          render();
+        }, function (e) {
+          mn.prog = -1;
+          mn.err = e && e.code === "cancelled" ? "" : (e && e.code) || "download";
+          render();
+        });
+      }, t("mn.switch")), { hint: t("mn.size", { mb: M.MB }) }));
+      if (mn.err) c.appendChild(el("p", "hint warn", t("mn.err." + (mn.err === "hash" || mn.err === "quota" ? mn.err : "download"))));
+    } else {
+      if (!mn.counting) {                // the index grows while Settings is open
+        mn.counting = true;
+        M.count().then(function (n) {
+          setTimeout(function () { mn.counting = false; }, 3000);
+          if (n !== mn.count) { mn.count = n; render(); }
+        }, function () { mn.counting = false; });
+      }
+      // Turning the switch off arms "Turn off and remove" (second tap removes).
+      c.appendChild(row(t("mn.switch"), switchBtn(true, "mn.on", function () {
+        armed.key = "mn.remove"; armed.until = Date.now() + 10000;
+        render();
+      }, t("mn.switch")),
+        { hint: t("mn.count", { n: mn.count == null ? "…" : mn.count }) }));
+      c.appendChild(actions(confirmBtn(t("mn.remove"), t("mn.removeSure"), "mn.remove", function () {
+        M.remove().then(function () { mn.on = false; mn.count = null; render(); });
+      }, "danger")));
+    }
+    host.appendChild(c);
   }
 
   // translate/engine.js loads only when this section first shows, so
