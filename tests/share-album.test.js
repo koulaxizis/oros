@@ -92,7 +92,9 @@ test("album.js: captions from names, what fits", () => {
   assert.ok(A.BUDGET <= 25 * 1048576);
   // Every photo is drawn again as JPEG: the new file has no EXIF.
   const s = src("share/album.js");
-  assert.match(s, /c\.toBlob\(function \(b\) \{ c\.width = c\.height = 0; ok\(b\); \}, "image\/jpeg", QUALITY\)/);
+  assert.match(s, /c\.toBlob\(function \(b\) \{ var w = c\.width, h = c\.height; c\.width = c\.height = 0; ok\(b \? \{ b: b, w: w, h: h \} : null\); \}, "image\/jpeg", QUALITY\)/);
+  // a face hook that fails fails the photo (never sent unblurred)
+  assert.match(s, /if \(hook\) throw e;/);
   assert.match(s, /imageOrientation: "from-image"/);
 });
 
