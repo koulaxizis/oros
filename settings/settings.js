@@ -379,6 +379,11 @@
     if (s.skins) c.appendChild(row(t("my.colour"), button(t("my.skin"), "y-skin-go", function () {
       yoursGo("skin-card", ".swatch.on", null);
     })));
+    if (s.menuIcon) {
+      var ymi = select(s.menuIcon.choices.map(function (v) { return { value: v, label: t("a.menuicon." + v) }; }), s.menuIcon.now, "y-menuicon",
+        function (v) { set("menuicon", v); });
+      c.appendChild(row(t("a.menuicon"), ymi, { forId: ymi.id }));
+    }
     // The top bar's look
     if (s.smartbar && s.smartbar.looks) {
       var ls = select(s.smartbar.looks.map(function (v) { return { value: v, label: t("sb.look." + (v || "classic")) }; }),
@@ -497,6 +502,12 @@
       sw.appendChild(b);
     });
     c2.appendChild(sw);
+    // MENUICON-1: the menu button's icon (this device; the bar shows it at once)
+    if (s.menuIcon) {
+      var mi = select(s.menuIcon.choices.map(function (v) { return { value: v, label: t("a.menuicon." + v) }; }), s.menuIcon.now, "menuicon",
+        function (v) { set("menuicon", v); });
+      c2.appendChild(row(t("a.menuicon"), mi, { forId: mi.id, scope: "menuicon" }));
+    }
     if (s.wpaccent) secWpAccent(c2, s.wpaccent);
     host.appendChild(c2);
 
