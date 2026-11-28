@@ -14355,3 +14355,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** smartbar.js, smartbar-apps.js, units/core.js, units/view.js, calculator/help.en/el.txt, translations.js, i18n/de (shell, help/calculator, help/topics/appearance), help/topics/appearance.en/el.txt, whatsnew EN/EL, OROS_BIBLE.md, tests/ratescard.test.js.
 - **Tests:** tests/ratescard.test.js; full suite; Playwright Chromium at 360 px and 1280 px: the card, the tap into Convert, country search, no page errors.
 - **Not tested:** Safari, Firefox.
+
+### 2026-11-28 — 9.09.01 — CI health fixes (CIH-TZ, CIH-N24, CIH-PW)
+- **Why:** CI health report 2026-11-24 (Chris approved every fix except the winget token, which he renews).
+- **What:** Spreadsheet import keeps a file's dates in every time zone (SheetJS UTC-faithful dates, `xlDateStr` UTC getters; was "02:00" in Greece). Cycle's predicted start steps in calendar days (was a day early across the October clock change; `dueIn` and the app round between midnights). Automations "event.soon" counts real minutes (`soonLeft`, clock-change nights). Tests also run with TZ=Europe/Athens (job `athens`); actions SHA-pinned on Node 24 majors; quality gate Playwright 1.63.0 on ubuntu-latest. Rules in Part VIII (Workflow limits) and Part X-B T9.
+- **Files:** spreadsheet/sheetimport.js, cycle/core.js, cycle/cycle.js, automations/host.js, .github/workflows, .github/qa/package.json, whatsnew EN/EL, OROS_BIBLE.md, tests (convert-spreadsheet, shelf-import, today-wave4, smartbar-auto).
+- **Tests:** full suite in UTC and in TZ=Europe/Athens; quality gate on CI.
+- **Not tested:** Safari, Firefox.
