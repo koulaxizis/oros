@@ -34,13 +34,14 @@
   --water:        #4fc4cf;
   --water-deep:   #2f98b8;
   --water-soft:   rgba(79, 196, 207, 0.22);
+  --water-ink:    var(--water);   /* numbers drawn in the water colour */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 dialog { margin: auto; }
 
 html { color-scheme: dark; }
-html[data-theme="light"] { color-scheme: light; }
+html[data-theme="light"] { color-scheme: light; --water-ink: #1c6b7d; }   /* TUX-CONTRAST: #4fc4cf was 1.8:1 on light */
 
 body {
   font-family: "Nunito", "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -208,7 +209,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
   font-size: clamp(40px, 9vw, 64px);
   font-weight: 900;
   line-height: 1;
-  color: var(--water);
+  color: var(--water-ink);
   font-variant-numeric: tabular-nums;
 }
 #amt-goal { margin-top: 4px; font-size: 15px; font-weight: 700; color: var(--text-dim); }
@@ -217,7 +218,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
   padding: 2px 8px;
   border-radius: 999px;
   background: var(--water-soft);
-  color: var(--water);
+  color: var(--water-ink);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -286,7 +287,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 /* ---------- 7. History ---------- */
 .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .stat { padding: 10px 12px; border-radius: 10px; background: var(--panel-bg); border: 1px solid var(--border); min-width: 0; }
-.stat-n { font-size: 20px; font-weight: 900; color: var(--water); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stat-n { font-size: 20px; font-weight: 900; color: var(--water-ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .stat-l { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
 
 .bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }

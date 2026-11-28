@@ -1994,6 +1994,14 @@ body.till-mode #pocket-chip { display: none !important; }
   --ok:     #87cf3e;
   --warn:   #f28c5a;
 }
+/* TUX-CONTRAST: on a light page the bright tokens were 2-3:1 as text
+   (game "Reset progress", low counters). Light skins get darker ones
+   (AA on white); high contrast keeps its own block. */
+[data-theme="light"] {
+  --danger: #b3261e;
+  --ok:     #3d7a12;
+  --warn:   #a8501c;
+}
 
 /* Z-INDEX LADDER (canonical documentation):
    version-toast 1200 (CSS) · sc/info-overlay 1300 (CSS) ·
