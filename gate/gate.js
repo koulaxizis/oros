@@ -3393,12 +3393,24 @@
   // δίνω έγκριση»): Claude asks for a folder of the orOS disk among
   // Claude's folders. Asked on a screen like localAsk; on Yes it joins the
   // synced list (setFolders), as if the owner added it in Settings.
-  function claudeAsk(args, p) {
+  function claudeAsk(args, p, pcFrom) {
     if (typeof p.hold === "number" && p.hold > Date.now()) return Promise.resolve({ ok: false, c: "The owner paused Claude's changes until " + new Date(p.hold).toISOString() + ". Nothing was asked." });
     return claudeFiles().then(function (CF) {
       var typed = typeof args.path === "string" ? args.path.trim().slice(0, 1024) : "", path = CF.normPath(typed);
       if (!path || path === "/internal") return { ok: false, c: "path must be a folder of the orOS disk, e.g. \"Studio/Podcasts\" (not the whole disk). Nothing was asked." };
       if (CF.secret(path)) return { ok: false, c: "\"" + CF.show(path) + "\" looks like a folder of keys or secrets; it is never opened for Claude. Nothing was asked." };
+      // GATE-PC: a computer path is asked for as its orOS Drive mirror, or refused with the reason
+      if (CF.pcPath(path)) {
+        return driveKnow().then(function (K) {
+          return CF.pcFind(path, K.devices, K.has).then(function (f) {
+            if (f.to) return claudeAsk({ path: f.to, access: args.access, reason: args.reason }, p, CF.show(path));
+            var tops = K.devices.map(function (d) { return "Drive/" + d; }).join(", ");
+            return { ok: false, c: "\"" + CF.show(path) + "\" is a folder of the owner's computer, not a folder of the orOS disk. orOS Drive mirrors a computer's folders to Drive/<computer>/<folder> (C:/Users/<name>/Documents becomes Drive/<computer>/Documents). " +
+              (f.many.length > 1 ? "It is mirrored more than once: " + f.many.map(CF.show).join(", ") + "; ask for the one you need. " :
+               "No device has synced a mirror of it into orOS yet" + (tops ? " (computers in Drive now: " + tops + "; list one with files_list path \"Drive\" once it is among Claude's folders)" : "") + ": orOS Drive on that computer may still be uploading, or the folder is not mirrored (orOS Drive › Folders). ") + "Nothing was asked." };
+          });
+        });
+      }
       var cur = foldersEff(), wantW = args.access === "write";   // GATE-PL9: app folders count
       var filesW = isObj(p.lv) && p.lv.files === "write", wNote = wantW && !filesW ? " Writing there also needs the owner's switch for Files at write (it is not now)." : "";
       var has = cur.filter(function (f) { return path === f || path.indexOf(f + "/") === 0; })[0];
@@ -3417,7 +3429,8 @@
         if (!yes) return askLast === "none" ? { ok: false, c: "__held" } : { ok: false, c: "The owner did not add that folder to Claude's folders. Nothing was opened." };
         return api.setFolders(cur.concat([path])).then(function (f) {
           if (f.indexOf(path) < 0 && !f.some(function (x) { return path.indexOf(x + "/") === 0; })) return { ok: false, c: "The owner allowed it, but the folder could not be added. Nothing was opened." };
-          return { ok: true, a: ["files"], k: 1, c: "The owner added it to Claude's folders: " + path + " (synced to every device; the owner can remove it in Settings › Connected services › orOS Gate). Use paths inside it with files_list, files_write, studio_import and the others." + wNote };
+          // fadd: the relay keeps the new folder (sealed) for calls made with orOS closed before the next copy (GATE-PC)
+          return { ok: true, a: ["files"], k: 1, fadd: path, c: "The owner added it to Claude's folders: " + path + (pcFrom ? " (the orOS Drive mirror of the computer folder " + pcFrom + ")" : "") + " (synced to every device; the owner can remove it in Settings › Connected services › orOS Gate). Use paths inside it with files_list, files_write, studio_import and the others. With orOS closed, its files are listed from the next copy, made when an orOS with the folder open is on." + wNote };
         }, function () { return { ok: false, c: "The owner allowed it, but the folder list could not be saved on this device. Nothing was opened." }; });
       });
     }, function () { return { ok: false, c: "This orOS could not load Claude's folders; ask the owner to update orOS. Nothing was asked." }; });
@@ -3979,10 +3992,56 @@
   // The folders Claude may use: the owner's list and the app folders
   // (cleaned again by claudefiles.js where they are used).
   function foldersEff() {
-    var fr = foldersRead(), out = fr.f.slice();
+    var fr = foldersRead(), out = [];
+    fr.f.forEach(function (p) {
+      var q = pcPathOf(p) ? pcMap[p] : p;            // GATE-PC: a computer path counts as its Drive mirror
+      if (pcPathOf(p) && pcMap[p] === undefined) pcRefreshSoon();
+      if (!q) q = p;                                  // no mirror yet: kept as granted (files_list says why)
+      if (out.indexOf(q) < 0) out.push(q);
+    });
     appFoldersOn(fr).forEach(function (p) { if (out.indexOf(p) < 0) out.push(p); });
     return out.sort();
   }
+  // GATE-PC (Chris 2026-11-28): Claude's folders once held computer paths
+  // ("C:/Users/koulaxizis/Documents"), which no orOS disk has: orOS Drive
+  // mirrors that folder to /internal/Drive/<computer>/Documents. Such a
+  // grant counts as its mirror once the mirror is on the disk (here or in
+  // the cloud). Computed, never written back (as GATE-PL9's app folders):
+  // a device that has not seen the mirror yet must not change the list.
+  var pcMap = {}, pcAt = 0, pcRun = null;
+  function pcPathOf(p) { return /^\/internal\/[A-Za-z]:(\/|$)/.test(String(p || "")); }
+  // → Promise<{ devices: [names in /internal/Drive], has(dir) → Promise<bool> }>
+  function driveKnow() {
+    var FS = root.orosFS, V = root.orosVault, D = "/internal/Drive", devs = {};
+    var cloud = [];
+    try { cloud = V && typeof V.remoteOnly === "function" ? V.remoteOnly(D) || [] : []; } catch (e) { cloud = []; }
+    cloud.forEach(function (e) { var r = e && typeof e.path === "string" ? e.path.slice(D.length + 1) : ""; var n = r.split("/")[0]; if (n && r.indexOf("/") > 0) devs[n] = 1; });
+    function has(dir) {
+      return Promise.resolve().then(function () { return FS && FS.stat ? FS.stat(dir) : null; }).then(function (st) { return !!(st && st.dir); }, function () { return false; })
+        .then(function (y) { return y || cloud.some(function (e) { return e && typeof e.path === "string" && e.path.indexOf(dir + "/") === 0; }); });
+    }
+    return Promise.resolve().then(function () { return FS && FS.ls ? FS.ls(D) : []; }).then(function (l) { return l || []; }, function () { return []; }).then(function (l) {
+      l.forEach(function (e) { if (e && e.dir && e.name && e.name.charAt(0) !== ".") devs[e.name] = 1; });
+      return { devices: Object.keys(devs).sort(), has: has };
+    });
+  }
+  function pcRefresh() {
+    if (pcRun) return pcRun;
+    var list = foldersRead().f.filter(pcPathOf);
+    if (!list.length) return Promise.resolve();
+    pcRun = Promise.all([claudeFiles(), driveKnow()]).then(function (r) {
+      var CF = r[0], K = r[1], next = {};
+      return list.reduce(function (pr, p) {
+        return pr.then(function () { return CF.pcFind(p, K.devices, K.has).then(function (f) { next[p] = f.to || ""; }); });
+      }, Promise.resolve()).then(function () {
+        var was = JSON.stringify(pcMap);
+        pcMap = next; pcAt = Date.now();
+        if (JSON.stringify(next) !== was) { try { changed(); } catch (e) {} }
+      });
+    }).then(function () { pcRun = null; }, function () { pcRun = null; pcAt = Date.now(); });
+    return pcRun;
+  }
+  function pcRefreshSoon() { if (!pcRun && Date.now() - pcAt > 60000) { pcAt = Date.now(); setTimeout(pcRefresh, 0); } }
   // The app folders exist on the disk (made once, empty; never removed).
   var appDirsDone = {};
   function appFoldersMake() {
@@ -4038,7 +4097,8 @@
   // Never while Sensitive work is on (window.orosStrict, PR #1010) or
   // the device is locked; one run at a time; unchanged files are not
   // read again (FC_KEY keeps size, time and hash per path).
-  var FC_KEY = "oros-gate-fcopy", FIDX_MAX = 880000, fcBusy = false, fcTimer = null, fcErr = "";
+  var FC_KEY = "oros-gate-fcopy", FIDX_MAX = 7000000,   // GATE-PC: was 880000 (one socket message); sent in parts now
+      fcBusy = false, fcTimer = null, fcErr = "";
   var fcModP = null;
   function fcMod() {
     if (root.OrosGateFileCopy) return Promise.resolve(root.OrosGateFileCopy);
@@ -4229,6 +4289,28 @@
       return rows;
     });
   }
+  // GATE-PC: { …, files: [{ p, … }] } → { v: 2, d: [folder], files: [{ d, n, … }] }
+  function fcPack(idx) {
+    var dirs = [], at = {}, out = {};
+    Object.keys(idx).forEach(function (k) { if (k !== "files") out[k] = idx[k]; });
+    out.v = 2;
+    out.files = idx.files.map(function (e) {
+      var i = e.p.lastIndexOf("/"), dir = e.p.slice(0, i), o = { d: 0, n: e.p.slice(i + 1) };
+      if (at[dir] === undefined) { at[dir] = dirs.length; dirs.push(dir); }
+      o.d = at[dir];
+      Object.keys(e).forEach(function (k) { if (k !== "p") o[k] = e[k]; });
+      return o;
+    });
+    out.d = dirs;
+    return out;
+  }
+  // The sealed index, in parts the relay joins (a socket message stays under its limit).
+  var FC_PART = 800 * 1024;
+  function fcSend(sealed) {
+    if (sealed.length <= FC_PART) { ws.send(JSON.stringify({ fidx: sealed })); return; }
+    var n = Math.ceil(sealed.length / FC_PART), id = Math.random().toString(36).slice(2, 10);
+    for (var i = 0; i < n; i++) ws.send(JSON.stringify({ fidxp: sealed.slice(i * FC_PART, (i + 1) * FC_PART), fi: i, fn: n, fs: id }));
+  }
   function fcBytes(r) {
     if (r.cloud) return root.orosVault.peek(r.p).then(function (b) { return new Uint8Array(b); });
     return Promise.resolve(root.orosFS.read(r.p)).then(function (b) { return b && typeof b.arrayBuffer === "function" ? b.arrayBuffer() : b; }).then(function (b) { return new Uint8Array(b); });
@@ -4253,7 +4335,7 @@
     return Promise.all([fcMod(), claudeFiles()]).then(function (m) {
       FC = m[0]; CF = m[1];
       known = FC.known(st.idx);
-      return appFoldersMake().then(function () { return fcWalk(CF, CF.cleanFolders(eff)); });
+      return appFoldersMake().then(pcRefresh).then(function () { eff = foldersEff(); return fcWalk(CF, CF.cleanFolders(eff)); });   // GATE-PC: computer paths as their mirrors
     }).then(function (r) {
       rows = r;
       // hashes: cloud entries carry theirs; unchanged files keep theirs
@@ -4265,7 +4347,7 @@
           else if (isObj(c) && c.s === x.s && c.m === x.m && typeof c.h === "string") x.h = c.h;
           else if (FC.wants(x).c) return fcBytes(x).then(function (b) { return FC.sha256(b); }).then(function (h) { x.h = h; }, function () { x.h = ""; });
         }).then(function () {
-          if (x.h) newCache[x.p] = { s: x.s, m: x.m, h: x.h };
+          if (x.h && !x.cloud) newCache[x.p] = { s: x.s, m: x.m, h: x.h };   // GATE-PC: a cloud entry carries its hash (tens of thousands must not fill localStorage)
         });
       }, Promise.resolve());
     }).then(function () {
@@ -4336,11 +4418,19 @@
       var idx = { v: 1, at: Date.now(), f: CF.cleanFolders(eff), q: FC.quotaOf(fr.q), used: pl.used, files: files,
                   w: isObj(pp.lv) && pp.lv.files === "write" ? 1 : 0 };   // F3: the relay checks closed changes against these
       if (typeof pp.hold === "number" && pp.hold > Date.now()) idx.hold = pp.hold;
-      var text = JSON.stringify(idx);
-      while (utf8Len(text) > FIDX_MAX && idx.files.length) { idx.files.pop(); idx.cut = 1; text = JSON.stringify(idx); }
+      // GATE-PC: v2 lists each folder once (d) and a file by its folder's
+      // number and name; the relay turns it back into paths. A mirror of a
+      // computer's Documents is tens of thousands of files.
+      var text = JSON.stringify(fcPack(idx));
+      if (utf8Len(text) > FIDX_MAX) {
+        var lo = 0, hi = idx.files.length, all = idx.files;
+        while (lo < hi) { var mid = Math.ceil((lo + hi) / 2); idx.files = all.slice(0, mid); if (utf8Len(JSON.stringify(fcPack(idx))) <= FIDX_MAX) lo = mid; else hi = mid - 1; }
+        idx.files = all.slice(0, lo); idx.cut = all.length - lo;
+        text = JSON.stringify(fcPack(idx));
+      }
       return seal(k, text).then(function (sealed) {
         if (!ws || ws.readyState !== 1) throw new Error("offline");
-        ws.send(JSON.stringify({ fidx: sealed }));
+        fcSend(sealed);
         writeJSON(FC_KEY, { at: idx.at, c: newCache, idx: { files: files.map(function (e) { return { h: e.h, c: e.c, t: e.t }; }).filter(function (e) { return e.h; }) }, n: Object.keys(names), up: put, used: pl.used, err: fcErr });
         changed();
       });

@@ -246,13 +246,96 @@
 
   // ---------- VD-OD: on-demand paths ----------
   function under(path, root) { return path === root || path.indexOf(root + "/") === 0; }
+  // VD-ODB (2026-11-28): the cloud-only list is kept in memory and in
+  // IndexedDB, not in localStorage. A computer's mirrored folders are tens
+  // of thousands of files (Chris's Documents: 83,841, about 20 M
+  // characters as JSON); the ~5 MB localStorage refused the write without
+  // a word, so no device ever listed /internal/Drive/<computer>. Where
+  // IndexedDB cannot be opened, localStorage is still tried (as before).
+  // sync() waits for the list to be loaded, so a pull never starts from
+  // an empty list that is only not read yet.
+  var OD_DB = "oros-vault-od", odMem = null, odSet = false, odReady = null, odLS = false, odSaveT = null;
+  function odShape(m) { return (m && typeof m === "object" && !Array.isArray(m)) ? m : null; }
+  function odIdb() { try { return typeof indexedDB !== "undefined" && indexedDB && typeof indexedDB.open === "function" ? indexedDB : null; } catch (e) { return null; } }
+  var odDbP = null;
+  function odDb() {
+    if (odDbP) return odDbP;
+    odDbP = new Promise(function (ok, no) {
+      var r;
+      try { r = odIdb().open(OD_DB, 1); } catch (e) { no(e); return; }
+      r.onupgradeneeded = function () { try { r.result.createObjectStore("od"); } catch (e) {} };
+      r.onsuccess = function () { ok(r.result); };
+      r.onerror = function () { no(r.error || new Error("idb")); };
+      r.onblocked = function () { no(new Error("idb blocked")); };
+    });
+    odDbP.then(function (db) { try { db.onclose = function () { odDbP = null; }; db.onversionchange = function () { try { db.close(); } catch (e) {} odDbP = null; }; } catch (e) {} }, function () { odDbP = null; });
+    return odDbP;
+  }
+  function odLoad() {
+    if (odReady) return odReady;
+    var ls = odShape(readJson(OD_KEY));
+    if (!odIdb()) { odLS = true; if (!odSet) odMem = ls || {}; odReady = Promise.resolve(); return odReady; }
+    odReady = odDb().then(function (db) {
+      return new Promise(function (ok) {
+        try {
+          var g = db.transaction("od", "readonly").objectStore("od").get("m");
+          g.onsuccess = function () { ok({ v: odShape(g.result) }); };
+          g.onerror = function () { ok(null); };
+        } catch (e) { ok(null); }
+      });
+    }).then(function (got) {
+      if (!got) throw new Error("idb read");
+      if (!odSet) {
+        if (got.v) odMem = got.v;
+        else {
+          odMem = ls || {};
+          // First start with IndexedDB: a list that never fit was never
+          // stored, and the saved revision would skip the manifest until
+          // the cloud moves. Download it once more (applying is idempotent).
+          if (!ls) { try { localStorage.removeItem(REV_KEY); } catch (e) {} }
+        }
+      }
+      odSave(0);
+      try { localStorage.removeItem(OD_KEY); } catch (e) {}
+    }).catch(function () { odLS = true; if (!odSet) odMem = ls || {}; });
+    return odReady;
+  }
+  function odWrite() {
+    var m = odMem || {};
+    if (odLS) {
+      if (Object.keys(m).length) writeJson(OD_KEY, m);
+      else { try { localStorage.removeItem(OD_KEY); } catch (e) {} }
+      return Promise.resolve();
+    }
+    return odDb().then(function (db) {
+      return new Promise(function (ok) {
+        try {
+          var tx = db.transaction("od", "readwrite");
+          tx.objectStore("od").put(m, "m");
+          tx.oncomplete = tx.onerror = tx.onabort = function () { ok(); };
+        } catch (e) { ok(); }
+      });
+    }, function () {});
+  }
+  function odSave(ms) {
+    if (odSaveT) clearTimeout(odSaveT);
+    odSaveT = setTimeout(function () { odSaveT = null; odWrite(); }, ms || 0);
+  }
+  // Read only (no copy): the live list. Before it is loaded, what
+  // localStorage still holds from an older version.
+  function odGet() { return odMem || odShape(readJson(OD_KEY)) || {}; }
+  // A copy to change and give back with setOnDemand.
   function getOnDemand() {
-    var m = readJson(OD_KEY);
-    return (m && typeof m === "object" && !Array.isArray(m)) ? m : {};
+    var m = odGet(), out = {};
+    Object.keys(m).forEach(function (k) { out[k] = m[k]; });
+    return out;
   }
   function setOnDemand(m) {
-    if (Object.keys(m).length) writeJson(OD_KEY, m);
-    else { try { localStorage.removeItem(OD_KEY); } catch (e) {} }
+    odMem = odShape(m) || {};
+    odSet = true;
+    if (!odReady) odLoad();
+    else if (odLS) odWrite();
+    else odSave(400);
   }
   function deviceFolders() {
     var l = readJson(OFFLINE_KEY);
@@ -633,6 +716,11 @@
     // cloud did not move, `same`) lists only this device's files, so the
     // cloud-only list stays as it was.
     var od = cloud.same ? getOnDemand() : {};
+    // VD-ODB: a cloud-only file the last pull already listed, unchanged in
+    // the cloud and not written here since (a local write is queued), is
+    // listed again without asking the disk: a computer's mirror is tens of
+    // thousands of files, and a phone stat-ed each one on every pull.
+    var odWas = odGet();
 
     Object.keys(cf).forEach(function (path) {
       chain = chain.then(function () {
@@ -644,6 +732,8 @@
           if (!queued) lm.files[path] = entry;         // meta refresh only
           return null;                                 // the cloud did not move: plain local work, or nothing
         }
+        var was = odWas[path];
+        if (!cached && !queued && was && was.h === entry.h && isOnDemand(path)) { od[path] = entry; return null; }
         // The cloud has a version this device has not seen.
         return localState(path, cached, entry).then(function (state) {
           // VD-OD: a Drive file this device never held stays in the
@@ -847,7 +937,7 @@
   // (An idle check hands over this device's own list as the "cloud"
   // manifest, so the cloud-only list is added too.)
   function manifestToWrite(lm, cloud, gone) {
-    var out = {}, cf = cloud.manifest.files, od = getOnDemand();
+    var out = {}, cf = cloud.manifest.files, od = odGet();
     [od, cf].forEach(function (src) {
       Object.keys(src).forEach(function (p) {
         if (!lm.files[p] && !gone[p] && src[p] && typeof src[p].h === "string") out[p] = src[p];
@@ -888,7 +978,7 @@
   // ordinary synced file of this device.
   function fetchOnDemand(path) {
     return betweenSyncs(function () {
-      var od = getOnDemand(), entry = od[path];
+      var od = odGet(), entry = od[path];
       if (!entry) {
         return FS().stat(path).then(function () { return path; }, function () {
           throw new Error("not in the vault");
@@ -1025,7 +1115,7 @@
       var cloud = null;                             // what THIS attempt pulled
       // The disk must answer first: an unavailable disk (EIO) reads
       // like "every file is missing" — never sync against that.
-      return fsReady()
+      return odLoad().then(function () { return fsReady(); })
         .then(seedOnce)
         .then(function () { return fetchCloudManifest(lm); })
         .then(function (c) {
@@ -1546,6 +1636,7 @@
     });
   }
 
+  odLoad();   // VD-ODB: read the cloud-only list early
   window.orosVault = {
     version: "0.1.0",
 
@@ -1601,7 +1692,7 @@
     // Files at or under `prefix` that are in the cloud only:
     // [{ path, h, s, m, mime }] (no content on this device yet).
     remoteOnly: function (prefix) {
-      var od = getOnDemand(), out = [];
+      var od = odGet(), out = [];
       Object.keys(od).forEach(function (p) {
         if (!prefix || under(p, prefix)) {
           var e = od[p];
@@ -1611,14 +1702,14 @@
       return out;
     },
     isRemoteOnly: function (path) {
-      return Object.prototype.hasOwnProperty.call(getOnDemand(), path);
+      return Object.prototype.hasOwnProperty.call(odGet(), path);
     },
     fetch: fetchOnDemand,
     // GATE-FILES (2026-11-13): a cloud-only file's content, hash-checked
     // (VD-H), in memory only: nothing is written to the disk and the
     // file stays on demand. → Promise<bytes>
     peek: function (path) {
-      var entry = getOnDemand()[path];
+      var entry = odGet()[path];
       if (!entry) return Promise.reject(new Error("not in the cloud only"));
       return downloadObject(entry);
     },

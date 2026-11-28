@@ -68,7 +68,8 @@ export const GATE_LIMITS = {
   aliveMs: 150000,
   lateMs: 120000,                 // a timed-out change waits this long before another device gets it
   // GATE-FILES F2: Claude's folders while orOS is closed
-  fidxChars: 900 * 1024,         // the sealed file index (base64url)
+  fidxChars: 10 * 1048576,       // the sealed file index (base64url); GATE-PC: sent in parts over 800 KiB (was 900 KiB, one message)
+  faddMs: 7 * 86400000,          // GATE-PC: a folder added while the copy is older counts this long
   linkMs: 15 * 60000,            // a files_link download link lives this long, for one download
   links: 20,                     // download links waiting per gate
   pieceBytes: 1048576 + 28,      // one sealed piece: 1 MiB + IV + tag
@@ -626,7 +627,7 @@ export const TOOLS = [
   // it in Settings. The owner answers with one tap on any device on screen.
   {
     name: "claude_folders_request",
-    description: "Asks the owner to add a folder of the orOS disk to Claude's folders (the folders files_list, files_read, files_write, studio_import, montage_import and export out may use), e.g. \"Studio/Podcasts\". The owner answers with one tap («Open for Claude») on any device where orOS is on screen, the phone too; with nobody at a screen the question waits, encrypted, for the next one (one question per call). The folder need not exist yet: files_write makes it. Never the whole disk, the Trash, or a folder that looks like keys or secrets. Writing there also needs the owner's switch for Files at write. Ask only for the folder the work needs.",
+    description: "Asks the owner to add a folder of the orOS disk to Claude's folders (the folders files_list, files_read, files_write, studio_import, montage_import and export out may use), e.g. \"Studio/Podcasts\". A folder of the owner's computer is on the disk as orOS Drive's mirror, Drive/<computer>/<folder> (C:\\Users\\<name>\\Documents\\Invoices = Drive/<computer>/Documents/Invoices); a computer path (C:/…) is asked for as that mirror, or refused with the reason when no mirror is synced yet. The owner answers with one tap («Open for Claude») on any device where orOS is on screen, the phone too; with nobody at a screen the question waits, encrypted, for the next one (one question per call). The folder need not exist yet: files_write makes it. Never the whole disk, the Trash, or a folder that looks like keys or secrets. Writing there also needs the owner's switch for Files at write. Ask only for the folder the work needs.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1662,6 +1663,23 @@ export function filePath(f) {
 function fileShow(p) { return String(p).replace(/^\/internal\/?/, "") || "/"; }
 function underDir(p, d) { return p === d || p.indexOf(d + "/") === 0; }
 // files_list from the index: the same shape as the open answer (assistant/claudefiles.js listOut) plus as_of.
+// GATE-PC: an index of version 2 lists each folder once (d) and a file by
+// its folder's number (d) and name (n); this gives every file its path (p)
+// back. Version 1 (a path per file) is kept as it is.
+export function fileIndexOpen(o) {
+  if (!o || typeof o !== "object" || !Array.isArray(o.files)) return null;
+  if (o.v !== 2) return o;
+  const dirs = Array.isArray(o.d) ? o.d : [];
+  o.files = o.files.map((e) => {
+    if (!e || typeof e !== "object" || typeof e.n !== "string" || !Number.isInteger(e.d) || typeof dirs[e.d] !== "string" || !e.n || e.n.indexOf("/") >= 0) return null;
+    const x = {};
+    Object.keys(e).forEach((k) => { if (k !== "d" && k !== "n") x[k] = e[k]; });
+    x.p = dirs[e.d] + "/" + e.n;
+    return x;
+  }).filter(Boolean);
+  delete o.d;
+  return o;
+}
 export function filesListFrom(idx, args, when) {
   const folders = Array.isArray(idx.f) ? idx.f : [];
   const a = args && typeof args === "object" ? args : {};
@@ -1678,6 +1696,12 @@ export function filesListFrom(idx, args, when) {
     for (let i = 1; i < segs.length && i <= depth; i++) dirs[p + "/" + segs.slice(0, i).join("/")] = 1;
     if (e.p.split("/").length <= lim) rows.push(e);
   });
+  // GATE-PC: say why a granted folder shows nothing, instead of a bare empty list
+  const added = (Array.isArray(idx.fnew) ? idx.fnew : []).find((x) => underDir(p, x.p) || underDir(x.p, p));
+  if (!rows.length && !Object.keys(dirs).length && added) {
+    return { ok: true, c: JSON.stringify({ path: fileShow(p), as_of: when, folders: folders.map(fileShow), entries: [], total: 0, offset: 0, next_offset: null,
+      note: "orOS is closed. The owner added " + fileShow(added.p) + " to Claude's folders at " + new Date(added.at).toISOString() + ", after this copy (" + when + "), so the copy has no files of it yet. They come with the next copy, which an orOS makes when it is open with the gate on." }) };
+  }
   if (!rows.length && !Object.keys(dirs).length && !folders.some((f) => underDir(f, p) || underDir(p, f))) return { ok: false, c: "\"" + fileShow(p) + "\" is not in the copy of " + when + "." };
   const all = Object.keys(dirs).sort().map((d) => ({ name: d.slice(p.length + 1), kind: "folder" }))
     .concat(rows.sort((x, y) => (x.p < y.p ? -1 : 1)).map((e) => {
@@ -1689,8 +1713,11 @@ export function filesListFrom(idx, args, when) {
       return o;
     }));
   const off = Math.max(0, Math.floor(Number(a.offset) || 0)), part = all.slice(off, off + 200);
+  let note = "orOS is closed: this is the copy of " + when + ". Changes wait until orOS opens (files_write and the other changes say so).";
+  if (!all.length) note += " The copy has no files in " + fileShow(p) + ": it is empty, or its files are not on the orOS disk yet (a computer folder mirrored by orOS Drive shows once orOS Drive has uploaded it and an open orOS has made a new copy).";
+  if (idx.cut) note += " The copy lists only part of Claude's folders (" + idx.cut + " files left out for size): ask the owner to give Claude smaller folders, or open orOS for live answers.";
   return { ok: true, c: JSON.stringify({ path: fileShow(p), as_of: when, folders: folders.map(fileShow), entries: part, total: all.length, offset: off,
-    next_offset: off + part.length < all.length ? off + part.length : null, note: "orOS is closed: this is the copy of " + when + ". Changes wait until orOS opens (files_write and the other changes say so)." }) };
+    next_offset: off + part.length < all.length ? off + part.length : null, note: note }) };
 }
 export function fileEntry(idx, path) {
   const folders = Array.isArray(idx.f) ? idx.f : [];
@@ -2570,6 +2597,7 @@ export class GateBox {
     if (o && o.upd === 1 && o.r === undefined) { this.askUpdate(ws); return; }   // GL-7: the owner's Update button
     if (o && typeof o.snap === "string" && o.r === undefined) { await this.putCopy(ws, o.snap); return; }
     if (o && typeof o.fidx === "string" && o.r === undefined) { await this.putFileIndex(ws, o.fidx); return; }
+    if (o && typeof o.fidxp === "string" && o.r === undefined) { await this.putFileIndexPart(ws, o); return; }   // GATE-PC: a big index in parts
     if (o && o.fdrop === 1 && o.r === undefined) { await this.dropFromDevice(ws); return; }
     if (o && Array.isArray(o.cqa) && o.r === undefined) {
       await this.queueDone(ws, o.cqa);
@@ -2687,7 +2715,7 @@ export class GateBox {
   async dropCopy(wraps) {
     const keys = [];
     for (const pre of wraps ? ["s:", "q:", "kw:", "x:", "lk:"] : ["s:", "q:", "x:", "lk:"]) (await this.st.list({ prefix: pre })).forEach((v, k) => keys.push(k));
-    keys.push("copy", "fidx");
+    keys.push("copy", "fidx", "fadd", "fpart");
     for (let i = 0; i < keys.length; i += 128) await this.st.delete(keys.slice(i, i + 128));
   }
   // A device sends the encrypted copy of what Claude may read (the
@@ -2730,12 +2758,63 @@ export class GateBox {
     await this.arm(m, now);
     try { ws.send(JSON.stringify({ fidxok: now })); } catch (e) {}
   }
+  // GATE-PC: one part of a big sealed index (fi of fn, set fs), kept
+  // until the last part has come; only the device that sends it, in order.
+  async putFileIndexPart(ws, o) {
+    const m = await this.meta();
+    if (!m || !devList(m).some((d) => d.th === attOf(ws).th)) return;
+    const fi = o.fi, fn = o.fn, fs = typeof o.fs === "string" ? o.fs.slice(0, 16) : "";
+    const maxN = Math.ceil(GATE_LIMITS.fidxChars / (800 * 1024));
+    if (!Number.isInteger(fi) || !Number.isInteger(fn) || fn < 2 || fn > maxN || fi < 0 || fi >= fn || !fs || !/^[A-Za-z0-9_.-]*$/.test(o.fidxp) || o.fidxp.length > 800 * 1024) return;
+    let st = await this.st.get("fpart");
+    if (fi === 0 || !st || st.fs !== fs || st.th !== attOf(ws).th || st.got !== fi) {
+      if (fi !== 0) { await this.dropParts(st); return; }   // a part out of order: the set is dropped, the next copy sends again
+      await this.dropParts(st);
+      st = { fs: fs, th: attOf(ws).th, fn: fn, got: 0, k: 0 };
+    }
+    const n = Math.ceil(o.fidxp.length / GATE_LIMITS.chunkChars);
+    for (let i = 0; i < n; i++) await this.st.put("y:" + (st.k + i), o.fidxp.slice(i * GATE_LIMITS.chunkChars, (i + 1) * GATE_LIMITS.chunkChars));
+    st.k += n; st.got = fi + 1;
+    if (st.got < st.fn) { await this.st.put("fpart", st); return; }
+    const all = [];
+    for (let i = 0; i < st.k; i++) { const x = await this.st.get("y:" + i); if (typeof x !== "string") { await this.dropParts(st); return; } all.push(x); }
+    await this.dropParts(st);
+    await this.putFileIndex(ws, all.join(""));
+  }
+  async dropParts(st) {
+    const keys = ["fpart"];
+    for (let i = 0; st && i < (st.k || 0); i++) keys.push("y:" + i);
+    for (let i = 0; i < keys.length; i += 128) await this.st.delete(keys.slice(i, i + 128));
+  }
   async readFileIndex(kRaw) {
     const c = await this.st.get("fidx");
     if (!c || !kRaw) return null;
     const parts = [];
     for (let i = 0; i < c.n; i++) { const x = await this.st.get("x:" + i); if (typeof x !== "string") return null; parts.push(x); }
-    try { const o = JSON.parse(await openText(kRaw, parts.join(""))); return o && typeof o === "object" && Array.isArray(o.files) ? o : null; } catch (e) { return null; }
+    let o = null;
+    try { o = fileIndexOpen(JSON.parse(await openText(kRaw, parts.join("")))); } catch (e) { return null; }
+    if (!o) return null;
+    // GATE-PC: folders the owner added after this copy was made count now
+    // (their files come with the next copy); never the ones the copy has
+    const fa = await this.readGrants(kRaw);
+    if (fa && Array.isArray(fa.f)) {
+      const at = +o.at || 0, add = fa.f.filter((x) => x && typeof x.p === "string" && x.at > at && x.at > Date.now() - GATE_LIMITS.faddMs && !(o.f || []).some((f) => underDir(x.p, f)));
+      if (add.length) { o.f = (o.f || []).concat(add.map((x) => x.p)).sort(); o.fnew = add; }
+    }
+    return o;
+  }
+  // GATE-PC: the folders the owner added through claude_folders_request,
+  // sealed with the gate key (the box never keeps them readable).
+  async readGrants(kRaw) {
+    const g = await this.st.get("fadd");
+    if (typeof g !== "string" || !kRaw) return null;
+    try { const o = JSON.parse(await openText(kRaw, g)); return o && Array.isArray(o.f) ? o : null; } catch (e) { return null; }
+  }
+  async addGrant(kRaw, path, now) {
+    if (!kRaw || typeof path !== "string" || path.indexOf("/internal/") !== 0 || path.length > 1024) return;
+    const old = await this.readGrants(kRaw);
+    const f = (old ? old.f : []).filter((x) => x && x.p !== path && x.at > now - GATE_LIMITS.faddMs).concat([{ p: path, at: now }]).slice(-50);
+    await this.st.put("fadd", await sealText(kRaw, JSON.stringify({ f: f })));
   }
   // A device drops Claude's closed copy now (Sensitive work, the owner).
   async dropFromDevice(ws) {
@@ -3321,6 +3400,11 @@ export class GateBox {
     // GATE-IMG: pictures only from this open device's answer, taken out of it at once
     const pics = ans && ans.ok === true && !ans.e ? gateImages(p.name, args, ans.img) : { imgs: [], dropped: 0 };
     if (ans && ans.img !== undefined) delete ans.img;
+    // GATE-PC: a folder the owner just added counts for calls made with orOS closed before the next copy
+    if (ans && ans.fadd !== undefined) {
+      if (p.name === "claude_folders_request" && ans.ok === true && typeof ans.fadd === "string") { try { await this.addGrant(await this.unwrapK(tok), ans.fadd, now); } catch (e) {} }
+      delete ans.fadd;
+    }
     // The gate this link points to (5.90.00): its first 6 characters, the
     // id orOS › Settings › orOS Gate shows, so a link to an old gate shows.
     const gid = String(request.headers.get("X-Gid") || "").slice(0, 6);

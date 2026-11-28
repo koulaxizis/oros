@@ -88,6 +88,36 @@
     if (!folders.some(function (f) { return under(p, f); })) return "\"" + show(p) + "\" is outside the folders the owner lets Claude use: " + folders.map(show).join(", ") + ".";
     return "";
   }
+  // GATE-PC (2026-11-28): a path of the owner's computer ("C:/Users/…",
+  // "C:\\Users\\…") is not a folder of the orOS disk. orOS Drive mirrors a
+  // computer's folder to /internal/Drive/<computer>/<folder name>, so the
+  // mirror of C:/Users/me/Documents/Τιμολόγια is
+  // Drive/<computer>/Documents/Τιμολόγια when Documents is mirrored.
+  function pcPath(p) { return /^\/internal\/[A-Za-z]:(\/|$)/.test(String(p || "")); }
+  // The tails of a computer path, longest first: the folder name a mirror
+  // starts with is one of them ("Users/me/Documents/Τιμολόγια",
+  // "me/Documents/Τιμολόγια", "Documents/Τιμολόγια", "Τιμολόγια").
+  function pcTails(p) {
+    var segs = String(p || "").replace(/^\/internal\/[A-Za-z]:\/?/, "").split("/").filter(Boolean), out = [];
+    for (var i = 0; i < segs.length; i++) out.push(segs.slice(i).join("/"));
+    return out;
+  }
+  // The mirror of a computer path: each tail, longest first, under each
+  // computer's folder in /internal/Drive. devices: the names there;
+  // has(path) → whether that folder is on the disk (here or in the cloud).
+  // → Promise<{ to: the one mirror | "", many: [every mirror found] }>
+  function pcFind(p, devices, has) {
+    var D = ROOT + "/Drive";
+    return pcTails(p).reduce(function (pr, t) {
+      return pr.then(function (found) {
+        if (found.length) return found;
+        return Promise.all((devices || []).map(function (d) {
+          var c = D + "/" + d + "/" + t;
+          return Promise.resolve().then(function () { return has(c); }).then(function (y) { return y ? c : ""; }, function () { return ""; });
+        })).then(function (l) { return l.filter(Boolean); });
+      });
+    }, Promise.resolve([])).then(function (found) { return { to: found.length === 1 ? found[0] : "", many: found }; });
+  }
   function kindOf(name) {
     var e = extOf(name);
     if (e === "pdf") return "pdf";
@@ -349,7 +379,7 @@
 
   var api = { ROOT: ROOT, TRASH: TRASH, FOLDERS_MAX: FOLDERS_MAX, LIST_MAX: LIST_MAX, DEPTH_MAX: DEPTH_MAX, READ_MAX: READ_MAX, WRITE_BYTES: WRITE_BYTES, PATHS_MAX: PATHS_MAX,
               normPath: normPath, cleanFolders: cleanFolders, secret: secret, reach: reach, kindOf: kindOf, validName: validName, ver: ver, show: show,
-              under: under, page: page, listOut: listOut, planWrite: planWrite, writeConflict: writeConflict, conflictName: conflictName, planMove: planMove, planDelete: planDelete, run: run, undo: undo };
+              under: under, pcPath: pcPath, pcTails: pcTails, pcFind: pcFind, page: page, listOut: listOut, planWrite: planWrite, writeConflict: writeConflict, conflictName: conflictName, planMove: planMove, planDelete: planDelete, run: run, undo: undo };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosClaudeFiles = api;
 })(typeof window !== "undefined" ? window : this);

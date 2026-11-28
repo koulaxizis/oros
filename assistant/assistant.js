@@ -5137,6 +5137,25 @@
     try { if (V && V.isRemoteOnly(path)) V.remoteOnly(path).forEach(function (e) { if (e.path === path) hit = e; }); } catch (e) { hit = null; }
     return hit;
   }
+  // GATE-PC: a folder of an orOS Drive mirror that holds only cloud files
+  function cfCloudDir(path) {
+    var V = cfVault();
+    try { return !!(V && V.remoteOnly(path).some(function (e) { return e && typeof e.path === "string" && e.path.indexOf(path + "/") === 0; })); } catch (e) { return false; }
+  }
+  // GATE-PC (Chris 2026-11-28): why a path files_list was asked for is not
+  // on the disk, instead of a bare "is not there".
+  function cfMissing(CF, p, folders) {
+    var V = cfVault(), name = CF.show(p), granted = folders.some(function (f) { return p === f; });
+    var st = null;
+    try { st = V && typeof V.status === "function" ? V.status() : null; } catch (e) { st = null; }
+    var last = st && st.lastOkAt ? " This orOS last synced the disk at " + new Date(st.lastOkAt).toISOString() + "." : "";
+    var drive = [];
+    try { (V ? V.remoteOnly("/internal/Drive") : []).forEach(function (e) { var r = String(e.path || "").split("/").slice(3, 5).join("/"); if (r.indexOf("/") > 0 && drive.indexOf("Drive/" + r) < 0) drive.push("Drive/" + r); }); } catch (e) {}
+    var tops = drive.length ? " Mirrored folders in orOS now: " + drive.sort().slice(0, 20).join(", ") + "." : "";
+    if (CF.pcPath(p)) return "\"" + name + "\" is a folder of the owner's computer, not of the orOS disk: orOS Drive mirrors a computer's folders to Drive/<computer>/<folder> (C:/Users/<name>/Documents becomes Drive/<computer>/Documents), and no mirror of it is on the disk yet." + tops + " Ask for the mirror with claude_folders_request." + last;
+    if (CF.under(p, "/internal/Drive")) return "\"" + name + "\"" + (granted ? " is one of Claude's folders, but" : "") + " is not on the orOS disk yet: no device has synced it into orOS (orOS Drive on that computer may still be uploading it, or the folder is not mirrored)." + tops + last;
+    return "\"" + name + "\"" + (granted ? " is one of Claude's folders, but it" : "") + " is not there" + (granted ? " yet (files_write makes it)" : "") + "." + last;
+  }
   function cfU8(x) { return x instanceof Uint8Array ? x : new Uint8Array(x); }
   function cfHex(bytes) {
     return crypto.subtle.digest("SHA-256", bytes).then(function (d) {
@@ -5308,7 +5327,9 @@
       if (why) return cfErr(why);
       var depth = Math.max(1, Math.min(CF.DEPTH_MAX, Math.floor(Number(a.depth) || 1)));
       return cfStat(x.fs, p).then(function (st) {
-        if (!st) return cfErr("\"" + CF.show(p) + "\" is not there.");
+        // GATE-PC: a Drive folder whose files are all in the cloud only is a folder too
+        if (!st && cfCloudDir(p)) st = { path: p, dir: true, cloud: true };
+        if (!st) return cfErr(cfMissing(CF, p, x.folders));
         if (!st.dir) return cfErr("\"" + CF.show(p) + "\" is a file; read it with files_read.");
         return cfWalk(x.fs, p, depth).then(function (rows) {
           var out = CF.listOut(p, rows, x.folders, a.offset);

@@ -304,3 +304,55 @@ test("a piece comes only from Dropbox's content host, and a too-big piece is ref
   await assert.rejects(G.fetchPiece(u, fake("https://evil.example/x")), /piece host/);
   await assert.rejects(G.fetchPiece(u, fake(u, 1e9)), /piece size/);
 });
+
+// GATE-PC (2026-11-28): a computer's mirror is tens of thousands of files.
+// The device packs the index (v2: each folder once) and sends it in parts;
+// a folder the owner adds after the copy counts at once, with a note.
+test("GATE-PC: index v2 in parts, a folder added after the copy, notes for empty and cut", async () => {
+  const w = world();
+  assert.equal((await dev(w, { act: "new", th: hex(TOK) })).status, 200);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32), KS = b64u(K);
+  const sock = { sent: [], closed: false, __g: { th: hex(TOK), v: 1, at: 1 }, send(x) { this.sent.push(x); const q = JSON.parse(x); if (q.q && q.n === "_key") setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: KS })), 1); }, close() {} };
+  b.socks.push(sock);
+  const t = await tokens(w);
+  const F = "/internal/Drive/ckDesktop/Documents";
+  const files = [];
+  for (let i = 0; i < 6000; i++) files.push({ d: i % 3, n: "τιμολόγιο αριθμός " + i + " με αρκετά μεγάλο όνομα για τον έλεγχο.pdf", s: 1000 + i, m: 1.7e12, k: "pdf", v: "0123456789abcdef", x: "none" });
+  const idx = { v: 2, at: 1.7e12, f: [F, "/internal/Empty"], q: FC.QUOTA_DEF, used: 0, cut: 12, d: [F + "/Τιμολόγια/Έσοδα", F + "/Τιμολόγια/Έξοδα", F + "/Συμφωνητικά"], files };
+  const sealed = await G.sealText(K, JSON.stringify(idx));
+  assert.ok(sealed.length > 900 * 1024, "too big for one message: " + sealed.length);
+  const P = 800 * 1024, n = Math.ceil(sealed.length / P);
+  // a stray part of another set is dropped, then the real set in order
+  await b.box.webSocketMessage(sock, JSON.stringify({ fidxp: sealed.slice(0, 10), fi: 1, fn: n, fs: "zzz" }));
+  assert.equal(await b.st.storage.get("fpart"), undefined);
+  for (let i = 0; i < n; i++) await b.box.webSocketMessage(sock, JSON.stringify({ fidxp: sealed.slice(i * P, (i + 1) * P), fi: i, fn: n, fs: "set1" }));
+  assert.match(sock.sent[sock.sent.length - 1], /fidxok/);
+  assert.equal(await b.st.storage.get("fpart"), undefined, "the parts are cleaned up");
+  assert.equal([...b.st.kv.keys()].filter((k) => k.indexOf("y:") === 0).length, 0);
+  sock.closed = true;
+  await b.st.storage.put("devtools", [
+    { name: "files_list", description: "x", inputSchema: { type: "object" }, annotations: { readOnlyHint: true } },
+    { name: "files_read", description: "x", inputSchema: { type: "object" }, annotations: { readOnlyHint: true } }
+  ]);
+  const tc = async (name, args) => (await (await call(w, "POST", "/mcp", { bearer: t.access_token, json: { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args || {} } } })).json()).result;
+  let r = JSON.parse((await tc("files_list", { path: "Drive/ckDesktop/Documents/Τιμολόγια/Έσοδα" })).content[0].text);
+  assert.equal(r.total, 2000);
+  assert.match(r.entries[0].name, /^τιμολόγιο αριθμός/);
+  assert.match(r.note, /12 files left out/);
+  r = JSON.parse((await tc("files_list", { path: "Empty" })).content[0].text);
+  assert.equal(r.total, 0);
+  assert.match(r.note, /no files in Empty/);
+  // the owner adds Drive/ckMobile after the copy: listed at once, with why it is empty
+  r = await tc("files_list", { path: "Drive/ckMobile" });
+  assert.equal(r.isError, true);
+  await b.box.addGrant(K, "/internal/Drive/ckMobile", Date.now());
+  assert.doesNotMatch(JSON.stringify(await b.st.storage.get("fadd")), /ckMobile/, "kept sealed");
+  r = JSON.parse((await tc("files_list")).content[0].text);
+  assert.ok(r.folders.includes("Drive/ckMobile"));
+  r = await tc("files_list", { path: "Drive/ckMobile" });
+  assert.equal(r.isError, false);
+  assert.match(JSON.parse(r.content[0].text).note, /added Drive\/ckMobile to Claude's folders at .*after this copy/);
+  // a grant the copy already has, or one older than the copy, adds nothing
+  assert.equal(G.fileIndexOpen({ v: 2, d: ["/internal/a"], files: [{ d: 0, n: "x" }, { d: 5, n: "y" }, { d: 0, n: "a/b" }] }).files.length, 1, "bad rows are dropped");
+});
