@@ -802,6 +802,7 @@
       "entry.invoice": "New invoice · {app}",
       "tool.sum": "Summary of {app}", "tool.sumNo": "You kept the summary of {app} back", "tool.shopFind": "Products of {shop} for “{q}”: {n}", "tool.shopErr": "The shop could not be asked",
       "tool.gh": "GitHub {repo}: {what}", "tool.ghErr": "GitHub could not be read ({repo})",
+      "tool.calc": "Computed with Spreadsheet's formulas: {n}", "tool.hash": "SHA-256 of {path}",
       "gh.w.releases": "releases", "gh.w.latest_release": "latest release", "gh.w.file": "file", "gh.w.runs": "Actions runs", "gh.w.pulls": "pull requests", "gh.w.commits": "commits", "gh.w.issues": "issues",
       "f.pweight": "Weight", "f.length": "Length", "f.width": "Width", "f.height": "Height", "f.saleprice": "Sale price", "f.stock": "In stock", "f.managestock": "Stock counted", "f.stockstatus": "Availability",
       "v.ms.true": "yes", "v.ms.false": "no", "v.ss.instock": "in stock", "v.ss.outofstock": "out of stock", "v.ss.onbackorder": "on backorder",
@@ -1621,6 +1622,7 @@
       "entry.invoice": "Νέο τιμολόγιο · {app}",
       "tool.sum": "Σύνοψη: {app}", "tool.sumNo": "Κράτησες τη σύνοψη ({app})", "tool.shopFind": "Προϊόντα του {shop} για «{q}»: {n}", "tool.shopErr": "Το κατάστημα δεν απάντησε",
       "tool.gh": "GitHub {repo}: {what}", "tool.ghErr": "Το GitHub δεν διαβάστηκε ({repo})",
+      "tool.calc": "Υπολογισμός με τους τύπους του Υπολογιστικού φύλλου: {n}", "tool.hash": "SHA-256 του {path}",
       "gh.w.releases": "εκδόσεις", "gh.w.latest_release": "τελευταία έκδοση", "gh.w.file": "αρχείο", "gh.w.runs": "εκτελέσεις Actions", "gh.w.pulls": "pull requests", "gh.w.commits": "commits", "gh.w.issues": "issues",
       "f.pweight": "Βάρος", "f.length": "Μήκος", "f.width": "Πλάτος", "f.height": "Ύψος", "f.saleprice": "Τιμή προσφοράς", "f.stock": "Απόθεμα", "f.managestock": "Μέτρηση αποθέματος", "f.stockstatus": "Διαθεσιμότητα",
       "v.ms.true": "ναι", "v.ms.false": "όχι", "v.ss.instock": "σε απόθεμα", "v.ss.outofstock": "εξαντλημένο", "v.ss.onbackorder": "με προπαραγγελία",
@@ -3608,7 +3610,7 @@
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native", page: wmode === "native",
                                             actions: acts, history: hiOn,
                                             recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn, epub: rbOn, mockup: !builtin && !!installed().mockups,
-                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps), fonts: !data.set.chat && !ro, github: ghOn });
+                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps), fonts: !data.set.chat && !ro, github: ghOn, calc: true });
     if (ro) tools = tools.filter(function (x) { return !!RT_READ[x.name]; }).concat(builtin ? [] : RT.TOOLS);
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
@@ -3887,6 +3889,8 @@
     if (call.name === "undo_change") return undoTool(c, call.args, apps);
     if (call.name === "web_search") return webSearch(call.args);
     if (call.name === "github_read") return ghRead(call.args);
+    if (call.name === "calc") return calcTool(call.args);
+    if (call.name === "file_hash") return fileHash(call.args, apps);
     if (call.name === "read_page") return readPage(c, call.args);
     // Claude knows Anthropic's own page tool as web_fetch: the same
     // page, under read_page's rules (TV-PAGE).
@@ -5709,6 +5713,34 @@
     }, function (e) {
       var why = e && e.why ? e.why : "unreadable";
       return cfErr((LOCAL_SAY[why] || "the local file could not be read (" + why + ")") + ". Path: " + path + localHint());
+    });
+  }
+  // AS-CALC (wave 5, AH-7): exact sums with Spreadsheet's engine, and a
+  // file's SHA-256; fixed tools, nothing the model writes is run.
+  function calcTool(a) {
+    return loadOnce("../spreadsheet/functions.js").then(function () { return window.OrosSheetFx; }, function () { return null; }).then(function (FX) {
+      var r = C.calc(a, FX);
+      if (r.err) return { content: "Error: " + r.err, err: 1, ui: { k: "toolErr", why: "args", name: "calc" } };
+      return { content: JSON.stringify(r), ui: { k: "calc", n: r.results.length } };
+    });
+  }
+  function fileHash(a, apps) {
+    a = a && typeof a === "object" ? a : {};
+    if (!window.crypto || !crypto.subtle) return Promise.resolve(cfErr("this browser cannot compute SHA-256."));
+    return cfPrep(apps, false).then(function (x) {
+      if (x.err) return cfErr(x.err);
+      var CF = x.CF, p = CF.normPath(a.path), why = CF.reach(p, x.folders);
+      if (why) return cfErr(why);
+      return cfStat(x.fs, p).then(function (st) {
+        if (!st) return cfErr("\"" + CF.show(p) + "\" is not there.");
+        if (st.dir) return cfErr("\"" + CF.show(p) + "\" is a folder.");
+        return cfBytes(x.fs, p).then(function (bytes) {
+          return crypto.subtle.digest("SHA-256", bytes).then(function (h) {
+            var hex = Array.prototype.map.call(new Uint8Array(h), function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
+            return { content: JSON.stringify({ path: CF.show(p), size: bytes.byteLength, sha256: hex }), ui: { k: "hash", path: CF.show(p) } };
+          });
+        }, function () { return cfErr("\"" + CF.show(p) + "\" could not be read."); });
+      });
     });
   }
   function filesRead(c, a, apps) {
@@ -8721,6 +8753,8 @@
         else if (ui.k === "chgErr") txt = t("chg.err", { app: ui.app || "" });
         else if (ui.k === "shopFind") txt = t("tool.shopFind", { q: ui.q || "", n: ui.n || 0, shop: ui.shop || "" });   // AS-SHOP
         else if (ui.k === "shopErr") txt = t("tool.shopErr");
+        else if (ui.k === "calc") txt = t("tool.calc", { n: ui.n || 0 });   // AS-CALC
+        else if (ui.k === "hash") txt = t("tool.hash", { path: ui.path || "" });
         else if (ui.k === "gh") txt = t("tool.gh", { repo: ui.repo || "", what: t("gh.w." + (ui.what || "file")) });   // AS-GH
         else if (ui.k === "ghErr") txt = t("tool.ghErr", { repo: ui.repo || "" });
         else if (ui.k === "toolErr" && /^(args|unknown|empty|off)$/.test(ui.why)) txt = t("tool.err." + ui.why, { name: ui.name || "" });
@@ -11044,7 +11078,7 @@
   // there. Changes it would make come as numbered proposals (cards
   // that wait for the person follow in wave 3).
   var RT_READ = { search_data: 1, list_apps: 1, read_item: 1, app_summary: 1, change_history: 1,
-                  files_list: 1, files_read: 1, web_search: 1, read_page: 1, github_read: 1,
+                  files_list: 1, files_read: 1, web_search: 1, read_page: 1, github_read: 1, calc: 1, file_hash: 1,
                   budget_lines: 1, invoice_list: 1, stock_items: 1, publish_titles: 1 };
   var rtCtx = null;            // the run going on in this frame
   var RT_FILE_MAX = 60000, RT_REF_MAX = 30000;

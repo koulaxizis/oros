@@ -4068,6 +4068,59 @@
   // files: the user picked folders for Claude, "write" when it may
   // change them too, for the files_* tools;
   // fonts: list_fonts, FM-7)
+  // ---------- AS-CALC (Assistant wave 5; AH-7: fixed tools, never run_js) ----------
+  // calc: Spreadsheet's own formula engine (spreadsheet/functions.js,
+  // OrosSheetFx) over a small table the model passes; no code runs.
+  // file_hash: SHA-256 of a file on the orOS disk (assistant.js).
+  var CALC_ROWS = 2000, CALC_COLS = 26, CALC_F = 20, CALC_CELL = 500;
+  var TOOL_CALC = {
+    name: "calc",
+    description: "Compute exactly with the formula engine of orOS Spreadsheet (Excel functions: SUM, ROUND, SUMIF, VLOOKUP, DATE, DATEDIF, EDATE, NETWORKDAYS, PMT, TEXT …) instead of counting in your head. " +
+      "Optionally pass a table (rows of cells, the first row at A1) and refer to it as A1:C20; each formula starts with =. Use it for totals, VAT, percentages, dates and loans.",
+    params: { type: "object", properties: {
+      formulas: { type: "array", items: { type: "string" }, description: "Up to 20 formulas, e.g. \"=ROUND(SUM(B2:B40)*0.24,2)\" or \"=NETWORKDAYS(DATE(2026,12,1),DATE(2026,12,31))\"." },
+      table: { type: "array", items: { type: "array", items: { type: ["string", "number", "boolean", "null"] } }, description: "Optional: up to 2000 rows × 26 columns of values (numbers as numbers or plain text like 12.5)." } },
+      required: ["formulas"] }
+  };
+  var TOOL_HASH = {
+    name: "file_hash",
+    description: "The SHA-256 (hex) and size of a file on the orOS disk, e.g. to check that a download or a release file is the one expected. Same folders as files_read.",
+    params: { type: "object", properties: { path: { type: "string", description: "The file's path on the orOS disk." } }, required: ["path"] }
+  };
+  // → { results: [{ formula, value | error }] } | { err }
+  function calc(a, FX) {
+    a = a && typeof a === "object" ? a : {};
+    if (!FX || typeof FX.engine !== "function") return { err: "the formula engine is not available on this device." };
+    var fs = Array.isArray(a.formulas) ? a.formulas : typeof a.formulas === "string" ? [a.formulas] : [];
+    fs = fs.filter(function (f) { return typeof f === "string" && f.trim(); }).slice(0, CALC_F).map(function (f) { f = f.trim().slice(0, 2000); return f.charAt(0) === "=" ? f : "=" + f; });
+    if (!fs.length) return { err: "give at least one formula, e.g. =SUM(1,2)." };
+    var tb = (Array.isArray(a.table) ? a.table : []).slice(0, CALC_ROWS).map(function (row) {
+      return (Array.isArray(row) ? row : []).slice(0, CALC_COLS).map(function (v) {
+        if (v === null || v === undefined) return "";
+        if (typeof v === "number") return isFinite(v) ? String(v) : "";
+        if (typeof v === "boolean") return v ? "TRUE" : "FALSE";
+        v = String(v).slice(0, CALC_CELL);
+        return v.charAt(0) === "=" ? "'" + v : v;          // a table holds values, never formulas
+      });
+    });
+    var fr = tb.length;                                     // formulas sit below the table
+    function raw(sid, r, c) {
+      if (sid !== "calc") return "";
+      if (r >= fr) return c === 0 && r - fr < fs.length ? fs[r - fr] : "";
+      var row = tb[r];
+      return row && row[c] != null ? row[c] : "";            // "'=…" stays text (literal drops the ')
+    }
+    var E = FX.engine({ raw: raw, sheetId: function (n) { return n == null || String(n).toLowerCase() === "calc" ? "calc" : null; },
+                        extent: function () { return { rows: fr, cols: CALC_COLS }; }, lang: "en" });
+    return { results: fs.map(function (f, i) {
+      var v;
+      try { v = E.value("calc", fr + i, 0); } catch (e) { v = FX.ERR.ERROR; }
+      if (FX.isErr(v)) return { formula: f, error: v };
+      if (typeof v === "number") v = Math.round(v * 1e12) / 1e12;
+      return { formula: f, value: v };
+    }) };
+  }
+
   // ---------- AS-GH (Assistant wave 6; AH-5, AH-PNoxpress-1, AH-PWaymark-3) ----------
   // Read-only GitHub through the GitHub account of orOS Connected
   // services (links/host.js: the token never reaches the Assistant or
@@ -4191,6 +4244,8 @@
     if (opts.cover) out.push(TOOL_COVER);
     if (opts.rules && autoCore()) out.push(TOOL_RULE);
     if (opts.github) out.push(TOOL_GITHUB);   // AS-GH
+    if (opts.calc) out.push(TOOL_CALC);   // AS-CALC
+    if (opts.files) out.push(TOOL_HASH);
     if (opts.web) out.push(TOOL_WEB, TOOL_PAGE);
     else if (opts.page) out.push(TOOL_PAGE);
     return out;
@@ -5821,7 +5876,7 @@
     labelHit: labelHit, filterLabel: filterLabel, isNoLabel: isNoLabel, WIDE: WIDE, LABEL_WIDE: LABEL_WIDE,
     parseMd: parseMd, parseInline: parseInline, linkKind: linkKind,
     systemPrompt: systemPrompt, chatTitle: chatTitle, monthKey: monthKey,
-    toolsFor: toolsFor, ghReq: ghReq, ghShape: ghShape, GH_WHAT: GH_WHAT, TOOL_GITHUB: TOOL_GITHUB, GATE_OPEN: GATE_OPEN, TOOL_LINE: TOOL_LINE, TOOL_KB_COLS: TOOL_KB_COLS, TOOL_KB_BOARD: TOOL_KB_BOARD, gateTools: gateTools, GATE_TOOLS: GATE_TOOLS, GATE_BAD: GATE_BAD, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
+    toolsFor: toolsFor, calc: calc, TOOL_CALC: TOOL_CALC, TOOL_HASH: TOOL_HASH, ghReq: ghReq, ghShape: ghShape, GH_WHAT: GH_WHAT, TOOL_GITHUB: TOOL_GITHUB, GATE_OPEN: GATE_OPEN, TOOL_LINE: TOOL_LINE, TOOL_KB_COLS: TOOL_KB_COLS, TOOL_KB_BOARD: TOOL_KB_BOARD, gateTools: gateTools, GATE_TOOLS: GATE_TOOLS, GATE_BAD: GATE_BAD, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
     DO_KINDS: DO_KINDS, normAction: normAction, HIST_DAYS: HIST_DAYS, HIST_MAX: HIST_MAX, histEntry: histEntry, histPrune: histPrune, histQuery: histQuery, histForModel: histForModel, undoPick: undoPick, UNDO_MAX: UNDO_MAX, canUndo: canUndo,
     CHAT_DIR: CHAT_DIR, chatPath: chatPath, chatFile: chatFile, parseChatFile: parseChatFile,
     normChat: normChat, mergeChat: mergeChat, msgSig: msgSig,

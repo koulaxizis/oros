@@ -270,6 +270,9 @@ A routine is a job the assistant does by itself on a schedule, like a colleague 
 - `Claude's reports` (optional): a folder where Claude's routine on the same job writes its reports. Each run reads the newest one and ends with `Compared with Claude's report`.
 - `Kanban board` and `column` (optional): a card that waits for you then has `To Kanban`, which opens Kanban's own new-card field filled in; you save it.
 
+## Exact sums
+For totals, VAT, percentages, dates and loans the assistant uses the formulas of [Spreadsheet](app:spreadsheet) instead of counting in its head ("what is 24% VAT on these 38 lines?", "how many working days in December?"). It can also give the SHA-256 of a file on the orOS disk, to check a download.
+
 ## GitHub (read only)
 With a GitHub account in orOS Settings › Connected services (best a fine-grained token that may only read, naming its repositories), ask for example "what is the latest Noxpress release and how often was it downloaded?", "show me updates.json on main" or "did the last Actions run fail?". The assistant can only read: releases, files, Actions runs, pull requests, commits and issues. It never sees the token. A routine reads GitHub only when you tick `May read GitHub`.
 

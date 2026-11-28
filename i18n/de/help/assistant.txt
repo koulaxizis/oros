@@ -270,6 +270,9 @@ Eine Routine ist eine Aufgabe, die der Assistent nach Plan selbst erledigt, wie 
 - `Claudes Berichte` (optional): ein Ordner, in den Claudes Routine zur selben Aufgabe ihre Berichte schreibt. Jeder Lauf liest den neuesten und endet mit `Vergleich mit Claudes Bericht`.
 - `Kanban-Board` und `Spalte` (optional): Eine Karte, die auf dich wartet, hat dann `Nach Kanban`, das Kanbans eigenes Feld für neue Karten ausgefüllt öffnet; du speicherst sie.
 
+## Genaue Rechnungen
+Für Summen, Mehrwertsteuer, Prozente, Daten und Kredite nutzt der Assistent die Formeln der [Tabelle](app:spreadsheet), statt im Kopf zu rechnen („Wie viel sind 24 % MwSt. auf diese 38 Zeilen?“, „Wie viele Arbeitstage hat der Dezember?“). Er nennt auch die SHA-256 einer Datei auf der orOS-Disk, um einen Download zu prüfen.
+
 ## GitHub (nur lesen)
 Mit einem GitHub-Konto in den orOS-Einstellungen › Verbundene Dienste (am besten ein feingranulares Token, das nur liest und seine Repositories nennt) frag zum Beispiel „Was ist das neueste Noxpress-Release und wie oft wurde es heruntergeladen?“, „Zeig mir updates.json auf main“ oder „Ist der letzte Actions-Lauf fehlgeschlagen?“. Der Assistent kann nur lesen: Releases, Dateien, Actions-Läufe, Pull-Requests, Commits und Issues. Das Token sieht er nie. Eine Routine liest GitHub nur, wenn du `Darf GitHub lesen` ankreuzt.
 
