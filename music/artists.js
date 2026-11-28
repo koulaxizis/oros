@@ -506,6 +506,75 @@
       return mbGet(releasesUrl(rgId)).then(function (j) { var r = parseRelease(j, rgId); if (!r) throw Err("closed"); return r; });
     });
   }
+  // ---------- 8. Bandcamp / SoundCloud through MusicBrainz (MU-EMB2) ----------
+  // MusicBrainz keeps, for many artists, their Bandcamp and SoundCloud
+  // pages, and for many releases the Bandcamp album page. Those play in
+  // the services' own players (core.js embedUrl, music.js embedOpen);
+  // nothing is asked of Bandcamp or SoundCloud before a tap.
+  function bcUrl(id, off) { return mbId(id) ? MB + "release?" + qs({ artist: id, inc: "url-rels", fmt: "json", limit: 100, offset: off || 0 }) : ""; }
+  // -> [{ u Bandcamp album/song page, t, y?, id release mbid, cv cover }], one per page, newest first
+  function parseBc(j) {
+    var list = j && Array.isArray(j.releases) ? j.releases : [], by = {};
+    list.forEach(function (r) {
+      var id = mbId(r && r.id);
+      if (!id) return;
+      (Array.isArray(r.relations) ? r.relations : []).forEach(function (x) {
+        var e = C.embedUrl(httpsUrl(x && x.url && x.url.resource));
+        if (!e || e.kind !== "bc") return;
+        var y = year(r.date), o = by[e.u];
+        if (o && (!y || (o.y && o.y <= y))) return;
+        by[e.u] = { u: e.u, t: str(r.title) || "?", id: id, cv: caaRelease(id) };
+        if (y) by[e.u].y = y;
+      });
+    });
+    return Object.keys(by).map(function (k) { return by[k]; })
+      .sort(function (a, b) { return (b.y || 0) - (a.y || 0) || C.fold(a.t).localeCompare(C.fold(b.t)); });
+  }
+  // The artist's own SoundCloud page (a profile plays its songs in the widget).
+  function scOf(links) {
+    var l = (links || []).filter(function (x) { return x && x.n === "SoundCloud"; }).map(function (x) { return C.embedUrl(x.u); }).filter(Boolean)[0];
+    return l && l.kind === "sc" ? l.u : "";
+  }
+  function bcRoot(links) {
+    return (links || []).some(function (x) { return x && x.n === "Bandcamp" && /^https:\/\/[a-z0-9-]+\.bandcamp\.com\/?$/i.test(x.u); });
+  }
+  function onBandcamp(id) {
+    if (!mbId(id)) return Promise.reject(Err("id"));
+    return cached("bc|" + id, TTL.g, function () {
+      var all = [];
+      var page = function (off) {
+        return mbGet(bcUrl(id, off)).then(function (j) {
+          all = all.concat(j && Array.isArray(j.releases) ? j.releases : []);
+          var total = +(j && j["release-count"]) || 0;
+          if (off + 100 < total && off < 200) return page(off + 100);
+          return parseBc({ releases: all });
+        });
+      };
+      return page(0);
+    });
+  }
+  // Artists with a MusicBrainz tag (genre).
+  function tagUrl(tag) {
+    var w = luceneWords(tag);
+    return w ? MB + "artist?" + qs({ query: 'tag:"' + w + '"', limit: 25, fmt: "json" }) : "";
+  }
+  function byTag(tag, lang) {
+    var u = tagUrl(tag);
+    if (!u) return Promise.resolve([]);
+    return cached("t|" + String(lang || "").slice(0, 2) + "|" + nameKey(tag), TTL.s, function () {
+      return mbGet(u).then(function (j) { return (j && Array.isArray(j.artists) ? j.artists : []).map(function (x) { return artistCard(x, lang); }).filter(Boolean); });
+    });
+  }
+  // Only an artist's links: whether it has a Bandcamp page / a SoundCloud profile.
+  function linksUrl(id) { return mbId(id) ? MB + "artist/" + id + "?" + qs({ inc: "url-rels", fmt: "json" }) : ""; }
+  function parseEmbedLinks(j) {
+    var links = (j && Array.isArray(j.relations) ? j.relations : []).map(linkOf).filter(Boolean);
+    return { bc: links.some(function (l) { return l.n === "Bandcamp"; }), sc: scOf(links) };
+  }
+  function embedLinks(id) {
+    if (!mbId(id)) return Promise.reject(Err("id"));
+    return cached("u|" + id, TTL.a, function () { return mbGet(linksUrl(id)).then(parseEmbedLinks); });
+  }
   function pages(id) { return { mb: "https://musicbrainz.org/artist/" + id }; }
   // ListenBrainz (one day / a week on the device).
   function topArtists(range) {
@@ -520,7 +589,7 @@
   }
 
   var api = {
-    VERSION: "1.0.0", MB_GAP: MB_GAP, TTL: TTL, MBID_RE: MBID_RE, DB: DB,
+    VERSION: "1.1.0", MB_GAP: MB_GAP, TTL: TTL, MBID_RE: MBID_RE, DB: DB,
     mbId: mbId, nameKey: nameKey, titleKey: titleKey, sameArtist: sameArtist, luceneWords: luceneWords,
     searchUrl: searchUrl, parseSearch: parseSearch, artistUrl: artistUrl, parseArtist: parseArtist, linkOf: linkOf,
     groupsUrl: groupsUrl, parseGroups: parseGroups, shelves: shelves, caa: caa, releasesUrl: releasesUrl, pickRelease: pickRelease, parseRelease: parseRelease,
@@ -528,6 +597,8 @@
     matchTracks: matchTracks, byArtist: byArtist,
     topArtistsUrl: topArtistsUrl, parseTopArtists: parseTopArtists, freshUrl: freshUrl, parseFresh: parseFresh, similarUrl: similarUrl, parseSimilar: parseSimilar,
     topArtists: topArtists, fresh: fresh, similar: similar,
+    bcUrl: bcUrl, parseBc: parseBc, scOf: scOf, bcRoot: bcRoot, tagUrl: tagUrl, linksUrl: linksUrl, parseEmbedLinks: parseEmbedLinks,
+    onBandcamp: onBandcamp, byTag: byTag, embedLinks: embedLinks,
     search: search, artist: artist, groups: groups, album: album, wiki: wiki, pages: pages
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

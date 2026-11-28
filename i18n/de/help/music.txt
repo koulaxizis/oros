@@ -68,6 +68,7 @@ Schalte in den Einstellungen (⚙) `Bandcamp- und SoundCloud-Player` ein. Füge 
 - Keiner der beiden Dienste lässt andere Apps seine Musik streamen. Darum kommt sie nicht in die Warteschlange, hat keinen Equalizer und kein Crossfade, kann nicht offline gespeichert werden und stoppt, wenn Musik geschlossen wird. Startet ein Song von Musik, schließt sich der Player.
 - Der Dienst sieht, was du hörst, wie auf seiner eigenen Website. Um den Player einer Bandcamp-Seite zu finden, liest orOS genau diese Seite einmal über sein Relay. Titel und Cover von SoundCloud kommen von SoundCloud selbst.
 - Nur Adressen der Form `name.bandcamp.com/album/…` oder `/track/…` und `soundcloud.com/name/…` funktionieren; Kurzlinks und eigene Domains von Künstlern nicht.
+- Künstler finden: Eine Suche in Bandcamp oder SoundCloud gibt es nicht, aber MusicBrainz weiß, welche Künstler dort sind. Mit `Künstlerseiten online` zeigt die Seite eines Künstlers `Auf Bandcamp` (seine Alben dort, aus MusicBrainz) und `Auf SoundCloud`; ein Tippen spielt es hier. Ein Genre auf der Künstlerseite, oder `{Genre}: Künstler auf Bandcamp und SoundCloud` auf einer Genre-Seite, listet die MusicBrainz-Künstler mit diesem Genre und markiert die auf Bandcamp oder SoundCloud. Stimmungen gehen nicht: Keiner der Dienste veröffentlicht sie.
 
 ## Deine eigenen Server
 Wenn deine Musik auf einem eigenen Server liegt, spielt Musik sie von dort. Drücke **+** und `Server verbinden`, oder geh zu `Deine Bibliothek › Server`:

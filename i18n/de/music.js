@@ -702,6 +702,16 @@ orosPack("de", "music", {
  "em.turnOn": "Einschalten und abspielen",
  "em.more": "Songs zeigen",
  "em.less": "Songs ausblenden",
+ "em.onBc": "Auf Bandcamp",
+ "em.onSc": "Auf SoundCloud",
+ "em.scPlay": "Abspielen: {n} auf SoundCloud",
+ "em.bcNone": "MusicBrainz kennt noch kein Bandcamp-Album für: {n}.",
+ "em.offNote": "Diese spielen hier in den Playern von Bandcamp und SoundCloud, sobald du sie einschaltest.",
+ "em.turnOn0": "Einschalten",
+ "em.tagBtn": "Bandcamp und SoundCloud",
+ "em.tagOpen": "{g}: Künstler auf Bandcamp und SoundCloud",
+ "em.tagSub": "Künstler mit diesem Genre auf MusicBrainz. Ein Abzeichen zeigt, wer Bandcamp oder SoundCloud hat; ihre Seite spielt es.",
+ "em.checking": "Suche ihre Bandcamp- und SoundCloud-Seiten…",
  "s.emb": "Bandcamp- und SoundCloud-Player",
  "s.embHint": "Füge einen Bandcamp- oder SoundCloud-Link ein (oder tippe ihn in die Suche) und er spielt hier, im eigenen Player des Dienstes. Like ihn oder füge ihn wie jeden Song einer Playlist hinzu. Der Dienst sieht, was du hörst, wie auf seiner eigenen Website; eine Bandcamp-Seite wird einmal über das orOS-Relay gelesen, um ihren Player zu finden. Nicht in der Warteschlange, kein Equalizer, nicht offline, und er stoppt, wenn Musik geschlossen wird."
 });
