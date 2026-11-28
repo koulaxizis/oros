@@ -36,10 +36,10 @@ test("extension/pm/ is a byte-for-byte copy of orOS's vault code (run .github/sc
   const FF = require(path.join(ROOT, ".github/scripts/ext-firefox.js"));
   const bg = fs.readFileSync(path.join(DIR, "background.js"), "utf8");
   const ff = FF.firefoxManifest(m, bg);
-  assert.deepEqual(ff.background, { scripts: ["core.js", "pm/pmcrypto.js", "pm/pmcore.js", "pm/pmkinds.js", "pmvault.js", "background.js"] });
+  assert.deepEqual(ff.background, { scripts: ["core.js", "pm/pmcrypto.js", "pm/pmcore.js", "pm/pmkinds.js", "pmvault.js", "pmfill.js", "background.js"] });
   ff.background.scripts.forEach((f) => assert.ok(fs.existsSync(path.join(DIR, f)), f));
   assert.equal(m.background.scripts, undefined);   // Chromium form has the service worker only
-  assert.match(fs.readFileSync(path.join(DIR, "background.js"), "utf8"), /importScripts\("core\.js", "pm\/pmcrypto\.js", "pm\/pmcore\.js", "pm\/pmkinds\.js", "pmvault\.js"\)/);
+  assert.match(fs.readFileSync(path.join(DIR, "background.js"), "utf8"), /importScripts\("core\.js", "pm\/pmcrypto\.js", "pm\/pmcore\.js", "pm\/pmkinds\.js", "pmvault\.js", "pmfill\.js"\)/);
   assert.match(m.content_security_policy.extension_pages, /script-src 'self' 'wasm-unsafe-eval'/);
   assert.ok(!/unsafe-inline|unsafe-eval'/.test(m.content_security_policy.extension_pages.replace("'wasm-unsafe-eval'", "")));
   assert.equal(m.browser_specific_settings.gecko.id, "send-to-oros@useoros.online");   // released id never changes

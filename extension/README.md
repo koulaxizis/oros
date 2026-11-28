@@ -85,14 +85,32 @@ Android's Share → orOS.
   isolated world into that page; the orOS shell answers
   `oros-pw-saved`. orOS shows it in the Passwords editor and stores it
   only when the person presses Save there. Nothing is kept here.
+- **Suggestions inside forms (PW-AF7, 2.3.0):** with `https://*/*`
+  allowed (one click on `Allow` in the popup, or in the options) and
+  the option on (default), `background.js` registers `inline.js`
+  (`scripting.registerContentScripts`, id `oros-inline`, https, top
+  frame only; also injected into tabs already open). A trusted click,
+  Tab or ArrowDown into a login, card or address field (`classify`)
+  sends `ii-open`; the answer is only show / token / row count. The
+  list is `inline.html` (+ `inline-menu.js`, `inline.css`, the only
+  web-accessible files) in a closed shadow root on the top layer; it
+  asks `ii-list` with the token and shows names with textContent. A
+  pick (`ii-fill`) fills the top frame with `fillInPage` only after
+  `inline.js` confirms the list was on screen for 500 ms, unfaded and
+  on top (`ii-check`), and, where the browser has it, an
+  IntersectionObserver v2 says nothing covers it. Locked: `Unlock`
+  opens the popup (`action.openPopup`), else a hint. Never on the orOS
+  address; tokens in `storage.session`, 10 minutes.
 - **Not yet:** logins inside a frame, passkeys.
 
 Permissions: `activeTab` and `scripting` (fill the tab you clicked
 on, only then), `storage`, `alarms` (the lock time, the 10-minute
 re-read), `contextMenus`,
 host access to `https://useoros.online/*` (read the vault copy);
-optional, asked when needed: other https sites, `localhost`.
-No content scripts. One network request of its own: once a day
+optional, asked when needed: other https sites (all of them for the
+suggestions inside forms), `localhost`.
+The only content script is `inline.js` (above), registered at run time
+once all https sites are allowed. One network request of its own: once a day
 (alarm `addon-check`) `background.js` reads `extension/manifest.json`
 from the orOS address (`fetch`, no cookies); a newer version
 (`OrosExt.newerVersion`) is kept as `addonNew` in `storage.local`,

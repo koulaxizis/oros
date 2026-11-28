@@ -3,7 +3,7 @@
   "name": "__MSG_extName__",
   "short_name": "orOS",
   "description": "__MSG_extDesc__",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "default_locale": "en",
   "homepage_url": "https://useoros.online/",
   "icons": {
@@ -41,6 +41,19 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "inline.html",
+        "inline.css",
+        "inline-menu.js",
+        "icons/icon-16.png"
+      ],
+      "matches": [
+        "https://*/*"
+      ]
+    }
+  ],
   "commands": {
     "_execute_action": {
       "suggested_key": {

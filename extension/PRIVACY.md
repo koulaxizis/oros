@@ -30,7 +30,13 @@ is sent with it.
 - It fills a page only when you choose an entry in its window, and
   only with that entry. When a card number sits in a payment frame of
   another site, it names that site and asks the browser for access to
-  it first. It never reads the pages you visit, except when you press
+  it first.
+- Suggestions inside forms (on once you allow the add-on on all sites;
+  off in its options): a small script of the add-on runs on https
+  pages. It only notices when you click into a login, card or address
+  field, and then shows the add-on's own list under it, which the page
+  cannot read. It reads nothing else from the page and sends nothing
+  anywhere; it fills only the entry you pick. Apart from that, it never reads the pages you visit, except when you press
   "Save the login from this page": then it reads the name and password
   you typed on that page, asks you, and hands them to Passwords in your
   orOS tab, where they are saved only when you press Save.
