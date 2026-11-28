@@ -270,6 +270,9 @@ A routine is a job the assistant does by itself on a schedule, like a colleague 
 - `Claude's reports` (optional): a folder where Claude's routine on the same job writes its reports. Each run reads the newest one and ends with `Compared with Claude's report`.
 - `Kanban board` and `column` (optional): a card that waits for you then has `To Kanban`, which opens Kanban's own new-card field filled in; you save it.
 
+## GitHub (read only)
+With a GitHub account in orOS Settings › Connected services (best a fine-grained token that may only read, naming its repositories), ask for example "what is the latest Noxpress release and how often was it downloaded?", "show me updates.json on main" or "did the last Actions run fail?". The assistant can only read: releases, files, Actions runs, pull requests, commits and issues. It never sees the token. A routine reads GitHub only when you tick `May read GitHub`.
+
 ## Pictures in Photo Lab
 Ask, for example, "make my open photo black and white", "write Winter instead of Summer on the beach picture", "make all my pictures 1200 pixels on the long side", "crop it square and add my name at the bottom right" or "give the title a shadow". The assistant reads the picture's layers (with your permission for [Photo Lab](app:photolab)) and shows a card with the changes and how many things each picture gets.
 - `Apply` opens Photo Lab, which opens each picture in turn, makes the changes as its own commands and saves it; `Stop` in Photo Lab ends it early.

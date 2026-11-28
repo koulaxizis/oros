@@ -270,6 +270,9 @@ Eine Routine ist eine Aufgabe, die der Assistent nach Plan selbst erledigt, wie 
 - `Claudes Berichte` (optional): ein Ordner, in den Claudes Routine zur selben Aufgabe ihre Berichte schreibt. Jeder Lauf liest den neuesten und endet mit `Vergleich mit Claudes Bericht`.
 - `Kanban-Board` und `Spalte` (optional): Eine Karte, die auf dich wartet, hat dann `Nach Kanban`, das Kanbans eigenes Feld für neue Karten ausgefüllt öffnet; du speicherst sie.
 
+## GitHub (nur lesen)
+Mit einem GitHub-Konto in den orOS-Einstellungen › Verbundene Dienste (am besten ein feingranulares Token, das nur liest und seine Repositories nennt) frag zum Beispiel „Was ist das neueste Noxpress-Release und wie oft wurde es heruntergeladen?“, „Zeig mir updates.json auf main“ oder „Ist der letzte Actions-Lauf fehlgeschlagen?“. Der Assistent kann nur lesen: Releases, Dateien, Actions-Läufe, Pull-Requests, Commits und Issues. Das Token sieht er nie. Eine Routine liest GitHub nur, wenn du `Darf GitHub lesen` ankreuzt.
+
 ## Bilder in Photo Lab
 Bitte zum Beispiel „mach mein offenes Foto schwarzweiß“, „schreib Winter statt Sommer auf das Strandbild“, „mach alle meine Bilder an der langen Seite 1200 Pixel groß“, „schneide es quadratisch zu und setz meinen Namen unten rechts“ oder „gib dem Titel einen Schatten“. Der Assistent liest die Ebenen des Bildes (mit deiner Erlaubnis für [Photo Lab](app:photolab)) und zeigt eine Karte mit den Änderungen und wie viele Dinge sich in jedem Bild ändern.
 - `Anwenden` öffnet Photo Lab, das die Bilder nacheinander öffnet, die Änderungen mit seinen eigenen Befehlen vornimmt und speichert; `Stopp` dort beendet es früher.
