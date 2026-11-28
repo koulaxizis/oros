@@ -140,6 +140,31 @@ test("host watch: event.soon skips sensitive apps and hides titles under Sensiti
   } finally { delete global.localStorage; }
 });
 
+test("host watch: event.soon counts real minutes the nights the clocks change (Athens)", async () => {
+  const tz = process.env.TZ, now0 = Date.now;
+  process.env.TZ = "Europe/Athens";
+  try {
+    // [now, the event's HH:MM, minutes left]: 03:02 does not exist in March (it is 04:02);
+    // in October 03:00-03:59 comes twice and its second pass counts too
+    for (const [at, hh, left] of [["2027-03-28T02:59:00+02:00", "04:02", 3], ["2027-10-31T03:59:00+03:00", "03:02", 3],
+                                  ["2027-10-31T03:30:00+03:00", "03:35", 5], ["2027-03-27T02:59:00+02:00", "03:02", 3]]) {
+      Date.now = () => Date.parse(at);
+      const today = C.ymdOf(Date.now());
+      const res = { today, apps: [{ id: "calendar" }], groups: { today: [{ key: "c1", app: "calendar", time: hh, title: "Review", kind: "event" }] } };
+      const { H, emitted } = fakeShell(["automations", "calendar"], { orosToday: { build: () => Promise.resolve(res) } });
+      try {
+        H.save(C.put(C.empty(), rule({ id: "w1", when: { t: "event", ev: "event.soon", min: left }, do: [{ a: "notify", text: "[{text}]" }] }), 1).data);
+        H.tick();
+        await new Promise((r) => setTimeout(r, 10));
+        assert.equal(emitted.length, 1, at + " " + hh);
+      } finally { delete global.localStorage; }
+    }
+  } finally {
+    Date.now = now0;
+    if (tz === undefined) delete process.env.TZ; else process.env.TZ = tz;
+  }
+});
+
 test("editor: minutes and amount rows, steps without fields, strings EN/EL/DE", () => {
   const html = read("automations/index.html"), app = read("automations/app.js"), de = read("i18n/de/automations.js");
   assert.match(html, /id="min-row" hidden/);

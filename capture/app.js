@@ -634,6 +634,12 @@
   // for the screen on the tap and drew one frame before this app
   // opened). Taken once from the parent; "region" asks to drag.
   function takeHeld(target) {
+    // QS-REC-1: Quick settings' › of Screen recording: the recording options.
+    if (target && typeof target === "object" && target.rec === "settings") {
+      if (prefs.mode !== "rec") { prefs.mode = "rec"; savePrefs(); renderOptions(); }
+      if (!stream && !clip) show("idle");
+      return true;
+    }
     if (!target || typeof target !== "object" || (target.shot !== "screen" && target.shot !== "region")) return false;
     var P = window.parent, held = null;
     try { held = P && P !== window && typeof P.__orosTakeShot === "function" ? P.__orosTakeShot() : null; } catch (e) { held = null; }

@@ -1,7 +1,7 @@
 # Appearance
 Make orOS look the way you like: language, light or dark theme, colour skin, wallpaper, seasonal decorations, a screen pet and the weather in the top bar. Most of these are in the [Settings](app:settings) app, under `Appearance`: open the menu and choose `Settings`. The top-bar weather is set in the Weather app.
 
-`Make it yours`, the first card of `Appearance`, puts the look of orOS in one place with a small preview of the desktop: `Choose a wallpaper` (it takes you to the `Wallpaper` card below, the one place to pick it), colour, `Accent from wallpaper`, the look of the top bar, the Dock and its edge, the motion feel, interface sounds and the look of the lock screen. Each choice is the same setting as in its own place further down (and in `Screen lock`), so changing it either way keeps both in step.
+`Make it yours`, the first card of `Appearance`, puts the look of orOS in one place with a small preview of the desktop: `Choose a wallpaper` (it takes you to the `Wallpaper` card below, the one place to pick it), `Choose a colour` (it takes you to `System colour`, with `Accent from wallpaper`), the look of the top bar, the Dock and its edge, the motion feel, interface sounds and the look of the lock screen. Each choice is the same setting as in its own place further down (and in `Screen lock`), so changing it either way keeps both in step.
 
 ## Quick settings
 The button at the right end of the top bar (the network and power symbols) opens Quick settings, as on a Linux desktop. [[Ctrl+Alt+Shift+M]] opens it too.
@@ -14,6 +14,7 @@ The button at the right end of the top bar (the network and power symbols) opens
 - `Energy saver` stops what moves on the desktop (live wallpaper, Living land, the Light show, the weather desktop, seasonal decorations, the opening and closing animation of apps) and refreshes widgets once a minute. It turns on by itself when the battery falls under 20 % and is not charging, and off again on the charger; turned off on a low battery, it stays off until the next charge. Sync, notifications, alarms, timers and sound never wait for it. A leaf on the top-bar button shows it is on. Both are set on this device only.
 - `Playing` lists the music, podcast, radio station or Sound Mixer mix that plays, with Play / Pause; tap its name to open the app.
 - `Screenshot` takes a picture of the whole screen with one tap; its arrow offers `Whole screen` or `Region`. Screen Capture opens with the picture, and you save it to Files › Pictures. See [Screen Capture](help:a/capture).
+- `Screen recording` records a video with one tap: choose what to share and it starts at once, also while you open and close apps. While it runs, the button and the top bar show the time and stop it. The video saves itself in Files › Videos; the arrow opens the recording options. On an Android phone the orOS app records it, into the phone's Movies › orOS; in a phone's browser the button is not there. See [Screen Capture](help:a/capture).
 - The `Search` field at the top hands what you type to the menu's search: apps, files and settings. With a mouse and keyboard the panel opens with the cursor in it; on a touch screen the keyboard stays closed until you tap it.
 - On orOS USB, the panel also has the volume and brightness, Wi-Fi and Bluetooth.
 
@@ -61,6 +62,10 @@ The top bar can show a few live items next to the clock. Add them and set their 
 - `AI use this month (your own key)`: how many tokens the [Assistant](app:assistant) used this month with your own keys (Claude, OpenAI and the other services), and how many of Tavily's 1,000 free searches a month it used on this device; it turns to the accent colour from 800. Local models (on your computer or in the browser) never count. Only numbers, never what you asked.
 - `Battery`: the battery's percent, and `charging` while it charges or `low` from 20 % down, on a laptop, tablet or phone whose browser reports it (Chrome, Edge and the orOS USB do; Firefox and Safari do not). A computer on mains power shows nothing. Tap it to open Quick settings.
 - `Now playing`: what [Music](app:music), [Podcasts](app:podcasts), [Radio](app:radio) or the [Sound Mixer](app:mixer) plays, while it plays. Tap it for a small player: Previous, Play / Pause, Next and `Open` the app.
+- `Screen time`: how long you used orOS today, while Settings › Screen time is on. Tap it for today's apps, longest first (the names stay hidden while Sensitive work is on, and a locked app is never listed); `Open Screen time` goes to its settings.
+- `Storage`: how much space is free. On the orOS USB stick, an installed orOS or Portable it is the disk orOS keeps its data on; in a browser it is the space the browser gives orOS. It turns to the warning colour with `almost full` under 10 %. Tap it for Settings › System › About this device.
+- `Exchange rate`: your currency pair in the [Calculator](app:calculator)'s `Convert` mode (euro to US dollar until you choose another) with the European Central Bank's reference rate it already keeps; nothing new is fetched. Tap it to convert. Hidden while Sensitive work is on.
+- `Mail`: how many emails are unread in your [Mail](app:mail) Inboxes (the count Mail keeps on this device; never a sender or a subject in the bar). Tap it for the unread messages, newest first, and `Starred` one tap away; a message opens in Mail. Only what Mail has already loaded on this device shows. Hidden while Sensitive work is on or Mail is locked.
 
 Live pills need no ticking: while a timer or the stopwatch of [Time](app:time) runs, or [Screen Capture](app:capture) records, a pill with its time shows at the start of the bar (the timer that ends first, with "+1" when another one runs too). Tap it to open the app; the button beside it pauses the timer or the stopwatch (resume it in Time) or stops the recording, which then waits in Screen Capture to be saved. On a phone the first live pill stays in the bar and the others go behind the button with the cards. `Live pills` in `Top bar` turns them off on this device.
 
@@ -106,6 +111,8 @@ In `Settings`, under `Appearance`, choose `Dark` or `Light` next to `Theme`. orO
 The coloured dots under `System colour` are skins: each one gives orOS and its apps a different accent colour. They are named after Linux systems, such as `Ubuntu`, `Fedora`, `Mint` or `Pop!_OS`; hover over a dot to see its name. The default is `Oros`, in gold.
 
 `Signal`, the last dot, is not named after a system: it gives orOS the look of an LED dot display, black with white text and a red light (in the light theme, white paper with a deep red). Its wallpaper is `Dot Matrix`, a fine grid of dots, and the Clock widget shows the time in LED dots while Signal is on.
+
+`Menu button icon`, under the colours, changes the symbol on the menu button at the left of the top bar: four squares (the first), nine dots, a ring, a spark, a leaf, three lines or no icon. It is set on this device only.
 
 `Accent from wallpaper`, under the dots, takes the accent colour from your wallpaper instead: the built-in wallpapers, `Living land`, `Mine` and a picture of your own. orOS adjusts its brightness so text on buttons and links stays easy to read in the light and the dark theme; backgrounds, panels and text keep the colours of your skin. When the wallpaper has several clear colours, up to four appear under `Colours from the wallpaper` to pick from; a new wallpaper starts at its strongest colour. Grey wallpapers such as `Monochrome` keep the skin's colour, and high contrast always keeps its own colours. The switch is off at first and works on this device only.
 
@@ -204,6 +211,8 @@ The Dock is a bar of your favourite apps along an edge of the desktop, at the bo
 - `Magnify on hover` makes icons grow under the mouse (only with a mouse or trackpad).
 - `Hide automatically` tucks it away until you move the mouse to its edge of the screen, or tap the small handle on a touch screen.
 - `Show over open apps` keeps it visible while an app is open. It is off until you turn it on, so apps get the whole screen.
+
+Groups: drag an app onto the middle of another app in the Dock (with a mouse), or choose `Put in a group with…` in its menu (right-click or a long press), and both go into a group. Apps of one category get its name, for example `Games`; others are called `Group 1`. Tap the group to open its panel: tap the name to rename it, tap an app to open it, `×` takes it out, and `Ungroup` puts every app back in the Dock. Drop another app on a group to add it. A group left with one app goes away by itself. Groups sync to your other devices with the Dock order.
 
 ## Motion feel
 In `Settings › Appearance`, `Animate apps opening and closing` lets an app grow out of its icon and shrink back into it. `Motion feel` sets how apps, menus and panels move: `Calm` (slower and soft), `Lively` (as before) or `Bouncy` (a little spring). Reduce motion, in Accessibility or on your system, always wins. This device only.

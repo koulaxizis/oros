@@ -78,13 +78,20 @@
     var st = starts(periods), last = st[st.length - 1];
     var len = avgPeriodLen(periods);
     if (len === null) len = 5;                          // no ended period yet
-    var start = last + avg * DAY_MS;
-    return { start: start, end: start + (len - 1) * DAY_MS, avg: avg };
+    // calendar days, not 24 h steps: a cycle across the clock change
+    // in March or October still lands on local midnight of the right day
+    var start = addDays(last, avg);
+    return { start: start, end: addDays(start, len - 1), avg: avg };
+  }
+  function addDays(ts, n) {
+    var d = new Date(ts);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n).getTime();
   }
   function dueIn(periods, todayMs) {
     var pr = nextPrediction(periods);
     if (!pr) return null;
-    var daysLeft = Math.ceil((pr.start - todayMs) / DAY_MS);
+    // whole days from today's midnight (a 23 or 25 h day rounds away)
+    var daysLeft = Math.round((pr.start - snap(todayMs)) / DAY_MS);
     if (daysLeft > 2) return null;
     return { ymd: ymdOf(pr.start), daysLeft: daysLeft };
   }

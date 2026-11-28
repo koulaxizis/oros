@@ -321,6 +321,8 @@
   // this app (focus.js; quiet hours are the Sleep mode's schedule),
   // else the old rule. Silent = inbox + badge, no pop-up, no sound.
   function quietFor(ns, now) {
+    // GAMEMODE-1: a fullscreen game in Game mode (shell.js, this device)
+    try { if (typeof window.__orosGameQuiet === 'function' && window.__orosGameQuiet()) return true; } catch (e) {}
     var F = focusApi();
     if (F && state.slice) {
       try { return F.silent(ns, now); } catch (e) {}

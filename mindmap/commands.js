@@ -83,7 +83,7 @@
     "remove: delete the picked ideas with everything under them (needs ids, has, branch or level; never the centre)",
     "map: layout map (around the centre)|org (org chart)|tree (a list going down)|time (a timeline); sides both|right (where a map's branches go)",
     "rename: the map's title (its centre's text) becomes `title`",
-    "export: the whole map as a file, saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Maps with Files at «may change»; never over a file): fmt png | svg | md (outline) | opml | json | oros (.orosmind); changes nothing"
+    "export: the whole map as a file, saved into `out` (a folder of Claude's on the orOS disk such as Drive/Maps with Files at «may change»; never over a file): fmt png | svg | md (outline) | opml | json | oros (.orosmind); changes nothing"
   ].join("\n");
 
   // ---------- 1. Checking ----------

@@ -36,7 +36,6 @@ const GATE_ONLY = {
   oros_update: { why: "GL-7: asks the owner's other open devices to fetch and apply the newest orOS, for Claude working from outside while the owner is away; inside orOS the owner presses Update in Settings or the app updates itself." },
   gate_call: { why: "GL-5: runs another gate tool by name for a conversation whose tool list is older; the Assistant always calls its tools directly." },
   claude_folders_request: { why: "CF-ASK: asking the owner, on any device on screen, to add a folder of the orOS disk to Claude's folders from outside; inside orOS the owner adds it in Settings › Connected services › orOS Gate › Claude's folders." },
-  local_folders_request: { why: "Asking the owner, on any device on screen, to open a folder of their computer for Claude from outside; inside orOS the owner opens it in Settings › Connected services › orOS Gate." },
   kanban_add_cards: { twin: ["create_items"] },    // create_items app kanban
   kanban_move_cards: { twin: ["change_item"] },    // change_item action move
   kanban_change_card: { twin: ["change_item"] },
@@ -148,4 +147,13 @@ test("list_fonts: the Assistant's and the gate's, read only, the same filters", 
   const src = require("fs").readFileSync(require("path").join(__dirname, "../assistant/assistant.js"), "utf8");
   assert.match(src, /summary: summaryIds\(ga\.read\)\.length > 0, fonts: ga\.read\.length > 0,/);
   assert.match(src, /if \(call\.name === "list_fonts"\) return listFonts\(call\.args\);/);
+});
+
+// GATE-NEVER2 (Chris 2026-11-27, card «Ναι, στην αυστηρότερη»): the
+// never list and the personal apps are the same on both sides.
+test("never and personal apps: the same on the gate and in the Assistant", () => {
+  const G = require("../gate/gate.js");
+  assert.deepEqual(G.NEVER.slice().sort(), Object.keys(C.NEVER_APPS).sort(), "the same never list");
+  G.SENSITIVE.forEach((id) => assert.equal(C.permFor(C.emptyData(), { id: id }), "never", id + " starts at Never in the Assistant"));
+  return R.NEVER_APPS.forEach((id) => assert.ok(G.NEVER.indexOf(id) >= 0, "relay " + id));
 });

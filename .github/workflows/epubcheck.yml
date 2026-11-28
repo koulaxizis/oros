@@ -46,8 +46,8 @@ jobs:
       EPUBCHECK_VERSION: 5.2.1
       EPUBCHECK_SHA256: 0532f6291faa2bb729dd253f958868a2a57dbd2c32f881a97c7c980c5940309e
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: .node-version
       - name: Download EPUBCheck (pinned, hash checked)

@@ -62,16 +62,18 @@ const IMDB_W = [
   "3,tt7366338,2024-03-01,2024-03-01,,Chernobyl,Chernobyl,https://www.imdb.com/title/tt7366338/,tvMiniSeries,9.3,330,2019,Drama,900000,2019-05-06,,,"
 ].join("\n");
 
+// Trakt times are instants and the Shelf logs the local day: midday UTC
+// is the same day everywhere from UTC-11 to UTC+12 (CI runs UTC and Athens).
 const TRAKT_WM = JSON.stringify([
-  { plays: 2, last_watched_at: "2024-03-05T20:00:00.000Z", movie: { title: "Heat", year: 1995, ids: { trakt: 1, imdb: "tt0113277", tmdb: 949 } } },
-  { plays: 1, last_watched_at: "2024-04-01T20:00:00.000Z", movie: { title: "Alien", year: 1979, ids: { trakt: 2, imdb: "tt0078748", tmdb: 348 } } }
+  { plays: 2, last_watched_at: "2024-03-05T11:00:00.000Z", movie: { title: "Heat", year: 1995, ids: { trakt: 1, imdb: "tt0113277", tmdb: 949 } } },
+  { plays: 1, last_watched_at: "2024-04-01T11:00:00.000Z", movie: { title: "Alien", year: 1979, ids: { trakt: 2, imdb: "tt0078748", tmdb: 348 } } }
 ]);
 const TRAKT_WS = JSON.stringify([
-  { plays: 3, last_watched_at: "2024-05-03T21:00:00.000Z", show: { title: "Severance", year: 2022, ids: { trakt: 10, imdb: "tt11280740" } },
-    seasons: [{ number: 1, episodes: [{ number: 1, plays: 1, last_watched_at: "2024-05-01T21:00:00.000Z" },
-      { number: 2, plays: 1, last_watched_at: "2024-05-02T21:00:00.000Z" }, { number: 3, plays: 1, last_watched_at: "2024-05-03T21:00:00.000Z" }] }] },
-  { plays: 2, last_watched_at: "2023-08-08T21:00:00.000Z", show: { title: "Mini", year: 2020, aired_episodes: 2, ids: { trakt: 11 } },
-    seasons: [{ number: 1, episodes: [{ number: 1, last_watched_at: "2023-08-07T21:00:00.000Z" }, { number: 2, last_watched_at: "2023-08-08T21:00:00.000Z" }] }] }
+  { plays: 3, last_watched_at: "2024-05-03T11:00:00.000Z", show: { title: "Severance", year: 2022, ids: { trakt: 10, imdb: "tt11280740" } },
+    seasons: [{ number: 1, episodes: [{ number: 1, plays: 1, last_watched_at: "2024-05-01T11:00:00.000Z" },
+      { number: 2, plays: 1, last_watched_at: "2024-05-02T11:00:00.000Z" }, { number: 3, plays: 1, last_watched_at: "2024-05-03T11:00:00.000Z" }] }] },
+  { plays: 2, last_watched_at: "2023-08-08T11:00:00.000Z", show: { title: "Mini", year: 2020, aired_episodes: 2, ids: { trakt: 11 } },
+    seasons: [{ number: 1, episodes: [{ number: 1, last_watched_at: "2023-08-07T11:00:00.000Z" }, { number: 2, last_watched_at: "2023-08-08T11:00:00.000Z" }] }] }
 ]);
 const TRAKT_RM = JSON.stringify([
   { rated_at: "2024-03-06T10:00:00.000Z", rating: 8, type: "movie", movie: { title: "Heat", year: 1995, ids: { trakt: 1, imdb: "tt0113277" } } },

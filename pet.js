@@ -1097,12 +1097,20 @@ function applyPetSettings(s) {
   // whether the pet is out on a walk, and until when.
   // rows{device:{w{startTs: minutes}}}: away while now < start + length.
   var NEST_KEY = "oros-petnest-data";
+  // sync's mailbox entry for an app (SY-Z: the mailbox may be packed,
+  // so the engine reads it; older engines: plain JSON).
+  function carryPeek(name) {
+    var os = window.orosSync;
+    if (os && typeof os.carryPeek === "function") return os.carryPeek(name);
+    var c = JSON.parse(localStorage.getItem("oros-remote-carry") || "null");
+    return (c && c[name]) || null;
+  }
   function walkUntil(now) {
     var raw = null, until = 0;
     try {
       raw = JSON.parse(localStorage.getItem(NEST_KEY) || "null");
       // a device that never opened Pet World holds the slice in sync's carry mailbox
-      if (!raw) raw = (JSON.parse(localStorage.getItem("oros-remote-carry") || "null") || {}).petnest || null;
+      if (!raw) raw = carryPeek("petnest");
     } catch (e) { return 0; }
     if (!raw || typeof raw !== "object" || !raw.rows || typeof raw.rows !== "object") return 0;
     Object.keys(raw.rows).forEach(function (dev) {
@@ -1123,7 +1131,7 @@ function applyPetSettings(s) {
     var raw = null;
     try {
       raw = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "null");
-      if (!raw) raw = (JSON.parse(localStorage.getItem("oros-remote-carry") || "null") || {}).petprogress || null;
+      if (!raw) raw = carryPeek("petprogress");
     } catch (e) { return ""; }
     var w = raw && typeof raw === "object" ? raw.wear : null;
     return w && typeof w.id === "string" && ACCESSORIES[w.id] === 1 ? w.id : "";

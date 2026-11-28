@@ -46,6 +46,16 @@
 //     itself (it used to stay still for the whole session, so a busy
 //     start on a phone stopped it for good);
 //   - canvas at devicePixelRatio <= 1.25 and <= 1.8 M pixels;
+//   - the beat (1.4.0, MU-VIZ-BEAT, Chris 2026-11-27 "it does not follow
+//     the rhythm and the energy"): with real sound, a rise of the bass
+//     well above its recent rises (beatStep: spectral flux over a
+//     running mean + 1.8 standard deviations, at least 0.06, to
+//     a level 15 % over the bass's recent average, at most one beat per
+//     200 ms) is a beat; each style answers it (glow swells, a ring
+//     starts, the bars jump, the wave grows) and the pulse fades over
+//     ~250 ms. Levels with real sound follow faster (up 0.6, down 0.18
+//     a frame); without sound the light moves slowly on its own and
+//     never imitates a beat;
 //   - no flashes: levels rise over ~3 frames and fall over ~12, the
 //     brightest layer stays under 0.85 alpha, no white frames, no
 //     strobing colour changes (photosensitivity).
@@ -55,7 +65,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.3.0";
+  var VER = "1.4.0";
   var STYLES = ["glow", "rings", "bars", "wave"];
   var FPS_GAP = 1000 / 30;
   var SLOW_MS = 55, SLOW_N = 90;
@@ -137,6 +147,23 @@
     peak = Math.max((+peak || 0) * 0.996, +x || 0);
     var v = (+x || 0) / Math.max(peak, 0.12);
     return { peak: peak, v: Math.max(0, Math.min(1, v)) };
+  }
+  // One frame of beat finding on the bass level x (0..1) at time t ms.
+  // s = { prev, m, v, e, at } (running mean / variance of the rises,
+  // the bass's average level, the last beat): a beat is a rise well
+  // above the usual rises to a level above the recent average.
+  // → { s, beat } (a new state; beat true on a beat).
+  function beatStep(s, x, t) {
+    s = s || {};
+    x = +x || 0;
+    var prev = s.prev == null ? x : s.prev, rise = Math.max(0, x - prev);
+    var m = s.m == null ? 0.01 : s.m, v = s.v == null ? 0.0004 : s.v, at = s.at == null ? -1e9 : s.at;
+    var e = s.e == null ? x : s.e;   // the bass's recent average level
+    var beat = rise > m + 1.8 * Math.sqrt(v) + 0.015 && rise > 0.06 && x > 0.12 && x > e * 1.15 && t - at >= 200;
+    var d = rise - m;
+    m += 0.06 * d;
+    v = Math.max(1e-5, 0.94 * (v + 0.06 * d * d));
+    return { s: { prev: x, m: m, v: v, e: e + 0.05 * (x - e), at: beat ? t : at }, beat: beat };
   }
   // Levels of the still picture (and of the wallpaper at rest).
   var REST = { lo: 0.4, mid: 0.32, hi: 0.24 };
@@ -240,9 +267,10 @@
     ];
     g.globalCompositeOperation = "lighter";
     spots.forEach(function (s) {
-      var x = cx + s.x * Math.max(B.w, W * 0.6), y = cy + s.y * Math.max(B.h, H * 0.5), r = m * (s.r + s.v * 0.32);
+      var pp = (lv.p || 0) * (s === spots[0] ? 1 : 0.4);   // the beat swells the bass light most
+      var x = cx + s.x * Math.max(B.w, W * 0.6), y = cy + s.y * Math.max(B.h, H * 0.5), r = m * (s.r + s.v * 0.32 + pp * 0.1);
       var gr = g.createRadialGradient(x, y, 0, x, y, r);
-      gr.addColorStop(0, hsla(s.p, 0.25 + s.v * 0.55));
+      gr.addColorStop(0, hsla(s.p, 0.25 + s.v * 0.55 + pp * 0.15));
       gr.addColorStop(0.55, hsla(s.p, 0.08 + s.v * 0.2));
       gr.addColorStop(1, hsla(s.p, 0));
       g.fillStyle = gr;
@@ -252,15 +280,17 @@
   }
   function drawRings(g, B, lv, t, pal, st) {
     var W = B.W, H = B.H, m = Math.min(B.w, B.h) * 1.15, cx = B.x + B.w / 2, cy = B.y + B.h / 2;
-    // A new ring when the bass rises, at most one every 160 ms, up to 9.
+    // A new ring on each beat (real sound, 1.4.0); without sound data
+    // when the bass rises, at most one every 160 ms; up to 9.
     st.rings = st.rings || [];
-    if (lv.lo > (st.lastLo || 0) + 0.06 && lv.lo > 0.3 && t - (st.ringAt || 0) > 160 && st.rings.length < 9) {
+    var ringNow = lv.real ? !!lv.beat : lv.lo > (st.lastLo || 0) + 0.06 && lv.lo > 0.3;
+    if (ringNow && t - (st.ringAt || 0) > 160 && st.rings.length < 9) {
       st.rings.push({ at: t, v: lv.lo, p: st.rings.length % 3 });
       st.ringAt = t;
     }
     st.lastLo = lv.lo;
-    var core = g.createRadialGradient(cx, cy, 0, cx, cy, m * (0.16 + lv.lo * 0.2));
-    core.addColorStop(0, hsla(pal[0], 0.3 + lv.lo * 0.45));
+    var core = g.createRadialGradient(cx, cy, 0, cx, cy, m * (0.16 + lv.lo * 0.2 + (lv.p || 0) * 0.06));
+    core.addColorStop(0, hsla(pal[0], 0.3 + lv.lo * 0.45 + (lv.p || 0) * 0.15));
     core.addColorStop(1, hsla(pal[0], 0));
     g.fillStyle = core;
     g.fillRect(0, 0, W, H);
@@ -297,10 +327,12 @@
     refl.addColorStop(0, hsla(pal[0], 0.22));
     refl.addColorStop(1, hsla(pal[0], 0));
     for (var i = 0; i < n; i++) {
-      var target = hs ? gain(st["pk" + i], hs[i]).v * 0.35 + hs[i] * 0.55
-        : (i < n / 3 ? lv.lo : i < 2 * n / 3 ? lv.mid : lv.hi) * (0.55 + 0.45 * Math.sin(t * 0.0012 + i * 0.7) * Math.sin(t * 0.0005 + i));
+      // Real sound: the spectrum, lifted on the beat (most in the bass).
+      // Without it: slow waves of the levels, never a fake beat.
+      var target = hs ? (gain(st["pk" + i], hs[i]).v * 0.35 + hs[i] * 0.55) * (1 + (lv.p || 0) * (i < n / 3 ? 0.3 : 0.12))
+        : (i < n / 3 ? lv.lo : i < 2 * n / 3 ? lv.mid : lv.hi) * (0.55 + 0.45 * Math.sin(t * 0.0005 + i * 0.7) * Math.sin(t * 0.0002 + i));
       if (hs) st["pk" + i] = Math.max((st["pk" + i] || 0) * 0.996, hs[i]);
-      st.bars[i] = smooth(st.bars[i], Math.max(0, target));
+      st.bars[i] = hs ? smooth(st.bars[i], Math.min(1.1, Math.max(0, target)), 0.6, 0.2) : smooth(st.bars[i], Math.max(0, target));
       var h = Math.max(bw, st.bars[i] * maxH), x = B.x + i * gap + (gap - bw) / 2;
       g.fillStyle = grad;
       round(g, x, base - h, bw, h, bw / 2);
@@ -314,7 +346,7 @@
     var layers = [[pal[0], lv.lo, 0.0011, 0], [pal[1], lv.mid, 0.0017, 2], [pal[2], lv.hi, 0.0023, 4]];
     g.lineCap = "round"; g.lineJoin = "round";
     layers.forEach(function (L, li) {
-      var amp = H * (0.05 + L[1] * 0.2);
+      var amp = H * (0.05 + L[1] * 0.2) * (1 + (li ? 0.2 : 0.5) * (lv.p || 0));
       g.strokeStyle = hsla(L[0], 0.35 + L[1] * 0.45);
       g.lineWidth = Math.max(1.5, Math.min(W, B.h) * (0.008 - li * 0.0015));
       g.beginPath();
@@ -355,6 +387,7 @@
     try { g = canvas.getContext("2d"); } catch (e) { g = null; }
     var style = normStyle(opts.style);
     var lv = { lo: 0, mid: 0, hi: 0 }, pk = { lo: 0, mid: 0, hi: 0 };
+    var bt = null, pulse = 0;   // beat finding (1.4.0)
     var st = {}, raf = 0, last = 0, prevT = 0, gaps = [], quiet = 0, dead = false, drawT = 0;
     var soft = opts.soft > 0 && opts.soft < 1 ? +opts.soft : 1, rest = !!opts.rest;
     var reason = "", battery = null, mq = null, pal = palette("");
@@ -396,16 +429,24 @@
       try { src = opts.source ? opts.source() : null; } catch (e) { src = null; }
       var playing = false;
       try { playing = !!(opts.playing && opts.playing()); } catch (e) {}
-      var target;
+      var target, real = false;
       if (still) target = REST;
       else if (src && src.live && src.f) {
+        real = true;
         var b = bands(src.f, src.rate);
         var a1 = gain(pk.lo, b.lo), a2 = gain(pk.mid, b.mid), a3 = gain(pk.hi, b.hi);
         pk.lo = a1.peak; pk.mid = a2.peak; pk.hi = a3.peak;
         target = { lo: a1.v, mid: a2.v, hi: a3.v };
+        var bs = beatStep(bt, b.lo, t);
+        bt = bs.s;
+        pulse = bs.beat ? 1 : pulse * 0.86;
+        lv.beat = bs.beat;
       } else if (playing) target = idle(t);
       else target = rest ? REST : { lo: 0, mid: 0, hi: 0 };
-      if (still) lv = { lo: target.lo, mid: target.mid, hi: target.hi };
+      if (!real) { pulse = 0; lv.beat = false; bt = null; }
+      lv.p = pulse; lv.real = real;
+      if (still) lv = { lo: target.lo, mid: target.mid, hi: target.hi, p: 0, beat: false };
+      else if (real) { lv.lo = smooth(lv.lo, target.lo, 0.6, 0.18); lv.mid = smooth(lv.mid, target.mid, 0.6, 0.18); lv.hi = smooth(lv.hi, target.hi, 0.6, 0.18); }
       else { lv.lo = smooth(lv.lo, target.lo); lv.mid = smooth(lv.mid, target.mid); lv.hi = smooth(lv.hi, target.hi); }
       g.globalAlpha = 1;
       g.globalCompositeOperation = "source-over";
@@ -630,7 +671,7 @@
 
   var api = {
     v: VER, STYLES: STYLES, create: create, stage: stage, label: label, normStyle: normStyle, nextStyle: nextStyle,
-    bands: bands, smooth: smooth, gain: gain, idle: idle, stillReason: stillReason, isSlow: isSlow, slowWait: slowWait, BOOT_MS: BOOT_MS, REST: REST, restGap: restGap,
+    bands: bands, smooth: smooth, gain: gain, idle: idle, stillReason: stillReason, beatStep: beatStep, isSlow: isSlow, slowWait: slowWait, BOOT_MS: BOOT_MS, REST: REST, restGap: restGap,
     rgb: rgb, palette: palette, fit: fit, bars: bars, STR: STR
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

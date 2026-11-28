@@ -62,6 +62,8 @@
 //                 "Unlock orOS" and "Use PIN"; none = Passwords)
 //               {t:"pw-bio", op:"clear", kid}  (v9: the secret for kid
 //                 removed; the key too when none is left)
+//               (QS-REC-1: state also carries rec, true while the app
+//                 records the screen; an app without it cannot record)
 //               {t:"af-state"}                 (v10: autofill state only;
 //                 the single app "orOS Passwords" has no full state)
 //   app → page: {t:"state", v, contacts, calendar, reminders, exact,
@@ -1766,6 +1768,7 @@
         wtodo: Math.max(0, Math.min(50, m.wtodo | 0)),
         health: ["granted", "some", "ask", "denied", "update", "unavailable"].indexOf(m.health) >= 0 ? m.health : "",
         drive: m.drive === true,
+        rec: typeof m.rec === "boolean" ? m.rec : null,   // QS-REC-1: null = an app that cannot record
         app: typeof m.app === "string" ? m.app.slice(0, 20) : "",
         af: afState(m.af)
       };
@@ -1957,6 +1960,15 @@
       root.location.href = PERM_URL[kind];
     },
     refresh: function () { if (port) send({ t: "state" }); else bioSend({ t: "af-state" }); },
+    // QS-REC-1: the orOS app records the phone's screen (Chrome on Android
+    // cannot share it with a page). canRec: this app knows how; rec(mic):
+    // inside a tap, starts it (Android asks first) or stops a running one.
+    canRec: function () { return !!(port && appState && appState.rec !== null && appState.rec !== undefined); },
+    rec: function (mic) {
+      if (!port || !appState || appState.rec === null) return false;
+      root.location.href = "intent://start" + (mic ? "?mic=1" : "") + "#Intent;scheme=oros-rec;package=online.useoros.twa;end";
+      return true;
+    },
     // Passwords autofill (PW-AF2). The Passwords app seals its lists
     // with the keys from afKeys() (passwords/afindex.js) and hands them
     // over; this file never sees a value.

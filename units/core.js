@@ -560,8 +560,54 @@
     USD: "$|us$|dollar|dollars|δολάριο|δολάρια",
     GBP: "£|pound sterling|sterling|στερλίνα|στερλίνες|λίρα αγγλίας",
     JPY: "¥|yen|γιεν",
-    CHF: "swiss franc|swiss francs|ελβετικό φράγκο|ελβετικά φράγκα"
+    CHF: "swiss franc|swiss francs|ελβετικό φράγκο|ελβετικά φράγκα",
+    // RATES-1: everyday country names the browser's list words otherwise
+    TRY: "turkey|τουρκία|türkei"
   };
+  // RATES-1: added to the aliases above (never replacing them)
+  var CURRENCY_MORE = { USD: "usa|america|ηπα|αμερική", GBP: "uk|britain|england|scotland|wales|αγγλία|βρετανία|σκωτία", EUR: "holland|ολλανδία" };
+
+  // RATES-1: the countries (ISO 3166 codes) that use each ECB currency,
+  // so typing a country's name in the picker finds its currency. Names
+  // come from the browser (Intl.DisplayNames) in English, Greek and the
+  // language in use: no list of names to keep up to date here.
+  var CURRENCY_REGIONS = {
+    EUR: "AT BE HR CY EE FI FR DE GR IE IT LV LT LU MT NL PT SK SI ES AD MC SM VA ME XK",
+    USD: "US EC SV PA PR TL", GBP: "GB IM JE GG", CHF: "CH LI", JPY: "JP", CAD: "CA", AUD: "AU",
+    SEK: "SE", NOK: "NO", DKK: "DK GL FO", PLN: "PL", CZK: "CZ", HUF: "HU", RON: "RO", BGN: "BG",
+    TRY: "TR", CNY: "CN", HKD: "HK", SGD: "SG", KRW: "KR", INR: "IN", BRL: "BR", MXN: "MX", ZAR: "ZA",
+    ILS: "IL", NZD: "NZ", THB: "TH", PHP: "PH", MYR: "MY", IDR: "ID", ISK: "IS"
+  };
+  var RN = {};
+  function regionName(code, loc) {
+    try {
+      if (!RN[loc] && typeof Intl !== "undefined" && Intl.DisplayNames) RN[loc] = new Intl.DisplayNames([loc], { type: "region" });
+      var n = RN[loc] ? RN[loc].of(code) : "";
+      return n && n !== code ? n : "";
+    } catch (e) { return ""; }
+  }
+  // The country names of a currency in a language ("en", "el", a pack).
+  function currencyCountries(code, lang) {
+    var loc = lang === "el" ? "el" : (lang && lang !== "en" ? locOf(lang) : "en");
+    return (own(CURRENCY_REGIONS, code) ? CURRENCY_REGIONS[code].split(" ") : [])
+      .map(function (r) { return regionName(r, loc); }).filter(Boolean);
+  }
+  // The country of `code` whose name (in `lang`, English or Greek)
+  // starts a word with `q`, named in `lang`, or "" (the picker shows it
+  // beside the currency: "Euro · Greece").
+  function countryHit(code, q, lang) {
+    var f = fold(q);
+    if (f.length < 2 || !own(CURRENCY_REGIONS, code)) return "";
+    var locs = [lang === "el" ? "el" : (lang && lang !== "en" ? locOf(lang) : "en"), "en", "el"];
+    var regs = CURRENCY_REGIONS[code].split(" ");
+    for (var i = 0; i < locs.length; i++) {
+      for (var k = 0; k < regs.length; k++) {
+        var n = fold(regionName(regs[k], locs[i]));
+        if (n && (n.indexOf(f) === 0 || n.indexOf(" " + f) >= 0)) return regionName(regs[k], locs[0]) || regionName(regs[k], "en");
+      }
+    }
+    return "";
+  }
 
   // Unit objects, built once: { id, cat, f | fn, sym, en, el, g, al[] }
   var CAT_BY_ID = {};
@@ -860,7 +906,12 @@
     var list = [u.id, u.sym, u.en, u.el].concat(u.al);
     Object.keys(NAMES).forEach(function (l) { if (u.key && l !== "en" && l !== "el" && NAMES[l][u.key]) list.push(NAMES[l][u.key]); });
     if (u.en.indexOf("(") < 0) list.push(u.en + "s");
-    if (u.cat === "currency") list.push(currencyName(u.id, "en"), currencyName(u.id, "el"));
+    if (u.cat === "currency") {
+      list.push(currencyName(u.id, "en"), currencyName(u.id, "el"));
+      list = list.concat(currencyCountries(u.id, "en"), currencyCountries(u.id, "el"));   // RATES-1
+      if (own(CURRENCY_MORE, u.id)) list = list.concat(CURRENCY_MORE[u.id].split("|"));
+      Object.keys(NAMES).forEach(function (l) { if (l !== "en" && l !== "el") list = list.concat(currencyCountries(u.id, l)); });
+    }
     var seen = {}, out = [];
     list.forEach(function (a) {
       var f = fold(a);
@@ -1191,7 +1242,8 @@
     setPrec: setPrec, precOf: precOf, favList: favList, recentList: recentList,
     readPrefs: readPrefs, pairOf: pairOf,
     readRates: readRates, storedRates: storedRates, ratesStale: ratesStale, factorOf: factorOf,
-    fetchLatest: fetchLatest, crossRate: crossRate, CURRENCY_ORDER: CURRENCY_ORDER
+    fetchLatest: fetchLatest, crossRate: crossRate, CURRENCY_ORDER: CURRENCY_ORDER,
+    CURRENCY_REGIONS: CURRENCY_REGIONS, currencyCountries: currencyCountries, countryHit: countryHit
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;

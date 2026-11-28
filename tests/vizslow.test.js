@@ -16,8 +16,8 @@ const V = require(path.join(ROOT, "vizkit.js"));
 const W = require(path.join(ROOT, "wallpaper/wxdesk.js"));
 const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 
-test("vizkit 1.3.0: slow is the median frame gap, stalls alone do not count", () => {
-  assert.equal(V.v, "1.3.0");
+test("vizkit 1.3.0+: slow is the median frame gap, stalls alone do not count", () => {
+  assert.ok(V.v >= "1.3.0");
   assert.equal(V.isSlow(new Array(90).fill(60)), true);
   assert.equal(V.isSlow(new Array(90).fill(17)), false);
   assert.equal(V.isSlow(new Array(89).fill(200)), false);

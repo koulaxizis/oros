@@ -55,6 +55,7 @@
         }
         break;
       case "peek": if (s) this.peek(s, m.req); break;
+      case "getstate": this.post({ type: "state", uid: m.uid, req: m.req, data: s ? s.fx.getState() : null }); break;
     }
   };
 
