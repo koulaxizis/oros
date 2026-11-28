@@ -255,11 +255,16 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     return handleHookIn(request, env, url, request.headers.get("CF-Connecting-IP") || "", now || Date.now());
   }
 
-  // Studio Remote's meeting rooms (relay/remote.js): WebSockets from orOS only.
+  // Studio Remote's meeting rooms and Sync's "Add a browser" pairing
+  // (relay/remote.js, pair.js): WebSockets from orOS only. The orOS on the
+  // person's own computer (LOCAL_ORIGINS: installed orOS, Portable, USB)
+  // may use them too: pairing is how a new USB or Portable gets the
+  // sign-in, and the room's frames are encrypted with a key only the two
+  // devices derive from the code (PAIR-LOCAL, 2026-11-28).
   if (url.pathname.startsWith("/rt/")) {
     const m = ROOM_RE.exec(url.pathname);
     if (!m || request.method !== "GET") return new Response("unknown route", { status: 404 });
-    if (!okOrigin) return new Response("origin not allowed", { status: 403 });
+    if (!okOrigin && !localOrigin) return new Response("origin not allowed", { status: 403 });
     if (limited(request.headers.get("CF-Connecting-IP") || "", now || Date.now())) return new Response("too many requests", { status: 429 });
     return handleRemote(request, env, m[1]);
   }
