@@ -251,6 +251,15 @@ The same card changes your print documents in [Layout](app:layout). Ask, for exa
 - The list of conversations works like a list of threads: search finds words in the titles and in what was said; the More menu pins a conversation to the top, renames, exports or deletes it. Conversations with a card you have not pressed yet stand under "Waiting for you". A new conversation offers "Continue: …" to go back to the last one.
 - When orOS sync is set up, conversations follow you to every device, encrypted, without a switch to find (Settings can still turn it off).
 
+## Routines
+A routine is a job the assistant does by itself on a schedule, like a colleague who checks something every Tuesday. Open `Routines` in the list of conversations, press `New routine` and give it a name, what to do, when (every day, week, month, every few hours, or when a file lands in a folder of the orOS disk) and the apps it may read.
+- Every routine has its own conversation under "Routines": each run writes its report there, and you can answer and keep talking in the same place. A notice tells you when a run is done.
+- A routine only reads. What it would change comes as numbered proposals in its report; nothing is changed without you.
+- The apps you tick are your consent, because nobody can be asked while it runs. Mail, Passwords and the Assistant are never read.
+- A RUNBOOK file on the orOS disk (for example `Claude/Shop/RUNBOOK.md`) is read again every run, so you can improve the steps without editing the routine. Reference files are read as information, never as orders.
+- Each routine has a limit of rounds and tokens per run, and may use a model on this computer only if you allow it. `Pause all routines` stops them on every device; three failed runs in a row pause a routine and tell you.
+- Routines run while orOS is open on a device (on an installed computer also with the window closed). One device runs each run; a missed run is done once when orOS opens, if it is less than 36 hours late.
+
 ## Pictures in Photo Lab
 Ask, for example, "make my open photo black and white", "write Winter instead of Summer on the beach picture", "make all my pictures 1200 pixels on the long side", "crop it square and add my name at the bottom right" or "give the title a shadow". The assistant reads the picture's layers (with your permission for [Photo Lab](app:photolab)) and shows a card with the changes and how many things each picture gets.
 - `Apply` opens Photo Lab, which opens each picture in turn, makes the changes as its own commands and saves it; `Stop` in Photo Lab ends it early.

@@ -841,3 +841,32 @@ body.as-mini #toolbar, body.as-mini #side, body.as-mini #scrim { display: none !
 .cr-fields th, .cr-fields td { padding: 2px 8px 2px 0; text-align: start; vertical-align: top; }
 .cr-fields th { color: var(--text-dim); font-weight: 700; white-space: nowrap; width: 1%; }
 .cr-fields td { overflow-wrap: anywhere; white-space: pre-line; }
+
+/* AS-RT (wave 2): routines list, editor, the bar above a routine's
+   conversation and a run's opening line */
+.hint.warn { color: var(--danger); }
+.rt-dlg { width: min(560px, calc(100vw - 24px)); }
+.rt-list { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; max-height: min(55vh, 480px); overflow-y: auto; }
+.rt-row { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.rt-row.off { opacity: .7; }
+.rt-head { display: flex; align-items: center; gap: 8px; }
+.rt-name { flex: 1; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.rt-sw { width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.rt-sched, .rt-stat { font-size: 13px; color: var(--text-dim); margin-top: 2px; overflow-wrap: anywhere; }
+.rt-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.rt-acts .dlg-btn { min-height: 32px; padding: 4px 10px; font-size: 13px; }
+.rt-text { resize: vertical; min-height: 90px; }
+.rt-when { margin-top: 4px; }
+.rt-days, .rt-apps { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 6px 0; }
+.rt-apps { max-height: 160px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
+.rt-day, .rt-app { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; min-height: 28px; }
+.rt-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 12px; padding: 8px 12px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--accent-soft); font-size: 13px; }
+.rt-bar-name { font-weight: 600; }
+.rt-bar-stat { color: var(--text-dim); flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.rt-bar-acts { display: inline-flex; gap: 6px; }
+.rt-bar-acts .dlg-btn { min-height: 30px; padding: 3px 10px; font-size: 13px; }
+.msg.rt-run { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; align-self: stretch; max-width: 100%; border-left: 3px solid var(--accent); padding: 6px 10px; font-size: 13px; color: var(--text-dim); }
+.rt-run-head { font-weight: 600; color: var(--text); }
+.rt-run-det summary { cursor: pointer; margin-top: 2px; }
+.rt-run-text { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; margin: 6px 0 0; max-height: 280px; overflow-y: auto; }

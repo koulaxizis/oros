@@ -10,7 +10,7 @@
 //     title hits first, each with a short snippet around the match
 //   - resume(chats): the conversation to continue (newest with
 //     messages)
-//   - groups(chats, now): Pinned / Waiting / Today / Yesterday /
+//   - groups(chats, now): Pinned / Waiting / Routines / Today / Yesterday /
 //     This week / Older, for the list
 // Chris 2026-11-28: "να κρατάει ιστορικό των συνομιλιών … να
 // μπορούμε να δουλεύουμε αβίαστα χωρίς να υπάρχει κενό".
@@ -126,23 +126,25 @@
 
   function dayStart(ms) { var d = new Date(ms); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); }
 
-  // → [{ key: "pin"|"wait"|"today"|"yday"|"week"|"older", chats: [...] }]
+  // → [{ key: "pin"|"wait"|"rt"|"today"|"yday"|"week"|"older", chats: [...] }]
   // (empty groups left out). A pinned chat is only under Pinned; a chat
-  // waiting for the person is under Waiting.
+  // waiting for the person is under Waiting; a routine's conversation
+  // (c.rt, AS-RT) is under Routines.
   function groups(list, now) {
     now = typeof now === "number" ? now : Date.now();
     var t0 = dayStart(now), y0 = t0 - 86400000, w0 = t0 - 6 * 86400000;
-    var g = { pin: [], wait: [], today: [], yday: [], week: [], older: [] };
+    var g = { pin: [], wait: [], rt: [], today: [], yday: [], week: [], older: [] };
     order(list).forEach(function (c) {
       var m = stampOf(c);
       if (c.pin === 1) g.pin.push(c);
       else if (waits(c)) g.wait.push(c);
+      else if (typeof c.rt === "string" && c.rt) g.rt.push(c);
       else if (m >= t0) g.today.push(c);
       else if (m >= y0) g.yday.push(c);
       else if (m >= w0) g.week.push(c);
       else g.older.push(c);
     });
-    return ["pin", "wait", "today", "yday", "week", "older"].filter(function (k) { return g[k].length; })
+    return ["pin", "wait", "rt", "today", "yday", "week", "older"].filter(function (k) { return g[k].length; })
       .map(function (k) { return { key: k, chats: g[k] }; });
   }
 

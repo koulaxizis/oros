@@ -155,6 +155,7 @@
   }
   function tick() {
     if (!registered()) return;
+    routinesTick();
     var N = root.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
     var data = read(), local = readLocal(), now = Date.now(), apps = installed(), l = lang(), touched = false;
@@ -508,6 +509,37 @@
     return bridgeLoad;
   }
 
+  // AS-RT (Chris 2026-11-28): the Assistant's routines get the same
+  // clock. assistant/routines.js + assistant/rthost.js load the first
+  // time the Assistant's synced data holds a routine; the host does the
+  // rest (once a minute, one run at a time, a hidden Assistant frame).
+  var rtLoad = 0;
+  function hasRoutines() {
+    try {
+      var d = JSON.parse(localStorage.getItem("oros-assistant-data") || "null");
+      var rt = d && d.rt && typeof d.rt === "object" ? d.rt : null;
+      return !!rt && Object.keys(rt).some(function (k) { return rt[k] && typeof rt[k] === "object" && !rt[k].del; });
+    } catch (e) { return false; }
+  }
+  function routinesTick() {
+    var H = root.orosRoutineHost;
+    if (H) { H.tick(); return; }
+    if (rtLoad || !hasRoutines()) return;
+    rtLoad = 1;
+    var v = (document.querySelector('script[src*="automations/host.js"]') || {}).src || "";
+    var m = /[?&]v=([^&#]+)/.exec(v), q = m ? "?v=" + m[1] : "";
+    function add(src, next) {
+      var s = document.createElement("script");
+      s.src = src + q;
+      s.onload = next;
+      s.onerror = function () { rtLoad = 0; };
+      document.head.appendChild(s);
+    }
+    add("assistant/routines.js", function () {
+      add("assistant/rthost.js", function () { if (root.orosRoutineHost) root.orosRoutineHost.tick(); });
+    });
+  }
+
   // The notice's deep link: one action → straight to it; several →
   // the app's run sheet, one button each.
   function openRun(key) {
@@ -544,7 +576,8 @@
     },
     installed: installed,
     appName: appName,
-    onChange: onChange
+    onChange: onChange,
+    routines: function () { routinesTick(); return root.orosRoutineHost || null; }
   };
   root.orosEvents = events;
   registerSlice();

@@ -107,3 +107,15 @@ test("strings: every th.* key in EN, EL and DE; page loads threads.js before ass
   const html = fs.readFileSync(path.join(ROOT, "assistant/index.html"), "utf8");
   assert.ok(html.indexOf("threads.js") > 0 && html.indexOf("threads.js") < html.indexOf("assistant.js?"));
 });
+
+test("a routine's conversation stands under Routines (AS-RT), unless pinned", () => {
+  const NOW2 = Date.now();
+  const g = TH.groups([
+    { id: "crabcdef1", m: NOW2, title: "Shop check", msgs: [{ r: "user", text: "x" }], rt: "rabcdef1" },
+    { id: "crabcdef2", m: NOW2, title: "Pinned routine", msgs: [], rt: "rabcdef2", pin: 1 },
+    { id: "cplain001", m: NOW2, title: "Plain", msgs: [] }
+  ], NOW2);
+  assert.deepStrictEqual(g.map((x) => x.key + ":" + x.chats.map((c) => c.id).join(",")), ["pin:crabcdef2", "rt:crabcdef1", "today:cplain001"]);
+  assert.strictEqual(C.normChat({ id: "crabcdef1", m: 1, msgs: [], rt: "rabcdef1" }).rt, "rabcdef1");
+  assert.strictEqual(C.normChat({ id: "crabcdef1", m: 1, msgs: [], rt: "../x" }).rt, undefined);
+});

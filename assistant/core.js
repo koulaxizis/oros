@@ -709,7 +709,7 @@
   function mergeAssist(a, b) {
     a = isObj(a) ? a : {};
     b = isObj(b) ? b : {};
-    return {
+    var out = {
       ver: DATA_VER,
       set: better(normSet(a.set), normSet(b.set)) || { m: 0, chat: 0, prov: "", web: 0, ws: "auto", wsBase: "", fb: "", auto: 0, skip: [] },
       provs: mergeMap(a.provs, b.provs, normProv, isProv, PROV_IDS.length),
@@ -718,6 +718,23 @@
       cs: better(normCs(a.cs), normCs(b.cs)) || { m: 0, on: 0 },
       keys: mergeMap(a.keys, b.keys, normKey, isKeyId, KEY_IDS.length)
     };
+    // AS-RT (routines.js): definitions, run states, "Pause all". When the
+    // module is missing (a stale page), what is there is carried as it
+    // is, never dropped.
+    var R = routinesMod();
+    if (R) {
+      out.rt = R.mergeRt(a.rt, b.rt);
+      out.rr = R.mergeRr(a.rr, b.rr, out.rt);
+      out.rp = better(R.normPause(a.rp), R.normPause(b.rp)) || { m: 0, on: 0 };
+    } else {
+      ["rt", "rr", "rp"].forEach(function (k) { var v = isObj(a[k]) ? a[k] : isObj(b[k]) ? b[k] : null; if (v) out[k] = v; });
+    }
+    return out;
+  }
+  function routinesMod() {
+    if (root.OrosAssistRoutines) return root.OrosAssistRoutines;
+    if (typeof module !== "undefined" && module.exports) { try { return require("./routines.js"); } catch (e) { return null; } }
+    return null;
   }
   function emptyData() { return mergeAssist(null, null); }
 
@@ -5431,6 +5448,8 @@
     };
     // AS-THREADS: pinned to the top of the list (on every device)
     if (x.pin === 1) out.pin = 1;
+    // AS-RT: the conversation of a routine (its runs and the talk about them)
+    if (typeof x.rt === "string" && /^r[a-z0-9]{6,24}$/.test(x.rt)) out.rt = x.rt;
     return out;
   }
   function chatFile(c) {
