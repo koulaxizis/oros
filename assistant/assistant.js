@@ -3228,7 +3228,7 @@
   var attText = attStore.text;    // id → text read on the device ("" = none found)
   var PDF_SRC = "../vendor/pdfjs/pdf.min.js", PDF_WORKER = "../vendor/pdfjs/pdf.worker.min.js";
   var OCR_BASE = "../vendor/tesseract/";
-  var READ_PAGES = 40, OCR_PAGES = 5;
+  var READ_PAGES = 40, OCR_PAGES = 5, OCR_PAGES_MORE = 15;
   var pdfjsP = null, ocrP = null, ocrW = null;
   var attPages = attStore.pages;  // id → a PDF's page count (0 = couldn't count), for a service with a page limit
   function needsText(a) {
@@ -3313,38 +3313,49 @@
     var blob = new Blob([b64Bytes(attMem[a.id])], { type: a.type });
     return ocrImage(blob, onProgress);
   }
-  function pdfBytesText(bytes, onProgress) {
+  // AS-OCR: an attached PDF (the reader was lost in 9.00.00, when a
+  // same-named Layout report helper stayed and attached PDFs stalled).
+  function pdfAttText(a, onProgress) { return pdfBytesText(b64Bytes(attMem[a.id]), onProgress); }
+  function pdfBytesText(bytes, onProgress, opts) {
     return pdfjs().then(function (lib) {
       return lib.getDocument({ data: bytes, isEvalSupported: false, enableXfa: false,
                                disableAutoFetch: true, disableStream: true, stopAtErrors: false }).promise;
     }).then(function (pdf) {
-      var n = Math.min(pdf.numPages, READ_PAGES), parts = [], chain = Promise.resolve();
+      var n = Math.min(pdf.numPages, READ_PAGES), parts = [], pics = [], chain = Promise.resolve();
+      var OPS = lib.OPS || {}, IMG_OPS = [OPS.paintImageXObject, OPS.paintInlineImageXObject, OPS.paintJpegXObject, OPS.paintImageXObjectRepeat].filter(function (x) { return typeof x === "number"; });
       for (var k = 1; k <= n; k++) (function (k) {
-        chain = chain.then(function () { return pdf.getPage(k); }).then(function (pg) { return pg.getTextContent(); }).then(function (tc) {
+        var page = null;
+        chain = chain.then(function () { return pdf.getPage(k); }).then(function (pg) { page = pg; return pg.getTextContent(); }).then(function (tc) {
           var line = (tc.items || []).map(function (it) { return (it.str || "") + (it.hasEOL ? "\n" : " "); }).join("");
           parts.push(line.replace(/[ \t]+/g, " ").trim());
           if (onProgress) onProgress({ progress: k / n });
+          // A page with little text: does it draw a picture (a scanned page)?
+          if (parts[k - 1].replace(/\s/g, "").length >= C.OCR_PAGE_MIN || !IMG_OPS.length) { pics.push(false); return; }
+          return page.getOperatorList().then(function (ol) {
+            pics.push((ol.fnArray || []).some(function (f) { return IMG_OPS.indexOf(f) >= 0; }));
+          }, function () { pics.push(false); });
         });
       })(k);
       return chain.then(function () {
-        var text = parts.filter(Boolean).join("\n\n");
-        if (pdf.numPages > n) text += "\n[" + (pdf.numPages - n) + " more pages not read]";
-        if (text.replace(/\s/g, "").length >= 40) return text;
-        // No text layer (a scan): read the first pages as pictures.
-        var m = Math.min(pdf.numPages, OCR_PAGES), out = [], c2 = Promise.resolve();
-        for (var j = 1; j <= m; j++) (function (j) {
-          c2 = c2.then(function () { return pdf.getPage(j); }).then(function (pg) {
+        // AS-OCR: pages with (almost) no text of their own are scans; read
+        // them as pictures (a whole scan, or the scanned pages of a mixed PDF).
+        var plan = C.ocrPlan(parts.map(function (x) { return x.replace(/\s/g, "").length; }), pics, opts && opts.ocr ? OCR_PAGES_MORE : OCR_PAGES);
+        var c2 = Promise.resolve();
+        plan.pages.forEach(function (i, at) {
+          c2 = c2.then(function () { return pdf.getPage(i + 1); }).then(function (pg) {
             var vp = pg.getViewport({ scale: 2 });
             var cv = document.createElement("canvas");
             cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
             return pg.render({ canvasContext: cv.getContext("2d"), viewport: vp, background: "#ffffff" }).promise
-              .then(function () { return ocrImage(cv, onProgress); }).then(function (tx) { out.push(tx.trim()); });
+              .then(function () { return ocrImage(cv, onProgress ? function (m) { onProgress({ progress: (at + (m.progress || 0)) / plan.pages.length }); } : null); })
+              .then(function (tx) { parts[i] = String(tx || "").replace(/[ \t]+\n/g, "\n").trim(); }, function () {});
           });
-        })(j);
+        });
         return c2.then(function () {
-          var t2 = out.filter(Boolean).join("\n\n");
-          if (pdf.numPages > m && t2) t2 += "\n[" + (pdf.numPages - m) + " more pages not read]";
-          return t2;
+          var text = parts.filter(Boolean).join("\n\n");
+          if (pdf.numPages > n && text) text += "\n[" + (pdf.numPages - n) + " more pages not read]";
+          if (plan.left && text) text += "\n[" + plan.left + " more scanned pages not read with OCR" + (opts && opts.ocr ? "" : "; ocr true reads up to " + OCR_PAGES_MORE) + "]";
+          return text;
         });
       });
     });
@@ -3384,7 +3395,7 @@
     renderAtt();
     return todo.reduce(function (pr, a) {
       return pr.then(function () {
-        var k = C.attKind(a.type), fn = k === "pdf" ? pdfText : k === "doc" ? docText : photoText;
+        var k = C.attKind(a.type), fn = k === "pdf" ? pdfAttText : k === "doc" ? docText : photoText;
         return fn(a, function (m) { attReadPct = Math.round((m.progress || 0) * 100); renderAtt(); })
           .then(function (tx) { attText[a.id] = String(tx || "").trim(); }, function (e) {
             attText[a.id] = "";
@@ -5464,7 +5475,7 @@
   // (PARITY). A file's version is the first 16 hex of its SHA-256 (a
   // cloud-only file's from its manifest entry); a file over 32 MB gets
   // one from its size and time instead of reading it all.
-  var CF_HASH_MAX = 32 * 1024 * 1024, CF_TEXT_MAX = 50 * 1024 * 1024;
+  var CF_HASH_MAX = 32 * 1024 * 1024, CF_TEXT_MAX = 50 * 1024 * 1024, PIC_CLOUD_MAX = 60 * 1024 * 1024;
   // The Assistant offers the files tools once the owner picked folders
   // and Files may always be read; the changes once Files takes changes.
   function cfOn(apps, chg) {
@@ -5778,7 +5789,7 @@
       return f.arrayBuffer().then(function (buf) {
         var bytes = new Uint8Array(buf);
         if (kind === "text") return new TextDecoder("utf-8").decode(bytes);
-        if (kind === "pdf") return pdfBytesText(bytes);
+        if (kind === "pdf") return pdfBytesText(bytes, null, { ocr: a.ocr === true });
         if (!DT) throw new Error("doctext");
         return DT.read(bytes, name, { sheets: sheets, max: CF.READ_MAX * 4 });
       }).then(function (text) {
@@ -5836,19 +5847,21 @@
         return cfVer(x.fs, p).then(function (v) {
           head.version = v;
           var ui = { k: "cfRead", path: CF.show(p) };
-          if (kind === "image" && !st.cloud) {
+          // AS-OCR: a picture in the cloud only (orOS Drive's on-demand
+          // folders) is fetched like a document (hash-checked by the vault).
+          if (kind === "image" && (!st.cloud || (st.size || 0) <= PIC_CLOUD_MAX)) {
             return cfBytes(x.fs, p).then(function (bytes) { return picResult(new Blob([bytes]), name, head, a, ui); },
-              function () { return cfErr("\"" + CF.show(p) + "\" could not be read."); });
+              function () { return cfErr("\"" + CF.show(p) + "\" could not be read" + (st.cloud ? " (it is in the cloud only and could not be fetched)." : ".")); });
           }
           if (!/^(text|document|pdf)$/.test(kind) || st.size > CF_TEXT_MAX) {
             head.note = kind === "image" || kind === "media" || kind === "other"
-              ? "Only the details: files_read gives the text of text files, documents and PDFs, and shows pictures on this device."
+              ? (kind === "image" ? "Only the details: a picture in the cloud only is read up to 60 MB." : "Only the details: files_read gives the text of text files, documents and PDFs, and shows pictures on this device.")
               : "Only the details: the file is over 50 MB.";
             return { content: JSON.stringify(head), ui: ui };
           }
           return cfBytes(x.fs, p).then(function (bytes) {
             if (kind === "text") return new TextDecoder("utf-8").decode(bytes);
-            if (kind === "pdf") return pdfBytesText(bytes);
+            if (kind === "pdf") return pdfBytesText(bytes, null, { ocr: a.ocr === true });
             if (!DT) throw new Error("doctext");
             return DT.read(bytes, name, { sheets: sheets, max: CF.READ_MAX * 4 });
           }).then(function (text) {
